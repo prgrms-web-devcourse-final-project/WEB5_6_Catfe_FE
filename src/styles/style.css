@@ -1,0 +1,163 @@
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  /* Primary */
+  --color-primary-50:  #FFF5F2;
+  --color-primary-100: #FFE1DA;
+  --color-primary-200: #FFC2B5;
+  --color-primary-300: #FFA08E;
+  --color-primary-400: #FF856E;
+  --color-primary-500: #FF6B4A;
+  --color-primary-600: #E55538;
+  --color-primary-700: #CC442C;
+  --color-primary-800: #B23622;
+  --color-primary-900: #8C2515;
+
+  /* Secondary */
+  --color-secondary-50:  #FFFCF2;
+  --color-secondary-100: #FFF6D9;
+  --color-secondary-200: #FFEDB3;
+  --color-secondary-300: #FFE48C;
+  --color-secondary-400: #FFDD74;
+  --color-secondary-500: #FFD66B;
+  --color-secondary-600: #E5BC52;
+  --color-secondary-700: #CC9F3E;
+  --color-secondary-800: #B28530;
+  --color-secondary-900: #8C6120;
+
+  /* Success */
+  --color-success-50:  #F3FAF4;
+  --color-success-100: #D7F2DA;
+  --color-success-200: #B1E5B7;
+  --color-success-300: #8BD994;
+  --color-success-400: #68CC75;
+  --color-success-500: #4CAF50;
+  --color-success-600: #3D9443;
+  --color-success-700: #317A36;
+  --color-success-800: #26602B;
+  --color-success-900: #1A421D;
+
+  /* Error */
+  --color-error-50:  #FDEDED;
+  --color-error-100: #FBD4D4;
+  --color-error-200: #F5A9A9;
+  --color-error-300: #EC7777;
+  --color-error-400: #E05252;
+  --color-error-500: #C92D2D;
+  --color-error-600: #A52323;
+  --color-error-700: #7F1B1B;
+  --color-error-800: #5A1212;
+  --color-error-900: #370A0A;
+
+  /* Warning */
+  --color-warning-50:  #FFFAF0;
+  --color-warning-100: #FFF3D6;
+  --color-warning-200: #FFE3A6;
+  --color-warning-300: #FFD372;
+  --color-warning-400: #FBC447;
+  --color-warning-500: #E6A812;
+  --color-warning-600: #BA860E;
+  --color-warning-700: #8C660B;
+  --color-warning-800: #5E4507;
+  --color-warning-900: #302404;
+
+  /* Background (semantic) */
+  --color-background-base:  #FBFAF6;
+  --color-background-white: #FAFAF9;
+
+  /* Text (semantic) */
+  --color-text-primary:   #2C2C2C;
+  --color-text-secondary: #6F6F6F;
+}
+
+@theme {
+  --scroll-thumb: #FFD2C6;
+  --scroll-thumb-hover: #FFB89E;
+}
+
+
+@layer base {
+  html, body {
+    @apply scroll-smooth;
+    font-family: var(--font-orbitron), 
+      var(--font-nanum), 
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      Roboto,
+      'Helvetica Neue',
+      'Segoe UI',
+      'Apple SD Gothic Neo',
+      'Noto Sans KR',
+      sans-serif;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scroll-thumb);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scroll-thumb-hover);
+  }
+
+  input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-background-white) inset !important;
+    box-shadow: 0 0 0px 1000px var(--color-background-white) inset !important;
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .animation-spinner {
+    width: 50px;
+    --b: 8px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 1px;
+    background: conic-gradient(#0000 10%, var(--color-primary-300)) content-box;
+    -webkit-mask:
+      repeating-conic-gradient(#0000 0deg, #000 1deg 20deg, #0000 21deg 36deg),
+      radial-gradient(farthest-side, #0000 calc(100% - var(--b) - 1px), #000 calc(100% - var(--b)));
+    -webkit-mask-composite: destination-in;
+    mask-composite: intersect;
+    animation: spinner 1s infinite steps(10);
+  }
+
+  @keyframes spinner {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+}

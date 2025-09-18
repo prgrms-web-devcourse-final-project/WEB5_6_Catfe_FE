@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Orbitron } from 'next/font/google';
 import localFont from 'next/font/local';
 import '@/styles/style.css';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -31,6 +33,17 @@ export default function RootLayout({
     <html lang="ko-KR">
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
         {children}
+        <ToastContainer
+          position="top-right"
+          theme="colored"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+        />
       </body>
     </html>
   );

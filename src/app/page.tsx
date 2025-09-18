@@ -1,5 +1,8 @@
+'use client';
+
 import Button from '@/component/Button';
 import Spinner from '@/component/Spinner';
+import showToast from '@/utils/showToast';
 
 export default function Home() {
   return (
@@ -20,7 +23,17 @@ export default function Home() {
       </div>
       <div className="border border-gray-500 p-4 overflow-y-auto flex flex-col gap-2">
         <h1>Button Test</h1>
-        <Button size="lg" borderType="solid" color="primary">
+        <Button
+          size="lg"
+          borderType="solid"
+          color="primary"
+          onClick={() => {
+            showToast('success', '성공 Success');
+            showToast('warn', '경고 Warning');
+            showToast('error', '에러 Error');
+            showToast('info', '정보 Info');
+          }}
+        >
           Button
         </Button>
         <Button size="md" borderType="solid" color="primary">

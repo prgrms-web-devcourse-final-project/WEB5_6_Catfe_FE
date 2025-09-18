@@ -98,6 +98,15 @@
     font-weight: 500;
   }
 
+  :root {
+    --toastify-color-success: theme(--color-success-500) !important;
+    --toastify-color-error: theme(--color-error-400) !important;
+    --toastify-color-warning: theme(--color-warning-500) !important;
+    --toastify-color-info: theme(colors.rose.600);
+    --toastify-font-family: var(--font-orbitron), 
+      var(--font-nanum) !important;
+  }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--scroll-thumb) transparent;

@@ -1,0 +1,6 @@
+# 템플릿을 사용하지 않는 issue 관리
+blank_issues_enabled: false
+contact_links:
+  - name: 기존 템플릿에 해당하지 않는 이슈는 Discussions에서!
+    url: https://github.com/prgrms-fe-devcourse/FES-5-Project3-TEAM-3/discussions
+    about: 질문이나 일반적인 논의는 Discussions 탭을 이용해주세요.

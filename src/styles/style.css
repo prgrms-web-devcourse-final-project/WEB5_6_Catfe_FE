@@ -141,23 +141,32 @@
   }
 
   .animation-spinner {
-    width: 50px;
-    --b: 8px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    padding: 1px;
-    background: conic-gradient(#0000 10%, var(--color-primary-300)) content-box;
-    -webkit-mask:
-      repeating-conic-gradient(#0000 0deg, #000 1deg 20deg, #0000 21deg 36deg),
-      radial-gradient(farthest-side, #0000 calc(100% - var(--b) - 1px), #000 calc(100% - var(--b)));
-    -webkit-mask-composite: destination-in;
-    mask-composite: intersect;
-    animation: spinner 1s infinite steps(10);
-  }
+    aspect-ratio: 2;
+    border-bottom: 3px solid var(--color-secondary-900);
+    position: relative;
+    overflow: hidden;
 
-  @keyframes spinner {
-    to {
-      transform: rotate(1turn);
+    &:before {
+      content: "";
+      position: absolute;
+      inset: auto 42.5% 0;
+      aspect-ratio: 1;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: url("/image/cat-default.svg") no-repeat center/contain;
+      animation: 
+        spinner-0 .5s cubic-bezier(0,900,1,900) infinite,
+        spinner-1  2.5s linear infinite;
     }
   }
+  @keyframes spinner-0 {
+    0%,2% {bottom: 0%}
+    98%,to {bottom:.1%}
+  }
+  @keyframes spinner-1 {
+    0% {translate: -500%}
+    to {translate:  500%}
+  }
 }
+

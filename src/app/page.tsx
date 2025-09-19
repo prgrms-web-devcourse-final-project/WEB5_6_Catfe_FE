@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 import Spinner from '@/components/Spinner';
+=======
+'use client';
+
+import Button from '@/components/Button';
+import Spinner from '@/components/Spinner';
+import showToast from '@/utils/showToast';
+>>>>>>> 3a4f4f5 (메인 최신화)
 
 export default function Home() {
   return (

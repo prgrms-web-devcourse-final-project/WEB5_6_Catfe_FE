@@ -4,6 +4,7 @@ import localFont from 'next/font/local';
 import '@/styles/style.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
+import Header from '@/components/common/Header';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="ko-KR">
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
+        <Header/>
         {children}
         <ToastContainer
           position="top-right"

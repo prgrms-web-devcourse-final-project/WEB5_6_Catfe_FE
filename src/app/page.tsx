@@ -1,4 +1,4 @@
-import Spinner from '@/component/Spinner';
+import Spinner from '@/components/Spinner';
 
 export default function Home() {
   return (

@@ -82,7 +82,7 @@ function CommunityEditor({ onSubmitAction }: EditorProps) {
 
   return (
     <div className="bg-background-white border-2 border-secondary-900 rounded-2xl flex flex-col items-center justify-start gap-6 p-6 w-full">
-      <h3 className="font-bold text-2xl w-full text-left">그룹 모집글 작성</h3>
+      <h3 className="font-bold text-xl sm:text-2xl w-full text-left">그룹 모집글 작성</h3>
       <form className="flex flex-col gap-4 w-full editor" ref={formRef} action={handleSubmit}>
         <div className="flex w-full gap-4">
           {/* 제목 */}
@@ -144,7 +144,7 @@ function CommunityEditor({ onSubmitAction }: EditorProps) {
           <label htmlFor="contents" className="text-xs">
             Description
           </label>
-          <div className="rounded-md border border-gray-300 p-3">
+          <div className="rounded-md border border-gray-300 p-3 max-h-[80vh] overflow-auto">
             <Toolbar editor={editor} />
             <EditorContent editor={editor} />
           </div>

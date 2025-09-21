@@ -112,6 +112,11 @@
     line-height: 0.8;
     text-underline-offset: 0.35rem;
     text-decoration-thickness: 0.06em;
+
+    a {
+      color: dodgerblue !important;
+      text-underline-offset: 0.25em;
+    }
   }
 
   :root {

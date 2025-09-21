@@ -77,7 +77,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     <div
       role="toolbar"
       aria-label="에디터 도구 막대"
-      className="flex flex-wrap items-center gap-1 rouunded-md border border-gray-300 bg-secondary-50 px-2 py-1 mb-2"
+      className="flex flex-wrap items-center gap-1 rouunded-md border border-gray-300 bg-secondary-50 px-2 py-1 mb-2 sticky top-0 z-10"
     >
       {/* h1, h2, h3, p 설정 */}
       <HeadingSelect value={snap.heading} onChange={onHeadingChange} labelOffset={1} />

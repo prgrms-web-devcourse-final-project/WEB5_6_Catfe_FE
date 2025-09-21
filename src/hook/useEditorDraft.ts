@@ -33,22 +33,26 @@ export function useEditorDraft(
       if (!raw) return;
 
       const parsed: DraftPayload = JSON.parse(raw);
-      if (!editor) {
-        setDraft(parsed);
-        return;
-      }
-      const shouldRestore = restoreIfEmpty
-        ? isDocEmpty(editor) && isBlank(title) && (filterOptions?.length ?? 0) === 0
-        : true;
+      // if (!editor) {
+      //   setDraft(parsed);
+      //   return;
+      // }
+      // const shouldRestore = restoreIfEmpty
+      //   ? isDocEmpty(editor) && isBlank(title) && (filterOptions?.length ?? 0) === 0
+      //   : true;
 
-      if (shouldRestore) {
-        setDraft(parsed);
-      }
+      // if (shouldRestore) {
+      setDraft((prev) => {
+        if (prev && prev.updatedAt === parsed.updatedAt) return prev;
+        return parsed;
+      });
+      // }
+
       setLastSavedAt(parsed.updatedAt ?? null);
     } catch (err) {
       console.error('LocalStorage Draft Restore Failed:', err);
     }
-  }, [title, filterOptions, editor, key, restoreIfEmpty]);
+  }, [key, restoreIfEmpty]);
 
   // Save Draft
   useEffect(() => {

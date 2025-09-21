@@ -7,7 +7,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
@@ -62,7 +62,7 @@ function CommunityEditor({ onSubmitAction }: EditorProps) {
         const res = await onSubmitAction(formData);
         if (!res?.ok) {
           showToast('error', '저장에 실패했습니다.');
-          console.log(res.error);
+          console.error(res.error);
         }
       } else {
         console.log('Submit', Object.fromEntries(formData));
@@ -79,21 +79,6 @@ function CommunityEditor({ onSubmitAction }: EditorProps) {
       history.back();
     }
   };
-
-  useEffect(() => {
-    if (!editor) return;
-
-    const log = () => console.log('bold?', editor.isActive('bold'));
-    editor.on('selectionUpdate', log);
-    editor.on('transaction', log);
-
-    log();
-
-    return () => {
-      editor.off('selectionUpdate', log);
-      editor.off('transaction', log);
-    };
-  }, [editor]);
 
   return (
     <div className="bg-background-white border-2 border-secondary-900 rounded-2xl flex flex-col items-center justify-start gap-6 p-6 w-full">

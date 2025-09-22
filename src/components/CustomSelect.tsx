@@ -2,9 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import CheckIcon from "@/aseets/icons/check.svg";
 import Image from "next/image";
-import SelectIcon from "@/aseets/icons/select.svg";
 
 type Option<V = string | number> = {
   label: string;
@@ -148,7 +146,7 @@ export default function CustomSelect<V = string | number>({
             open ? (direction === "top" ? "-rotate-90" : "rotate-180") : "rotate-0"
           )}
         >
-          <Image src={SelectIcon} alt="" width={16} height={16} />
+          <Image src="/icon/study-room/select.svg" alt="" width={16} height={16} />
         </span>
       </button>
 
@@ -197,7 +195,7 @@ export default function CustomSelect<V = string | number>({
                 >
                   <span className="truncate">{opt.label}</span>
                   {isSelected && !isDanger && (
-                    <Image src={CheckIcon} alt="" className="w-4 h-4" />
+                    <Image src="/icon/study-room/check.svg" alt="" className="w-4 h-4" />
                   )}
                 </button>
               </li>

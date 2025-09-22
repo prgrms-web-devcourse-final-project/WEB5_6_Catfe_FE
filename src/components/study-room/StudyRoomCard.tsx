@@ -1,7 +1,5 @@
 import React from "react";
 import clsx from "clsx";
-import lockIcon from "@/aseets/icons/lock.svg"
-import imgPlaceholderIcon from "@/aseets/icons/image-placeholder.svg"
 import Image from "next/image";
 
 type Props = {
@@ -47,7 +45,7 @@ export default function StudyRoomCard({
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Image
-                src={imgPlaceholderIcon}
+                src="/icon/study-room/image-placeholder.svg"
                 alt="이미지 없음 아이콘"
                 width={40}
                 height={40}
@@ -68,7 +66,7 @@ export default function StudyRoomCard({
           </h3>
           {isPrivate && (
             <Image
-              src={lockIcon}
+              src="/icon/study-room/lock.svg"
               alt="비공개 스터디룸 아이콘"
               width={16}
               height={16}

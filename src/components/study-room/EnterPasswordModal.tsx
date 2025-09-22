@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Button from '@/components/Button';
-import BeforeIcon from "@/aseets/icons/before.svg"
 import Image from 'next/image';
 
 type EnterPasswordModalProps = {
@@ -32,7 +31,7 @@ export default function EnterPasswordModal({
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">스터디룸 비밀번호</h2>
           <button onClick={onClose} aria-label="닫기" className='cursor-pointer'>
-            <Image src={BeforeIcon} alt='이전으로 돌아가기' />
+            <Image src="/icon/study-room/before.svg" alt='이전으로 돌아가기' />
           </button>
         </div>
 

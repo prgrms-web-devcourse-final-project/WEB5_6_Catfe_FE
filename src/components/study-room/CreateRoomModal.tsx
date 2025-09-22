@@ -4,8 +4,6 @@ import { useState, useCallback, useMemo } from "react";
 import RoomInfo, { RoomInfoValue } from "./RoomInfo";
 import RoomPassword from "./RoomPassword";
 import StudyRoomCard from "./StudyRoomCard";
-import MakeIcon from "@/aseets/icons/right.svg";
-import CleanIcon from "@/aseets/icons/clean.svg";
 import Toggle from "@/components/Toggle";
 import Button from "@/components/Button";
 import Image from "next/image";
@@ -64,8 +62,8 @@ export default function CreateRoomModal() {
     >
       <BigModal.Body>
         <p className="flex gap-2.5 mb-6 items-center">
-          <Image src={CleanIcon} alt="" className="w-4 h-4" />
-          스페이스 정보
+          <Image src="/icon/study-room/clean.svg" alt="생성 아이콘" width={16} height={16} />
+          스터디룸 정보
         </p>
 
         {/*메인 블록*/}
@@ -129,7 +127,7 @@ export default function CreateRoomModal() {
           disabled={!canCreate}
         >
           생성
-          <Image src={MakeIcon} alt="스터디룸 생성 아이콘" />
+          <Image src="/icon/study-room/right.svg" alt="스터디룸 생성 아이콘" width={16} height={16} />
         </Button>
       </BigModal.Footer>
     </BigModal>

@@ -3,7 +3,6 @@
 import clsx from "clsx";
 import Image from "next/image";
 import React from "react";
-import CloseIcon from "@/aseets/icons/close.svg";
 
 type BigModalLayoutProps = {
   open: boolean;
@@ -65,7 +64,7 @@ function BigModalLayout({
                 onClick={onClose}
                 className="cursor-pointer"
               >
-                <Image src={CloseIcon} alt="닫기" />
+                <Image src="/icon/study-room/close.svg" alt="닫기" width={20} height={20}/>
               </button>
             )}
           </div>

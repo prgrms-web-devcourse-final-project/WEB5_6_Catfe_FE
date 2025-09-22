@@ -81,6 +81,15 @@ function CommunityEditor({
           allowedAttributes: {
             a: ['href', 'target', 'rel'],
             img: ['src', 'alt', 'width', 'height'],
+            p: ['style'],
+            h2: ['style'],
+            h3: ['style'],
+            h4: ['style'],
+          },
+          allowedStyles: {
+            '*': {
+              'text-align': [/^left$/, /^center$/, /^right$/],
+            },
           },
           allowedSchemes: ['http', 'https', 'mailto', 'data'],
           disallowedTagsMode: 'discard',

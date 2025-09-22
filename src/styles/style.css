@@ -109,13 +109,17 @@
       'Apple SD Gothic Neo',
       'Noto Sans KR',
       sans-serif !important;
-    line-height: 0.8;
+    line-height: 1.1;
     text-underline-offset: 0.35rem;
     text-decoration-thickness: 0.06em;
 
     a {
       color: dodgerblue !important;
       text-underline-offset: 0.25em;
+    }
+
+    p {
+      margin: 0.5rem 0 !important;
     }
   }
 

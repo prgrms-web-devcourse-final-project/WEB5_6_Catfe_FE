@@ -11,6 +11,7 @@ import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
 import { isBlank, isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
+import sanitizeHtml from 'sanitize-html';
 
 type EditorProps = {
   draftKey?: string;
@@ -33,16 +34,24 @@ function CommunityEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3, 4] },
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
       }),
       Underline,
       Link.configure({
         openOnClick: true,
         autolink: true,
         protocols: ['http', 'https', 'mailto'],
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
       }),
       Image.configure({ allowBase64: true }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right'],
       }),
     ],
     content: '',
@@ -50,6 +59,41 @@ function CommunityEditor({
     editorProps: {
       attributes: {
         class: 'prose max-w-none min-h-[240px] focus:outline-none prose-stone',
+      },
+      transformPastedHTML: (html) => {
+        return sanitizeHtml(html, {
+          allowedTags: [
+            'h2',
+            'h3',
+            'h4',
+            'p',
+            'br',
+            'strong',
+            'em',
+            'u',
+            's',
+            'ul',
+            'ol',
+            'li',
+            'a',
+            'img',
+          ],
+          allowedAttributes: {
+            a: ['href', 'target', 'rel'],
+            img: ['src', 'alt', 'width', 'height'],
+            p: ['style'],
+            h2: ['style'],
+            h3: ['style'],
+            h4: ['style'],
+          },
+          allowedStyles: {
+            '*': {
+              'text-align': [/^left$/, /^center$/, /^right$/],
+            },
+          },
+          allowedSchemes: ['http', 'https', 'mailto', 'data'],
+          disallowedTagsMode: 'discard',
+        });
       },
     },
     immediatelyRender: false,

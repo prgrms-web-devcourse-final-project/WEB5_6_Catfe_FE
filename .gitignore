@@ -48,7 +48,7 @@ next-env.d.ts
 
 # Icon must end with two \r
 Icon
-
+!public/icon/
 
 # Thumbnails
 ._*
@@ -75,11 +75,6 @@ Temporary Items
 
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/

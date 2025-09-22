@@ -42,7 +42,6 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
   const onChangeDesc = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setDesc(e.target.value.slice(0, DESC_MAX));
 
-  // 이미지 선택
   const fileRef = useRef<HTMLInputElement>(null);
   const onPickImage = () => fileRef.current?.click();
 
@@ -50,7 +49,6 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
     const f = e.target.files?.[0];
     if (!f) return;
 
-    // 기존 blob URL 정리
     setCoverPreviewUrl((prev) => {
       if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
       return prev;
@@ -61,7 +59,6 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
     setCoverUploadFile(f);
   };
 
-  // 언마운트 시 blob URL 정리
   useEffect(() => {
     return () => {
       if (coverPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(coverPreviewUrl);

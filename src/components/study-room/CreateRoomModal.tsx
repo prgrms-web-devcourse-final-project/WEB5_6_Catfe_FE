@@ -62,7 +62,7 @@ export default function CreateRoomModal() {
     >
       <BigModal.Body>
         <p className="flex gap-2.5 mb-6 items-center">
-          <Image src="/icon/study-room/clean.svg" alt="생성 아이콘" width={16} height={16} />
+          <Image src="/icon/study-room/makeUp.svg" alt="생성 아이콘" width={16} height={16} />
           스터디룸 정보
         </p>
 

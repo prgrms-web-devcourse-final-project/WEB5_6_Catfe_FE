@@ -20,8 +20,8 @@ async function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <HydrationBoundary state={dehydrate(qc)}>
       {/* header 때문에 pt 넣어둠 나중에 지울것! */}
-      <div className="min-h-dvh px-5 max-w-[1200px] flex justify-center items-start pt-20">
-        <div className="w-full rounded-2xl border-2 border-secondary-900 p-8 mx-auto">
+      <div className="min-h-dvh px-auto max-w-[1200px] flex justify-center items-start pt-20">
+        <div className="w-7/8 rounded-2xl border-2 border-secondary-900 p-8 mx-auto">
           <ContentsDetail postId={postId} />
         </div>
       </div>

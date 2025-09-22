@@ -19,67 +19,68 @@ function CommunityContents({ post }: { post: Post }) {
   } = post;
 
   return (
-    <article className="flex flex-col gap-4">
-      <header className="flex justify-between">
+    <article className="flex flex-col gap-4 relative">
+      <header className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         {/* title & tags */}
-        <div className="flex gap-4">
-          <h2 className="mr-3 text-2xl font-bold">{title}</h2>
+        <h2 className="mr-3 text-2xl font-bold">{title}</h2>
+        <div className="flex gap-2">
           {categories &&
             categories.map((c, idx) => (
               <div
                 key={`${postId}-category-${idx}`}
-                className="px-2 border-0 bg-primary-500 rounded-sm text-background-white text-xs flex justify-center items-center"
+                className="px-2 py-1 border-0 bg-primary-500 rounded-sm text-background-white text-xs flex justify-center items-center"
               >
                 {c}
               </div>
             ))}
         </div>
-        {/* button groups */}
-        <div className="flex gap-2 items-center justify-center">
-          <button
-            onClick={() => console.log('즐겨찾기')}
-            aria-label="즐겨찾기에 저장"
-            className="cursor-pointer"
-          >
-            <Image
-              src="/icon/community/heart.svg"
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
-              priority={false}
-            />
-          </button>
-          <button
-            onClick={() => console.log('수정')}
-            aria-label="게시글 수정"
-            className="cursor-pointer"
-          >
-            <Image
-              src="/icon/community/pencil.svg"
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
-              priority={false}
-            />
-          </button>
-          <button
-            onClick={() => console.log('삭제')}
-            aria-label="게시글 삭제"
-            className="cursor-pointer"
-          >
-            <Image
-              src="/icon/community/trash.svg"
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
-              priority={false}
-            />
-          </button>
-        </div>
       </header>
+
+      {/* button groups */}
+      <div className="flex gap-4 items-center justify-center absolute top-0 right-0 sm:top-2 sm:right-2">
+        <button
+          onClick={() => console.log('즐겨찾기')}
+          aria-label="즐겨찾기에 저장"
+          className="cursor-pointer"
+        >
+          <Image
+            src="/icon/community/heart.svg"
+            alt=""
+            width={20}
+            height={20}
+            unoptimized
+            priority={false}
+          />
+        </button>
+        <button
+          onClick={() => console.log('수정')}
+          aria-label="게시글 수정"
+          className="cursor-pointer"
+        >
+          <Image
+            src="/icon/community/pencil.svg"
+            alt=""
+            width={20}
+            height={20}
+            unoptimized
+            priority={false}
+          />
+        </button>
+        <button
+          onClick={() => console.log('삭제')}
+          aria-label="게시글 삭제"
+          className="cursor-pointer"
+        >
+          <Image
+            src="/icon/community/trash.svg"
+            alt=""
+            width={20}
+            height={20}
+            unoptimized
+            priority={false}
+          />
+        </button>
+      </div>
 
       {/* user Profile */}
       <div className="flex gap-2 items-center">
@@ -106,6 +107,8 @@ function CommunityContents({ post }: { post: Post }) {
       <TiptapRenderer content={content} />
 
       <hr />
+
+      {/* likes & comments */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => console.log('좋아요')}

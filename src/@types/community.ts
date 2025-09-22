@@ -1,4 +1,5 @@
 import { UserProfile } from './type';
+import { JSONContent } from '@tiptap/react';
 
 export type UserSummary = Pick<UserProfile, 'user_id' | 'nickname' | 'profile_image_url'>;
 
@@ -6,7 +7,7 @@ export type Post = {
   post_id: string;
   author: UserSummary;
   title: string;
-  content: string | null;
+  content: JSONContent | null;
   categories: string[];
   likeCount: number;
   commentCount: number;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
 import BlindIcon from "@/assets/icon/blind.svg";
+import ClosedIcon from "@/assets/icon/closed.svg";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +49,12 @@ function LoginPage() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               aria-label="비밀번호 보기 토글"
             >
-              <Image src={BlindIcon} alt="비밀번호 보기 토글" width={20} height={20} />
+    <Image
+      src={showPassword ? ClosedIcon : BlindIcon}
+      alt={showPassword ? "비밀번호 가리기" : "비밀번호 보기"}
+      width={20}
+      height={20}
+    />
             </button>
           </div>
 

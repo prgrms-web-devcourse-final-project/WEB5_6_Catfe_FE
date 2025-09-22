@@ -57,7 +57,7 @@ function Header() {
     <>
     <header className={`fixed top-0 left-0 w-full h-[56px] flex items-center justify-between px-10 border-b border-[var(--color-primary-500)] bg-[var(--color-background-base)] transition-transform duration-300 ${
     hidden ? "-translate-y-full" : "translate-y-0"
-  }`}>
+  } z-[9999]`}>
       <Link href="/" className="flex items-center gap-2">
         <Image
           src="/image/logo-light.svg"

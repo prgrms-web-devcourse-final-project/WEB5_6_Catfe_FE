@@ -9,6 +9,7 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const HEADER_HEIGHT = 56;
 
 
   useEffect(() => {
@@ -53,6 +54,7 @@ function Header() {
   }, []);
 
   return (
+    <>
     <header className={`fixed top-0 left-0 w-full h-[56px] flex items-center justify-between px-10 border-b border-[var(--color-primary-500)] bg-[var(--color-background-base)] transition-transform duration-300 ${
     hidden ? "-translate-y-full" : "translate-y-0"
   } z-[9999]`}>
@@ -125,6 +127,8 @@ function Header() {
         )}
       </div>
     </header>
+    <div style={{ height: HEADER_HEIGHT }} />
+    </>
   );
 }
 

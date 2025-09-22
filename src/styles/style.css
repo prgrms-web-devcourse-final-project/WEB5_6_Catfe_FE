@@ -3,88 +3,90 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* Primary */
-  --color-primary-50:  #FFF5F2;
-  --color-primary-100: #FFE1DA;
-  --color-primary-200: #FFC2B5;
-  --color-primary-300: #FFA08E;
-  --color-primary-400: #FF856E;
-  --color-primary-500: #FF6B4A;
-  --color-primary-600: #E55538;
-  --color-primary-700: #CC442C;
-  --color-primary-800: #B23622;
-  --color-primary-900: #8C2515;
+  --color-primary-50: #fff5f2;
+  --color-primary-100: #ffe1da;
+  --color-primary-200: #ffc2b5;
+  --color-primary-300: #ffa08e;
+  --color-primary-400: #ff856e;
+  --color-primary-500: #ff6b4a;
+  --color-primary-600: #e55538;
+  --color-primary-700: #cc442c;
+  --color-primary-800: #b23622;
+  --color-primary-900: #8c2515;
 
   /* Secondary */
-  --color-secondary-50:  #FFFCF2;
-  --color-secondary-100: #FFF6D9;
-  --color-secondary-200: #FFEDB3;
-  --color-secondary-300: #FFE48C;
-  --color-secondary-400: #FFDD74;
-  --color-secondary-500: #FFD66B;
-  --color-secondary-600: #E5BC52;
-  --color-secondary-700: #CC9F3E;
-  --color-secondary-800: #B28530;
-  --color-secondary-900: #8C6120;
+  --color-secondary-50: #fffcf2;
+  --color-secondary-100: #fff6d9;
+  --color-secondary-200: #ffedb3;
+  --color-secondary-300: #ffe48c;
+  --color-secondary-400: #ffdd74;
+  --color-secondary-500: #ffd66b;
+  --color-secondary-600: #e5bc52;
+  --color-secondary-700: #cc9f3e;
+  --color-secondary-800: #b28530;
+  --color-secondary-900: #8c6120;
 
   /* Success */
-  --color-success-50:  #F3FAF4;
-  --color-success-100: #D7F2DA;
-  --color-success-200: #B1E5B7;
-  --color-success-300: #8BD994;
-  --color-success-400: #68CC75;
-  --color-success-500: #4CAF50;
-  --color-success-600: #3D9443;
-  --color-success-700: #317A36;
-  --color-success-800: #26602B;
-  --color-success-900: #1A421D;
+  --color-success-50: #f3faf4;
+  --color-success-100: #d7f2da;
+  --color-success-200: #b1e5b7;
+  --color-success-300: #8bd994;
+  --color-success-400: #68cc75;
+  --color-success-500: #4caf50;
+  --color-success-600: #3d9443;
+  --color-success-700: #317a36;
+  --color-success-800: #26602b;
+  --color-success-900: #1a421d;
 
   /* Error */
-  --color-error-50:  #FDEDED;
-  --color-error-100: #FBD4D4;
-  --color-error-200: #F5A9A9;
-  --color-error-300: #EC7777;
-  --color-error-400: #E05252;
-  --color-error-500: #C92D2D;
-  --color-error-600: #A52323;
-  --color-error-700: #7F1B1B;
-  --color-error-800: #5A1212;
-  --color-error-900: #370A0A;
+  --color-error-50: #fdeded;
+  --color-error-100: #fbd4d4;
+  --color-error-200: #f5a9a9;
+  --color-error-300: #ec7777;
+  --color-error-400: #e05252;
+  --color-error-500: #c92d2d;
+  --color-error-600: #a52323;
+  --color-error-700: #7f1b1b;
+  --color-error-800: #5a1212;
+  --color-error-900: #370a0a;
 
   /* Warning */
-  --color-warning-50:  #FFFAF0;
-  --color-warning-100: #FFF3D6;
-  --color-warning-200: #FFE3A6;
-  --color-warning-300: #FFD372;
-  --color-warning-400: #FBC447;
-  --color-warning-500: #E6A812;
-  --color-warning-600: #BA860E;
-  --color-warning-700: #8C660B;
-  --color-warning-800: #5E4507;
+  --color-warning-50: #fffaf0;
+  --color-warning-100: #fff3d6;
+  --color-warning-200: #ffe3a6;
+  --color-warning-300: #ffd372;
+  --color-warning-400: #fbc447;
+  --color-warning-500: #e6a812;
+  --color-warning-600: #ba860e;
+  --color-warning-700: #8c660b;
+  --color-warning-800: #5e4507;
   --color-warning-900: #302404;
 
   /* Background (semantic) */
-  --color-background-base:  #FBFAF6;
-  --color-background-white: #FAFAF9;
+  --color-background-base: #fbfaf6;
+  --color-background-white: #fafaf9;
 
   /* Text (semantic) */
-  --color-text-primary:   #2C2C2C;
-  --color-text-secondary: #6F6F6F;
+  --color-text-primary: #2c2c2c;
+  --color-text-secondary: #6f6f6f;
 }
 
 @theme {
-  --scroll-thumb: #FFD2C6;
-  --scroll-thumb-hover: #FFB89E;
+  --scroll-thumb: #ffd2c6;
+  --scroll-thumb-hover: #ffb89e;
 }
 
-
 @layer base {
-  html, body {
+  html,
+  body {
     @apply scroll-smooth;
-    font-family: var(--font-orbitron), 
-      var(--font-nanum), 
+    font-family:
+      var(--font-orbitron),
+      var(--font-nanum),
       -apple-system,
       BlinkMacSystemFont,
       system-ui,
@@ -99,13 +101,30 @@
     background-color: var(--color-background-base);
   }
 
+  .editor :where(.ProseMirror, .ProseMirror *) {
+    font-family:
+      var(--font-nanum),
+      -apple-system,
+      system-ui,
+      'Apple SD Gothic Neo',
+      'Noto Sans KR',
+      sans-serif !important;
+    line-height: 0.8;
+    text-underline-offset: 0.35rem;
+    text-decoration-thickness: 0.06em;
+
+    a {
+      color: dodgerblue !important;
+      text-underline-offset: 0.25em;
+    }
+  }
+
   :root {
     --toastify-color-success: theme(--color-success-500) !important;
     --toastify-color-error: theme(--color-error-400) !important;
     --toastify-color-warning: theme(--color-warning-500) !important;
     --toastify-color-info: theme(colors.rose.600);
-    --toastify-font-family: var(--font-orbitron), 
-      var(--font-nanum) !important;
+    --toastify-font-family: var(--font-orbitron), var(--font-nanum) !important;
   }
 
   * {
@@ -157,26 +176,35 @@
     overflow: hidden;
 
     &:before {
-      content: "";
+      content: '';
       position: absolute;
       inset: auto 42.5% 0;
       aspect-ratio: 1;
       width: 2rem;
       height: 2rem;
       border-radius: 50%;
-      background: url("/image/cat-default.svg") no-repeat center/contain;
-      animation: 
-        spinner-0 .5s cubic-bezier(0,900,1,900) infinite,
-        spinner-1  2.5s linear infinite;
+      background: url('/image/cat-default.svg') no-repeat center/contain;
+      animation:
+        spinner-0 0.5s cubic-bezier(0, 900, 1, 900) infinite,
+        spinner-1 2.5s linear infinite;
     }
   }
   @keyframes spinner-0 {
-    0%,2% {bottom: 0%}
-    98%,to {bottom:.1%}
+    0%,
+    2% {
+      bottom: 0%;
+    }
+    98%,
+    to {
+      bottom: 0.1%;
+    }
   }
   @keyframes spinner-1 {
-    0% {translate: -500%}
-    to {translate:  500%}
+    0% {
+      translate: -500%;
+    }
+    to {
+      translate: 500%;
+    }
   }
 }
-

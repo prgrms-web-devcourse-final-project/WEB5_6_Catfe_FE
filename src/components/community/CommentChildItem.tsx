@@ -4,6 +4,7 @@ import { ReplyComment } from '@/@types/community';
 import { useState, memo } from 'react';
 import UserProfile from './UserProfile';
 import Image from 'next/image';
+import LikeButton from '../LikeButton';
 
 function CommentChildItem({ reply }: { reply: ReplyComment }) {
   const {
@@ -18,7 +19,7 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
   const [liked, setLiked] = useState<boolean>(isLikedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
 
-  // user
+  // user 정보 붙이기 전 임시 코드
   const isAuthor = true;
 
   const toggleLike = () => {
@@ -65,22 +66,7 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
       </header>
       <main className="text-sm font-light mb-2">{content}</main>
       <footer className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={toggleLike}
-          aria-label="좋아요"
-          className="cursor-pointer inline-flex gap-1 items-center"
-        >
-          <Image
-            src={liked ? '/icon/community/thumbs-up-on.svg' : '/icon/community/thumbs-up.svg'}
-            alt=""
-            width={12}
-            height={12}
-            unoptimized
-            priority={false}
-          />
-          <span className="text-sm">{likeCount}</span>{' '}
-        </button>
+        <LikeButton liked={liked} count={likeCount} onToggle={toggleLike} iconSize={12} />
       </footer>
     </div>
   );

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import UserProfile from './UserProfile';
 import Image from 'next/image';
 import CommentChildItem from './CommentChildItem';
+import LikeButton from '../LikeButton';
 
 interface CommentProps {
   comment: RootComment;
@@ -26,6 +27,7 @@ function CommentRootItem({ comment }: CommentProps) {
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
   const [openReplies, setOpenReplies] = useState<boolean>(false);
 
+  // user 정보 붙이기 전 임시 코드
   const isAuthor = true;
 
   const toggleLike = () => {
@@ -74,22 +76,7 @@ function CommentRootItem({ comment }: CommentProps) {
       </header>
       <main className="text-sm font-light mb-2">{content}</main>
       <footer className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={toggleLike}
-          aria-label="좋아요"
-          className="cursor-pointer inline-flex gap-1 items-center"
-        >
-          <Image
-            src={liked ? '/icon/community/thumbs-up-on.svg' : '/icon/community/thumbs-up.svg'}
-            alt=""
-            width={12}
-            height={12}
-            unoptimized
-            priority={false}
-          />
-          <span className="text-sm">{likeCount}</span>{' '}
-        </button>
+        <LikeButton liked={liked} count={likeCount} iconSize={12} onToggle={toggleLike} />
         <button
           onClick={() => setOpenReplies((prev) => !prev)}
           aria-label="댓글"

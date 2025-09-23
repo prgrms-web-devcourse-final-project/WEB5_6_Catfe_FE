@@ -10,7 +10,7 @@ function CommunityTab() {
   const isList = pathname === '/community';
 
   return (
-    <div className="max-w-[800px] w-full sm:w-1/2 bg-gray-600 rounded-full flex  justify-between px-2 py-2 mx-auto">
+    <div className="max-w-[800px] w-full lg:w-1/2 bg-gray-600 rounded-full flex  justify-between px-2 py-2 mx-auto">
       <div
         className={tw(
           'rounded-full w-1/2 py-1',

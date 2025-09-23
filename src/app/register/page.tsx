@@ -4,6 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
+import { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+  title: "Catfé | Register",
+  description: "회원가입 페이지 - Catfé에서 새로운 계정을 만들어보세요.",
+};
 
 
 function RegisterPage() {

@@ -91,10 +91,14 @@ function CommentRootItem({ comment }: CommentProps) {
             priority={false}
           />
           <span className="text-sm">{replyCount}</span>
-          <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
-          <span className="text-xs text-text-secondary">
-            {openReplies ? '숨기기' : '답글 보기'}
-          </span>
+          {replyCount > 0 && (
+            <>
+              <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
+              <span className="text-xs text-text-secondary">
+                {openReplies ? '숨기기' : '답글 보기'}
+              </span>
+            </>
+          )}
         </button>
       </footer>
 

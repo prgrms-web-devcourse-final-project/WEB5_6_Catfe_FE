@@ -456,4 +456,9 @@ export const mockPosts = {
     await new Promise((r) => setTimeout(r, 200));
     return comments.filter((c) => c.post_id === postId);
   },
+  async getAllPosts(): Promise<Post[]> {
+    // 네트워크 지연 흉내
+    await new Promise((r) => setTimeout(r, 200));
+    return posts;
+  },
 };

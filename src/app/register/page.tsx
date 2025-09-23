@@ -159,7 +159,6 @@ function RegisterPage() {
                 className="absolute left-3 top-1/2 -translate-y-1/2"
               />
             </div>
-            {/* 버튼 */}
             <Button
               type="submit"
               size="lg"
@@ -170,7 +169,6 @@ function RegisterPage() {
             >
               Register
             </Button>
-            {/* 에러 메시지: 버튼 바로 아래 */}
             {error && (
               <p className="text-error-600 text-center text-sm mt-2" role="alert" aria-live="polite">
                 {error}

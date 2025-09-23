@@ -1,9 +1,9 @@
 'use client';
 
 import { Post } from '@/@types/community';
-import { formatRelativeDate } from '@/utils/formatRelativeDate';
 import Image from 'next/image';
 import TiptapRenderer from './TiptapRenderer';
+import UserProfile from './UserProfile';
 
 function CommunityContents({ post }: { post: Post }) {
   const {
@@ -83,23 +83,7 @@ function CommunityContents({ post }: { post: Post }) {
       </div>
 
       {/* user Profile */}
-      <div className="flex gap-2 items-center">
-        <div className="size-8 rounded-full border-2 border-gray-400 overflow-hidden">
-          <Image
-            src={author.profile_image_url ?? '/image/cat-default.svg'}
-            alt={author.nickname}
-            width={30}
-            height={30}
-          />
-        </div>
-        <span>{author.nickname}</span>
-        <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
-        {updatedAt ? (
-          <span className="text-xs text-text-secondary">{formatRelativeDate(updatedAt)} 수정</span>
-        ) : (
-          <span className="text-xs text-text-secondary">{formatRelativeDate(createdAt)} 작성</span>
-        )}
-      </div>
+      <UserProfile author={author} createdAt={createdAt} updatedAt={updatedAt} />
 
       <hr />
 

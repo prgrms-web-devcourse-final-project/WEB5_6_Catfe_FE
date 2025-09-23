@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
+import { useRouter } from "next/navigation";
+
 
 function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +15,9 @@ function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (password !== passwordConfirm) {
@@ -22,7 +26,15 @@ function RegisterPage() {
     }
 
     setError("");
-    console.log({ id, password, name, email });
+
+    setLoading(true);
+  try {
+    router.replace("/");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "회원가입 처리 중 오류가 발생했습니다. ";
+    setError(msg);
+    setLoading(false);
+  }
   };
 
   return (
@@ -31,7 +43,7 @@ function RegisterPage() {
         <div className="w-full max-w-[600px]">
           <Image
             src="/catmodum/catmakase_02.png"
-            alt="고양이 픽셀"
+            alt="고양카세"
             width={600}
             height={600}
             className="w-full h-auto object-contain"
@@ -165,9 +177,10 @@ function RegisterPage() {
               color="secondary"
               borderType="solid"
               fullWidth
+              disabled={loading} 
               className="h-[54px] text-shadow-text-primary border border-solid border-amber-600"
             >
-              Register
+              {loading ? "Processing..." : "Register"}
             </Button>
             {error && (
               <p className="text-error-600 text-center text-sm mt-2" role="alert" aria-live="polite">

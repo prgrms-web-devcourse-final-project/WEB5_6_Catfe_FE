@@ -16,7 +16,8 @@ export default function FindModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50" onClick={handleOverlayClick}>
-      <div className="bg-background-base w-[800px] h-[600px] rounded-lg relative p-10 flex flex-col">
+      <div className="bg-background-base w-[800px] h-[600px] sm:rounded-lg relative p-6 sm:p-10 flex flex-col
+                max-w-[90%] max-h-[90%]">
         <button
           onClick={onClose}
           className="absolute top-4 right-4"

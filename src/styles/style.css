@@ -101,7 +101,8 @@
     background-color: var(--color-background-base);
   }
 
-  .editor :where(.ProseMirror, .ProseMirror *) {
+  .editor :where(.ProseMirror, .ProseMirror *),
+  .tiptap-renderer {
     font-family:
       var(--font-nanum),
       -apple-system,

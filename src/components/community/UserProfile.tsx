@@ -30,7 +30,7 @@ function UserProfile({
           height={isComment ? 20 : 30}
         />
       </div>
-      <span>{author.nickname}</span>
+      <span className={isComment ? 'text-xs' : 'text-base'}>{author.nickname}</span>
       <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
       {updatedAt ? (
         <span className="text-xs text-text-secondary">{formatRelativeDate(updatedAt)} 수정</span>

@@ -30,7 +30,7 @@ function ContentsDetail({ postId }: { postId: string }) {
   return (
     <div className="mx-auto flex flex-col gap-3">
       <CommunityContents post={post} />
-      <CommentList />
+      {comments && <CommentList comments={comments} />}
     </div>
   );
 }

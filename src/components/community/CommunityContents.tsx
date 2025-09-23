@@ -93,7 +93,7 @@ function CommunityContents({ post }: { post: Post }) {
       <hr />
 
       {/* likes & comments */}
-      <div className="flex items-center gap-3">
+      <footer className="flex items-center gap-3">
         <button
           onClick={() => console.log('좋아요')}
           aria-label="좋아요"
@@ -120,7 +120,7 @@ function CommunityContents({ post }: { post: Post }) {
           />
         </button>
         <span>{commentCount}</span>
-      </div>
+      </footer>
     </article>
   );
 }

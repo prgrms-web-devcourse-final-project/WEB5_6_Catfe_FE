@@ -28,7 +28,7 @@ function RoomPassword({
 
   return (
     <div className={clsx("w-full", className)}>
-      <div className="flex w-full items-start justify-between">
+      <div className="flex w-full justify-between items-ceter">
         <div className="font-medium text-text-primary text-xs">비공개 여부</div>
         <Toggle checked={enabled} onChange={setEnabled} />
       </div>

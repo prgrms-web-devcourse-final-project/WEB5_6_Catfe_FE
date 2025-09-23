@@ -12,6 +12,7 @@ export type RoomInfoValue = {
   isPrivate: boolean;
   coverPreviewUrl: string | null;
   coverUploadFile?: File | null;
+  mediaEnabled?: boolean;
 };
 
 type RoomInfoProps = {
@@ -86,8 +87,9 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
       isPrivate,
       coverPreviewUrl,
       coverUploadFile,
+      mediaEnabled,
     });
-  }, [title, desc, maxMember, isPrivate, coverPreviewUrl, coverUploadFile, onChange]);
+  }, [title, desc, maxMember, isPrivate, coverPreviewUrl, coverUploadFile, mediaEnabled, onChange]);
 
   return (
     <div className={clsx("w-full", className)}>

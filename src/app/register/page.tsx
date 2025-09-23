@@ -7,49 +7,41 @@ import Button from "@/components/Button";
 function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
   const [error, setError] = useState("");
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 비밀번호 확인
     if (password !== passwordConfirm) {
       setError("비밀번호가 일치하지 않습니다.");
       return;
     }
 
-    setError(""); // 에러 초기화
-
-    // 여기서 회원가입 로직 추가 (API 호출 등)
+    setError("");
     console.log({ id, password, name, email });
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="flex gap-20 items-center">
-        {/* 좌측 이미지 */}
-        <div className="w-[600px] h-[600px] relative">
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex w-full max-w-5xl mx-auto flex-col md:flex-row items-center gap-10 md:gap-20">
+        <div className="w-full max-w-[600px]">
           <Image
             src="/catmodum/catmakase_02.png"
             alt="고양이 픽셀"
-            fill
-            className="object-contain"
+            width={600}
+            height={600}
+            className="w-full h-auto object-contain"
+            priority
           />
         </div>
-
-        {/* 회원가입 폼 */}
-        <div className="w-[403px] flex flex-col gap-6">
-          <h1 className="text-[64px] font-semibold text-secondary-900 mb-5">
+        <div className="w-full max-w-[403px] flex flex-col gap-6">
+          <h1 className="text-[48px] md:text-[64px] font-semibold text-secondary-900 mb-5 text-center md:text-left">
             Register
           </h1>
-
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* 아이디 */}
             <div className="relative">
@@ -66,10 +58,9 @@ function RegisterPage() {
                 alt="아이디"
                 width={20}
                 height={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
             </div>
-
             {/* 비밀번호 */}
             <div className="relative">
               <input
@@ -85,22 +76,22 @@ function RegisterPage() {
                 alt="비밀번호"
                 width={20}
                 height={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
+                onClick={() => setShowPassword((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-label="비밀번호 보기 토글"
               >
                 <Image
                   src={showPassword ? "/icon/closed.svg" : "/icon/blind.svg"}
-                  alt={showPassword ? "비밀번호 가리기" : "비밀번호 보기"}
+                  alt=""
                   width={20}
                   height={20}
                 />
               </button>
             </div>
-
             {/* 비밀번호 확인 */}
             <div className="relative">
               <input
@@ -116,22 +107,22 @@ function RegisterPage() {
                 alt="비밀번호 확인"
                 width={20}
                 height={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
               <button
                 type="button"
-                onClick={() => setShowPasswordConfirm((prev) => !prev)}
+                onClick={() => setShowPasswordConfirm((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-label="비밀번호 확인 보기 토글"
               >
                 <Image
                   src={showPasswordConfirm ? "/icon/closed.svg" : "/icon/blind.svg"}
-                  alt={showPasswordConfirm ? "비밀번호 가리기" : "비밀번호 보기"}
+                  alt=""
                   width={20}
                   height={20}
                 />
               </button>
             </div>
-
             {/* 이름 */}
             <div className="relative">
               <input
@@ -147,10 +138,9 @@ function RegisterPage() {
                 alt="이름"
                 width={20}
                 height={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
             </div>
-
             {/* 이메일 */}
             <div className="relative">
               <input
@@ -166,15 +156,9 @@ function RegisterPage() {
                 alt="이메일"
                 width={20}
                 height={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
             </div>
-
-            {/* 에러 메시지 */}
-            {error && (
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            )}
-
             {/* 버튼 */}
             <Button
               type="submit"
@@ -186,6 +170,12 @@ function RegisterPage() {
             >
               Register
             </Button>
+            {/* 에러 메시지: 버튼 바로 아래 */}
+            {error && (
+              <p className="text-error-600 text-center text-sm mt-2" role="alert" aria-live="polite">
+                {error}
+              </p>
+            )}
           </form>
         </div>
       </div>

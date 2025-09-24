@@ -23,6 +23,7 @@ function CommunityTab() {
             alt=""
             width={16}
             height={16}
+            className="w-4 h-auto"
             unoptimized
             priority={false}
           />
@@ -44,6 +45,7 @@ function CommunityTab() {
             alt=""
             width={16}
             height={16}
+            className="w-4 h-auto"
             unoptimized
             priority={false}
           />

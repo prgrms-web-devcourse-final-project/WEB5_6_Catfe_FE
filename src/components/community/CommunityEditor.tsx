@@ -12,6 +12,9 @@ import Button from '../Button';
 import Toolbar from './Toolbar';
 import { isBlank, isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
 import sanitizeHtml from 'sanitize-html';
+import SubjectCombobox from './SubjectCombobox';
+import DemographicSelect from './DemographicSelect';
+import GroupSizeSelect from './GroupSizeSelect';
 
 type EditorProps = {
   draftKey?: string;
@@ -161,6 +164,13 @@ function CommunityEditor({
     }
   };
 
+  const setFilter = (idx: 0 | 1 | 2, val: string) =>
+    setFilterOptions((prev) => {
+      const next = [...(prev ?? [])];
+      next[idx] = val;
+      return next;
+    });
+
   return (
     <div className="bg-background-white border-2 border-secondary-900 rounded-2xl flex flex-col items-center justify-start gap-6 p-6 w-full">
       <h3 className="font-bold text-xl sm:text-2xl w-full text-left">
@@ -187,67 +197,41 @@ function CommunityEditor({
           </div>
           {/* 옵션 1 */}
           <div className="flex flex-col w-1/2 gap-2">
-            <label htmlFor="filter1" className="text-xs">
-              Subject
-            </label>
-            <input
-              type="text"
-              name="filter1"
-              id="filter1"
-              placeholder="공부 과목을 입력하세요"
+            <SubjectCombobox
               value={filterOptions[0] ?? ''}
-              onChange={(e) =>
-                setFilterOptions((prev) => {
-                  const next = [...(prev ?? [])];
-                  next[0] = e.target.value;
-                  return next;
-                })
-              }
-              className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"
+              onChange={(v) => {
+                const normalized = Array.isArray(v) ? (v[0] ?? '') : v;
+                setFilter(0, normalized);
+              }}
+              placeholder="공부 과목을 입력하세요"
+              allowMultiSelect={false}
+              label="Subject"
             />
           </div>
         </div>
         <div className="flex w-full gap-4">
           {/* 옵션 2 */}
           <div className="flex flex-col w-1/2 gap-2">
-            <label htmlFor="filter2" className="text-xs">
-              Age
-            </label>
-            <input
-              type="text"
-              name="filter2"
-              id="filter2"
-              placeholder="연령대를 입력하세요"
+            <DemographicSelect
               value={filterOptions[1] ?? ''}
-              onChange={(e) =>
-                setFilterOptions((prev) => {
-                  const next = [...(prev ?? [])];
-                  next[1] = e.target.value;
-                  return next;
-                })
-              }
-              className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"
+              onChange={(v) => {
+                const normalized = Array.isArray(v) ? (v[1] ?? '') : v;
+                setFilter(1, normalized);
+              }}
+              placeholder="연령대 선택..."
+              label="Age"
             />
           </div>
           {/* 옵션 3 */}
           <div className="flex flex-col w-1/2 gap-2">
-            <label htmlFor="filter3" className="text-xs">
-              Headcount
-            </label>
-            <input
-              type="text"
-              name="filter3"
-              id="filter3"
-              placeholder="모집할 최대 인원수를 입력하세요"
+            <GroupSizeSelect
               value={filterOptions[2] ?? ''}
-              onChange={(e) =>
-                setFilterOptions((prev) => {
-                  const next = [...(prev ?? [])];
-                  next[2] = e.target.value;
-                  return next;
-                })
-              }
-              className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"
+              onChange={(v) => {
+                const normalized = Array.isArray(v) ? (v[2] ?? '') : v;
+                setFilter(2, normalized);
+              }}
+              placeholder="모집할 최대 인원 선택..."
+              label="Headcount"
             />
           </div>
         </div>

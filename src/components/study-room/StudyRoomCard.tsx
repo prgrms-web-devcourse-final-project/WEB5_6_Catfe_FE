@@ -33,14 +33,14 @@ export default function StudyRoomCard({
     >
       {/* 상단: 썸네일 영역 */}
       <div className="relative">
-        <div className="relative h-[152px] w-full bg-secondary-500 sm:h-40">
+        <div className="relative h-full w-full bg-secondary-500 sm:h-40">
           {coverSrc ? (
             <Image
               src={coverSrc}
               alt="썸네일 이미지"
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 100vw, 268px"
+              sizes="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
@@ -54,7 +54,6 @@ export default function StudyRoomCard({
             </div>
           )}
         </div>
-        {/* 구분선 */}
         <div className="h-[2px] w-full bg-text-secondary" />
       </div>
 

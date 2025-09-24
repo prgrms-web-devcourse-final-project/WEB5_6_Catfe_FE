@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Toggle from "@/components/Toggle";
 import Image from "next/image";
@@ -22,13 +22,26 @@ function RoomPassword({
   const [password, setPassword] = useState(defaultPassword);
   const [show, setShow] = useState(false);
 
+  const onChangeRef = useRef<typeof onChange>(onChange);
   useEffect(() => {
-    onChange?.({ enabled, password });
-  }, [enabled, password, onChange]);
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onChangeRef.current?.({ enabled, password });
+  }, [enabled, password]);
+
+  useEffect(() => {
+    setEnabled(defaultEnabled);
+  }, [defaultEnabled]);
+
+  useEffect(() => {
+    setPassword(defaultPassword);
+  }, [defaultPassword]);
 
   return (
     <div className={clsx("w-full", className)}>
-      <div className="flex w-full items-start justify-between">
+      <div className="flex w-full justify-between items-center">
         <div className="font-medium text-text-primary text-xs">비공개 여부</div>
         <Toggle checked={enabled} onChange={setEnabled} />
       </div>

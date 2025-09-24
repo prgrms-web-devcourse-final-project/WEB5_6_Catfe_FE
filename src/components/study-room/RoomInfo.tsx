@@ -4,14 +4,17 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import CustomSelect from "../CustomSelect";
 import Button from "../Button";
+import RoomPassword from "./RoomPassword";
 
 export type RoomInfoValue = {
   title: string;
   description: string;
   maxMember: number;
   isPrivate: boolean;
+  password: string | null;
   coverPreviewUrl: string | null;
   coverUploadFile?: File | null;
+  mediaEnabled?: boolean;
 };
 
 type RoomInfoProps = {
@@ -21,11 +24,20 @@ type RoomInfoProps = {
   mediaEnabled?: boolean;
 };
 
-function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: RoomInfoProps) {
+function RoomInfo({
+  defaultValue,
+  onChange,
+  className,
+  mediaEnabled = false,
+}: RoomInfoProps) {
   const [title, setTitle] = useState(defaultValue?.title ?? "");
   const [desc, setDesc] = useState(defaultValue?.description ?? "");
   const [maxMember, setMaxMember] = useState(defaultValue?.maxMember ?? 2);
-  const [isPrivate] = useState(defaultValue?.isPrivate ?? false);
+
+  const [isPrivate, setIsPrivate] = useState<boolean>(defaultValue?.isPrivate ?? false);
+  const [password, setPassword] = useState<string | null>(
+    defaultValue?.password ?? null
+  );
 
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(
     defaultValue?.coverPreviewUrl ?? null
@@ -49,10 +61,9 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
     const f = e.target.files?.[0];
     if (!f) return;
 
-    setCoverPreviewUrl((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return prev;
-    });
+    if (coverPreviewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(coverPreviewUrl);
+    }
 
     const url = URL.createObjectURL(f);
     setCoverPreviewUrl(url);
@@ -61,7 +72,9 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
 
   useEffect(() => {
     return () => {
-      if (coverPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(coverPreviewUrl);
+      if (coverPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
     };
   }, [coverPreviewUrl]);
 
@@ -74,9 +87,16 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
   }, [maxCap]);
 
   const members = useMemo(
-    () => Array.from({ length: maxCap - 1 }, (_, i) => i + 2),
+    () => Array.from({ length: Math.max(0, maxCap - 1) }, (_, i) => i + 2),
     [maxCap]
   );
+
+  const handlePrivacyChange = (s: { enabled: boolean; password: string }) => {
+    setIsPrivate(s.enabled);
+    const nextPwd =
+      s.enabled && s.password.trim().length > 0 ? s.password : null;
+    setPassword(nextPwd);
+  };
 
   useEffect(() => {
     onChange?.({
@@ -84,10 +104,22 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
       description: desc,
       maxMember,
       isPrivate,
+      password,
       coverPreviewUrl,
       coverUploadFile,
+      mediaEnabled,
     });
-  }, [title, desc, maxMember, isPrivate, coverPreviewUrl, coverUploadFile, onChange]);
+  }, [
+    title,
+    desc,
+    maxMember,
+    isPrivate,
+    password,
+    coverPreviewUrl,
+    coverUploadFile,
+    mediaEnabled,
+    onChange,
+  ]);
 
   return (
     <div className={clsx("w-full", className)}>
@@ -96,7 +128,9 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
         <div className="space-y-1.5">
           <label className="flex items-center justify-between text-xs font-medium text-text-primary">
             <span>스터디룸 이름</span>
-            <span className="text-text-secondary">{title.length} / {TITLE_MAX}</span>
+            <span className="text-text-secondary">
+              {title.length} / {TITLE_MAX}
+            </span>
           </label>
           <input
             value={title}
@@ -110,7 +144,9 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
         <div className="space-y-1.5">
           <label className="flex items-center justify-between text-xs font-medium text-text-primary">
             <span>스터디룸 소개</span>
-            <span className="text-text-secondary">{desc.length} / {DESC_MAX}</span>
+            <span className="text-text-secondary">
+              {desc.length} / {DESC_MAX}
+            </span>
           </label>
           <textarea
             value={desc}
@@ -120,6 +156,14 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
             className="w-full resize-none rounded-xl border border-text-secondary/60 bg-background-white px-3.5 py-2.5 outline-none focus:border-text-primary text-[10px]"
           />
         </div>
+
+        {/* 공개/비밀번호 섹션 */}
+        <RoomPassword
+          className="mt-1"
+          defaultEnabled={isPrivate}
+          defaultPassword={password ?? ""}
+          onChange={handlePrivacyChange}
+        />
 
         {/* 썸네일 변경 */}
         <div className="flex items-center justify-between">
@@ -150,7 +194,7 @@ function RoomInfo({ defaultValue, onChange, className, mediaEnabled = false }: R
           <span className="font-medium text-text-primary text-xs">최대 인원</span>
           <CustomSelect
             value={maxMember}
-            onChange={(v) => setMaxMember(v as number)}
+            onChange={(v) => setMaxMember((v as number) ?? maxMember)}
             options={members.map((n) => ({ label: String(n), value: n }))}
             size="sm"
             placement="bottom"

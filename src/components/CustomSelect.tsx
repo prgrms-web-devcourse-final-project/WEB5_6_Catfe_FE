@@ -146,7 +146,7 @@ export default function CustomSelect<V = string | number>({
             open ? (direction === "top" ? "-rotate-90" : "rotate-180") : "rotate-0"
           )}
         >
-          <Image src="/icon/study-room/select.svg" alt="" width={16} height={16} />
+          <Image src="/icon/study-room/select.svg" alt="드롭다운 아이콘" width={16} height={16} />
         </span>
       </button>
 
@@ -195,7 +195,7 @@ export default function CustomSelect<V = string | number>({
                 >
                   <span className="truncate">{opt.label}</span>
                   {isSelected && !isDanger && (
-                    <Image src="/icon/study-room/check.svg" alt="" className="w-4 h-4" />
+                    <Image src="/icon/study-room/check.svg" alt="체크 아이콘" width={16} height={16} />
                   )}
                 </button>
               </li>

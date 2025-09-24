@@ -25,7 +25,6 @@ function InviteShareModal({
   const urlInputId = useId();
   const copyHelpId = useId();
   const sharePwId = useId();
-  const liveId = useId();
   const hasPassword = !!password?.trim();
 
   useEffect(() => {
@@ -44,8 +43,6 @@ function InviteShareModal({
       showToast("success", "링크가 복사되었습니다!");
     } catch {
       showToast("error", "링크 복사에 실패했습니다.");
-      const live = document.getElementById(liveId);
-      if (live) live.textContent = "링크 복사에 실패했습니다.";
     }
   };
 
@@ -59,21 +56,24 @@ function InviteShareModal({
           스터디룸에 초대해 보세요
         </h2>
         {onClose && (
-          <button type="button" onClick={onClose} aria-label="닫기" title="닫기">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            title="닫기"
+            className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 rounded-md"
+          >
             <Image src="/icon/study-room/close.svg" alt="" width={20} height={20} />
           </button>
         )}
       </div>
 
+      {/* URL + 복사 버튼 */}
       <div className="flex flex-col gap-2">
         <label htmlFor={urlInputId} className="sr-only">
           스터디룸 링크
         </label>
-        <div
-          className={clsx(
-            "flex items-center justify-between rounded-lg border px-3 py-1.5 border-text-secondary"
-          )}
-        >
+        <div className={clsx("flex items-center justify-between rounded-lg border px-3 py-1.5 border-text-secondary")}>
           <input
             id={urlInputId}
             readOnly
@@ -98,41 +98,42 @@ function InviteShareModal({
         </p>
       </div>
 
+      {/* 비밀번호 공유 체크 */}
       {hasPassword && (
-          <div className="flex items-center gap-2">
-            <input
-              id={sharePwId}
-              type="checkbox"
-              className="sr-only peer"
-              checked={sharePw}
-              onChange={(e) => setSharePw(e.target.checked)}
-            />
-            <label
-              htmlFor={sharePwId}
-              className={clsx(
-                "grid place-items-center w-4 h-4 rounded-sm transition-colors cursor-pointer",
-                sharePw ? "bg-primary-500" : "border border-text-secondary"
-              )}
-              aria-hidden="true"
-            >
-              {sharePw && (
-                <svg width="12" height="12" viewBox="0 0 20 20" aria-hidden="true">
-                  <path
-                    d="M4.5 10.5l3.2 3.2 7.8-7.8"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </label>
-            <label htmlFor={sharePwId} className="text-xs font-medium text-text-primary cursor-pointer">
-              비밀번호 공유
-            </label>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <input
+            id={sharePwId}
+            type="checkbox"
+            className="sr-only peer"
+            checked={sharePw}
+            onChange={(e) => setSharePw(e.target.checked)}
+          />
+          <label
+            htmlFor={sharePwId}
+            className={clsx(
+              "grid place-items-center w-4 h-4 rounded-sm transition-colors cursor-pointer",
+              sharePw ? "bg-primary-500" : "border border-text-secondary"
+            )}
+            aria-hidden="true"
+          >
+            {sharePw && (
+              <svg width="12" height="12" viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M4.5 10.5l3.2 3.2 7.8-7.8"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </label>
+          <label htmlFor={sharePwId} className="text-xs font-medium text-text-primary cursor-pointer">
+            비밀번호 공유
+          </label>
+        </div>
+      )}
 
       <Button
         type="button"
@@ -146,9 +147,8 @@ function InviteShareModal({
       >
         초대 정보 복사하기
       </Button>
-
-      <p id={liveId} aria-live="polite" className="sr-only" />
     </section>
   );
 }
+
 export default InviteShareModal;

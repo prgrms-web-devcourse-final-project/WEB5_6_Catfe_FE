@@ -1,15 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import SubjectCombobox from './SubjectCombobox';
 import Image from 'next/image';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
 
-function CommunityFilters() {
-  const [subject, setSubject] = useState<string[]>([]);
-  const [demographics, setDemographics] = useState<string>('');
-  const [groupSize, setGroupSize] = useState<string>('');
+interface CommunityFilterProps {
+  value: {
+    q?: string;
+    subjects?: string[];
+    demographics?: string;
+    groupSize?: string;
+  };
+  onChange: (next: Partial<CommunityFilterProps['value']>) => void;
+}
+
+function CommunityFilters({ value, onChange }: CommunityFilterProps) {
+  const { q = '', subjects = [], demographics = '', groupSize = '' } = value;
 
   return (
     <div className="w-full md:w-2/3 flex flex-col gap-3 mx-auto">
@@ -23,8 +30,10 @@ function CommunityFilters() {
             type="search"
             placeholder="스터디 모집 글 제목 검색"
             className="w-11/12 outline-none"
+            value={q}
+            onChange={(e) => onChange({ q: e.target.value })}
           />
-          <button type="button" className="cursor-pointer">
+          <button type="button" aria-label="검색" className="cursor-pointer">
             <Image
               src="/icon/community/search-black.svg"
               alt=""
@@ -37,20 +46,24 @@ function CommunityFilters() {
         </div>
       </div>
       <SubjectCombobox
-        value={subject}
+        value={subjects}
         onChange={(v) => {
           const normalized = Array.isArray(v) ? v : [v];
-          setSubject(normalized);
+          onChange({ subjects: normalized });
         }}
         allowMultiSelect={true}
       />
       <div className="w-full flex gap-4">
         <DemographicSelect
           value={demographics}
-          onChange={(v) => setDemographics(v)}
+          onChange={(v) => onChange({ demographics: v })}
           className="w-1/2"
         />
-        <GroupSizeSelect value={groupSize} onChange={(v) => setGroupSize(v)} className="w-1/2" />
+        <GroupSizeSelect
+          value={groupSize}
+          onChange={(v) => onChange({ groupSize: v })}
+          className="w-1/2"
+        />
       </div>
     </div>
   );

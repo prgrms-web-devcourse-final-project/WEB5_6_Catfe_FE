@@ -4,9 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
 import Link from "next/link";
+import FindModal from "@/components/find/FindModal";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFindOpen, setIsFindOpen] = useState(false);
 
   return (
     <main className="flex min-h-screen items-center justify-center">
@@ -102,8 +104,15 @@ function LoginPage() {
             </button>
           </div>
           <p className="text-center text-sm text-secondary-800 mt-4">
-            아이디/비밀번호 찾기
+            <button 
+            type="button" 
+            onClick={() => setIsFindOpen(true)}
+            className="underline text-secondary-900 hover:text-blue-800"
+             >
+              아이디/비밀번호 찾기
+            </button>
           </p>
+          {isFindOpen && <FindModal onClose={() => setIsFindOpen(false)} />}
         </div>
       </div>
     </main>

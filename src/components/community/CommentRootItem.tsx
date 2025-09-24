@@ -103,7 +103,7 @@ function CommentRootItem({ comment }: CommentProps) {
       </footer>
 
       {openReplies && children && children.length > 0 && (
-        <div className="bg-secondary-100 w-7/8 ml-auto">
+        <div className="bg-secondary-100 w-11/12 ml-auto">
           {children.map((reply) => (
             <CommentChildItem key={reply.comment_id} reply={reply} />
           ))}

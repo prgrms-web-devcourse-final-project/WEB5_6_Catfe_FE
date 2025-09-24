@@ -16,6 +16,10 @@ type BigModalLayoutProps = {
   children: React.ReactNode;
 };
 
+type SectionProps = React.HTMLAttributes<HTMLDivElement> & {
+  children: React.ReactNode;
+};
+
 function BigModalLayout({
   open,
   onClose,
@@ -46,12 +50,12 @@ function BigModalLayout({
         aria-labelledby={titleId}
         className={clsx(
           "relative w-[750px] rounded-2xl border border-black/10 bg-white shadow-lg flex flex-col",
-          className ?? "p-8"
+          className
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header(통합) */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-7 py-5">
           <h2 id={titleId} className="text-xl font-bold text-text-primary">
             {title}
           </h2>
@@ -64,12 +68,12 @@ function BigModalLayout({
                 onClick={onClose}
                 className="cursor-pointer"
               >
-                <Image src="/icon/study-room/close.svg" alt="닫기" width={20} height={20}/>
+                <Image src="/icon/study-room/close.svg" alt="닫기" width={20} height={20} />
               </button>
             )}
           </div>
         </div>
-        {showDivider && <hr className=" border-text-secondary/70 " />}
+        {showDivider && <hr className="border-text-secondary/70" />}
 
         {children}
       </div>
@@ -77,14 +81,27 @@ function BigModalLayout({
   );
 }
 
-function Body({ children }: { children: React.ReactNode }) {
-  return <div>{children}</div>;
+function Body({ children, className, ...rest }: SectionProps) {
+  return (
+    <div className={className} {...rest}>
+      {children}
+    </div>
+  );
 }
-function Footer({ children }: { children: React.ReactNode }) {
-  return <div className="flex justify-end ">{children}</div>;
+function Footer({ children, className, ...rest }: SectionProps) {
+  return (
+    <div className={clsx("flex justify-end", className)} {...rest}>
+      {children}
+    </div>
+  );
 }
 
-BigModalLayout.Body = Body;
-BigModalLayout.Footer = Footer;
+interface BigModalComponent extends React.FC<BigModalLayoutProps> {
+  Body: React.FC<SectionProps>;
+  Footer: React.FC<SectionProps>;
+}
+const BigModal = BigModalLayout as unknown as BigModalComponent;
+BigModal.Body = Body;
+BigModal.Footer = Footer;
 
-export default BigModalLayout;
+export default BigModal;

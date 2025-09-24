@@ -33,9 +33,9 @@ function InviteShareModal({
 
   const inviteText = useMemo(() => {
     const lines = ["Catfé 스터디룸에 초대합니다 🙌", `링크: ${roomUrl}`];
-    if (sharePw && password) lines.push(`비밀번호: ${password}`);
+    if (hasPassword && sharePw) lines.push(`비밀번호: ${password}`);
     return lines.join("\n");
-  }, [roomUrl, password, sharePw]);
+  }, [roomUrl, password, hasPassword, sharePw]);
 
   const copy = async (text: string) => {
     try {
@@ -68,7 +68,6 @@ function InviteShareModal({
         )}
       </div>
 
-      {/* URL + 복사 버튼 */}
       <div className="flex flex-col gap-2">
         <label htmlFor={urlInputId} className="sr-only">
           스터디룸 링크
@@ -85,10 +84,9 @@ function InviteShareModal({
             onClick={() => copy(roomUrl)}
             className="shrink-0 p-1 rounded-full hover:bg-black/10 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300"
             aria-label="링크 복사"
-            aria-controls={urlInputId}
             aria-describedby={copyHelpId}
             title="링크 복사"
-            disabled={!roomUrl}
+            disabled={!roomUrl?.trim()}
           >
             <Image src="/icon/study-room/copy.svg" alt="" width={16} height={16} />
           </button>
@@ -98,7 +96,6 @@ function InviteShareModal({
         </p>
       </div>
 
-      {/* 비밀번호 공유 체크 */}
       {hasPassword && (
         <div className="flex items-center gap-2">
           <input

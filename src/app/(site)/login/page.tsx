@@ -5,10 +5,32 @@ import Image from "next/image";
 import Button from "@/components/Button";
 import Link from "next/link";
 import FindModal from "@/components/find/FindModal";
+import { login } from "@/api/auth"; 
+import { useRouter } from "next/navigation";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isFindOpen, setIsFindOpen] = useState(false);
+
+
+  const [username, setUsername] = useState("");   // 추가
+  const [password, setPassword] = useState("");   // 추가
+  const router = useRouter();
+ 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const data = await login({ username, password });
+    console.log("로그인 성공:", data);
+
+    // 홈으로 이동
+    router.push("/");
+  } catch (err) {
+    console.error("로그인 실패:", err);
+    alert("아이디/비밀번호를 확인하세요");
+  }
+};
 
   return (
     <main className="flex min-h-screen items-center justify-center">
@@ -22,9 +44,9 @@ function LoginPage() {
           />
         </div>
         <div className="w-[403px] flex flex-col gap-6">
-          <h1 className="text-[64px] font-semibold text-secondary-900 mb-5">
+          <h2 className="text-[64px] font-semibold text-secondary-900 mb-5">
             Login
-          </h1>
+          </h2>
           {/* 아이디 입력 */}
           <label htmlFor="login-id" className="sr-only">
             아이디
@@ -33,6 +55,8 @@ function LoginPage() {
             id="login-id"
             type="text"
             placeholder="ID"
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full h-[64px] px-4 border border-black rounded-md"
           />
           {/* 비밀번호 입력 */}
@@ -44,6 +68,8 @@ function LoginPage() {
               id="login-password"
               type={showPassword ? "text" : "password"}
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)} 
               className="w-full h-[64px] pr-10 pl-4 border border-black rounded-md"
             />
             <button
@@ -61,7 +87,8 @@ function LoginPage() {
             </button>
           </div>
           {/* 버튼 영역 */}
-          <form className="flex flex-col gap-6 mt-2">
+          <form className="flex flex-col gap-6 mt-2"
+                onSubmit={handleSubmit}>
             <Button
               type="submit"
               size="lg"

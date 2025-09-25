@@ -78,6 +78,6 @@ export const ALL_CATEGORIES = {
     '명상',
     '기타 과목',
   ],
-  demographics: ['중학생', '고등학생', '대학생', '취준생', '직장인', '기타'],
+  demographic: ['중학생', '고등학생', '대학생', '취준생', '직장인', '기타'],
   groupSize: ['2~4명', '5~10명', '10~20명'],
 } as const;

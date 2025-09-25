@@ -1,7 +1,6 @@
-import PostEditor from '@/components/community/PostEditor';
 import CommunityTab from '@/components/community/CommunityTab';
 import { Metadata } from 'next';
-
+import EditorPageClient from './page.client';
 export const metadata: Metadata = {
   title: 'Catfé | Editor',
   description: '스터디 그룹 모집 글을 작성해보세요.',
@@ -15,7 +14,7 @@ function Page() {
         <h2 className="text-2xl sm:text-3xl font-extrabold">신규 그룹 만들기</h2>
         <p className="text-base sm:text-lg">함께 공부할 스터디 멤버를 모집해보세요!</p>
       </header>
-      <PostEditor />
+      <EditorPageClient />
     </div>
   );
 }

@@ -56,14 +56,16 @@ function Pagination({
 
       router.replace(`${pathname}?${searchParam.toString()}`, { scroll: false });
       onPageChange?.(clamp);
-
-      // 스크롤 제어
-      requestAnimationFrame(() => {
-        scrollToTopPage(scrollContainer, scrollOnChange);
-      });
     },
-    [params, pathname, router, totalPages, onPageChange, scrollContainer, scrollOnChange]
+    [params, pathname, router, totalPages, onPageChange]
   );
+
+  // page 이동 시 스크롤 최상단으로 이동 (함수 분리)
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      scrollToTopPage(scrollContainer, scrollOnChange);
+    });
+  }, [page, scrollContainer, scrollOnChange]);
 
   const setPage = useCallback((next: number) => replaceUrl(next), [replaceUrl]);
 

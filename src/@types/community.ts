@@ -19,6 +19,11 @@ export type Post = {
   updatedAt?: string;
 };
 
+export type InitialPost =
+  | Pick<Post, 'post_id' | 'title' | 'categories' | 'content'>
+  | null
+  | undefined;
+
 type CommentBase = {
   comment_id: string;
   post_id: string;

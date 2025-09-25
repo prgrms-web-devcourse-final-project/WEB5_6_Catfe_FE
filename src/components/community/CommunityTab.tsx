@@ -13,17 +13,20 @@ function CommunityTab() {
     <div className="max-w-[800px] w-full lg:w-1/2 bg-gray-600 rounded-full flex  justify-between px-2 py-2 mx-auto">
       <div
         className={tw(
-          'rounded-full w-1/2 py-1',
+          'rounded-full w-1/2 py-1 flex items-center',
           isList ? 'bg-secondary-50 text-text-primary' : 'text-secondary-50'
         )}
       >
-        <Link href="/community" className="inline-flex gap-4 w-full items-center justify-center">
+        <Link
+          href="/community"
+          className="inline-flex gap-2 sm:gap-4 w-full items-center justify-center"
+        >
           <Image
             src={isList ? '/icon/community/search-black.svg' : '/icon/community/search-white.svg'}
             alt=""
             width={16}
             height={16}
-            className="w-4 h-auto"
+            className="w-4 h-4"
             unoptimized
             priority={false}
           />
@@ -32,7 +35,7 @@ function CommunityTab() {
       </div>
       <div
         className={tw(
-          'rounded-full w-1/2 py-1',
+          'rounded-full w-1/2 py-2 sm:py-1 flex items-center',
           isList ? 'text-secondary-50' : 'bg-secondary-50 text-text-primary'
         )}
       >

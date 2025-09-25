@@ -1,6 +1,6 @@
 'use client';
 
-import { ALL_CATEGORIES } from '@/lib/communityCategories';
+import { ALL_CATEGORIES } from '@/lib/postCategories';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 
@@ -23,6 +23,13 @@ function GroupSizeSelect({
   options = ALL_CATEGORIES.groupSize as unknown as string[],
   className,
 }: GroupSizeProps) {
+  const hasValue = value !== '';
+  const handleClear = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange('');
+  };
+
   return (
     <label htmlFor="group-size-select" className={tw('flex flex-col gap-2', className)}>
       <span className="text-xs">{label}</span>
@@ -37,7 +44,7 @@ function GroupSizeSelect({
             value === '' ? 'text-gray-500/80' : 'text-text-primary',
           ].join(' ')}
         >
-          <option value="" disabled selected hidden>
+          <option value="" disabled hidden>
             {placeholder}
           </option>
           {options.map((option) => (
@@ -46,16 +53,37 @@ function GroupSizeSelect({
             </option>
           ))}
         </select>
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer pointer-events-none">
-          <Image
-            src="/icon/angle-small-down.svg"
-            alt=""
-            width={16}
-            height={16}
-            unoptimized
-            priority={false}
-          />
-        </span>
+        {
+          // 값이 없으면 드롭다운, 값이 있으면 초기화 X 버튼
+          !hasValue || disabled ? (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none select-none">
+              <Image
+                src="/icon/angle-small-down.svg"
+                alt=""
+                width={16}
+                height={16}
+                unoptimized
+                priority={false}
+              />
+            </span>
+          ) : (
+            <button
+              type="button"
+              aria-label="선택 초기화"
+              onClick={handleClear}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer"
+            >
+              <Image
+                src="/icon/study-room/close.svg"
+                alt=""
+                width={16}
+                height={16}
+                unoptimized
+                priority={false}
+              />
+            </button>
+          )
+        }
       </div>
     </label>
   );

@@ -1,7 +1,8 @@
-import { ALL_CATEGORIES } from '@/lib/communityCategories';
+import { useComboboxLogic } from '@/hook/useComboboxLogic';
+import { ALL_CATEGORIES } from '@/lib/postCategories';
 import tw from '@/utils/tw';
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 
 interface SubjectProps {
   label?: string;
@@ -30,79 +31,29 @@ function SubjectCombobox({
   required = false,
   className = '',
 }: SubjectProps) {
-  const vArr = Array.isArray(value) ? value : value ? [value] : [];
-  const [keyword, setKeyword] = useState<string>('');
-  const [open, setOpen] = useState<boolean>(false);
-  const [activeIndex, setActiveIndex] = useState<number>(-1);
-  const ref = useRef<HTMLDivElement>(null);
+  const config = useMemo(
+    () => ({
+      options,
+      allowMultiSelect,
+      allowCustom,
+      maxOptions,
+    }),
+    [options, allowMultiSelect, allowCustom, maxOptions]
+  );
 
-  const filtered = useMemo(() => {
-    const k = keyword.trim().toLowerCase();
-    const base = k ? options.filter((o) => o.toLowerCase().includes(k)) : options;
-    return base
-      .slice()
-      .sort((a, b) => {
-        const aIndex = a.toLowerCase().indexOf(k);
-        const bIndex = b.toLowerCase().indexOf(k);
-        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
-      })
-      .slice(0, maxOptions);
-  }, [keyword, options, maxOptions]);
-
-  useEffect(() => {
-    const onClickOutside = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
-
-  const commitSingle = (item: string) => {
-    const hasItem = vArr.includes(item);
-    const next = hasItem ? vArr.filter((x) => x !== item) : [...vArr, item];
-    onChange(next);
-    setKeyword(item);
-    setOpen(false);
-    setActiveIndex(-1);
-  };
-
-  const toggleMulti = (item: string) => {
-    const hasItem = vArr.includes(item);
-    const next = hasItem ? vArr.filter((x) => x !== item) : [...vArr, item];
-    onChange(next);
-    setKeyword('');
-    setActiveIndex(-1);
-  };
-
-  const handleKeydown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open && (e.key === 'ArrowDown' || e.key === 'Enter')) {
-      setOpen(true);
-      return;
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (activeIndex >= 0) {
-        const item = filtered[activeIndex];
-        if (allowMultiSelect) {
-          toggleMulti(item);
-        } else {
-          commitSingle(item);
-        }
-      } else if (keyword.trim() && allowCustom) {
-        if (allowMultiSelect) {
-          toggleMulti(keyword.trim());
-        } else {
-          commitSingle(keyword.trim());
-        }
-      }
-    } else if (e.key === 'Escape') setOpen(false);
-  };
+  const {
+    vArr,
+    setKeyword,
+    open,
+    setOpen,
+    activeIndex,
+    setActiveIndex,
+    ref,
+    filtered,
+    inputValue,
+    handleSelect,
+    handleKeydown,
+  } = useComboboxLogic({ value, onChange, config });
 
   return (
     <div ref={ref} className={['relative', className].join(' ')}>
@@ -114,7 +65,7 @@ function SubjectCombobox({
               <button
                 key={chip}
                 type="button"
-                onClick={() => toggleMulti(chip)}
+                onClick={() => handleSelect(chip)}
                 className="rounded-full bg-secondary-200 px-3 py-1 text-xs hover:bg-secondary-300 cursor-pointer"
                 title="클릭하면 제거"
               >
@@ -134,7 +85,7 @@ function SubjectCombobox({
           <input
             id="subject-select"
             disabled={disabled}
-            value={keyword}
+            value={inputValue}
             required={required}
             onChange={(e) => {
               setKeyword(e.target.value);
@@ -145,6 +96,7 @@ function SubjectCombobox({
             onKeyDown={handleKeydown}
             onBlur={() => setOpen(false)}
             placeholder={placeholder}
+            autoComplete="off"
             className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"
           />
           <button
@@ -164,6 +116,7 @@ function SubjectCombobox({
           </button>
         </div>
       </label>
+      {/* dropdown list */}
       {open && filtered.length > 0 && (
         <ul
           id="subject-listbox"
@@ -181,11 +134,7 @@ function SubjectCombobox({
                 onMouseEnter={() => setActiveIndex(idx)}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  if (allowMultiSelect) {
-                    toggleMulti(opt);
-                  } else {
-                    commitSingle(opt);
-                  }
+                  handleSelect(opt);
                 }}
                 className={tw(
                   'cursor-pointer px-3 py-2 text-sm',

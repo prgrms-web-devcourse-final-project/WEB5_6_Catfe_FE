@@ -11,7 +11,6 @@ function PostCard({ post }: { post: Post }) {
   if (!post || post.title.trim().length === 0 || !post.content) return null;
 
   const imgSrc = findFirstImage(post.content) ?? DefaultImage;
-  // const imgSrc = DefaultImage;
   const snippet = extractPlainText(post.content, 90);
 
   return (

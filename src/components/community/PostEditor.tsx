@@ -1,126 +1,79 @@
 'use client';
 
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
-import TextAlign from '@tiptap/extension-text-align';
 import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
-import { isBlank, isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
-import sanitizeHtml from 'sanitize-html';
+import { isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
 import SubjectCombobox from './SubjectCombobox';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
+import { InitialPost } from '@/@types/community';
+import { TIPTAP_EXTENSIONS } from '@/lib/tiptapExtensions';
+import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
 
 type EditorProps = {
-  draftKey?: string;
-  isEditMode?: boolean;
+  initialData?: InitialPost;
   onSubmitAction?: (data: FormData) => Promise<{ ok: boolean; id?: string; error?: string }>;
 };
 // Promise Props 는 API 명세에 따라 수정 필요
 
-function CommunityEditor({
-  draftKey = 'draft:community:new',
-  isEditMode = false,
-  onSubmitAction,
-}: EditorProps) {
-  const [title, setTitle] = useState<string>('');
-  const [filterOptions, setFilterOptions] = useState<string[]>([]);
+function PostEditor({ initialData, onSubmitAction }: EditorProps) {
+  const isEditMode = !!initialData;
+  const postId = initialData?.post_id;
+
+  const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [2, 3, 4] },
-        blockquote: false,
-        codeBlock: false,
-        horizontalRule: false,
-      }),
-      Underline,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-        protocols: ['http', 'https', 'mailto'],
-        HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer',
-        },
-      }),
-      Image.configure({ allowBase64: true }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-        alignments: ['left', 'center', 'right'],
-      }),
-    ],
-    content: '',
-    autofocus: isEditMode,
-    editorProps: {
+  const editorProps = useMemo(
+    () => ({
       attributes: {
         class: 'prose max-w-none min-h-[240px] focus:outline-none prose-stone',
       },
-      transformPastedHTML: (html) => {
-        return sanitizeHtml(html, {
-          allowedTags: [
-            'h2',
-            'h3',
-            'h4',
-            'p',
-            'br',
-            'strong',
-            'em',
-            'u',
-            's',
-            'ul',
-            'ol',
-            'li',
-            'a',
-            'img',
-          ],
-          allowedAttributes: {
-            a: ['href', 'target', 'rel'],
-            img: ['src', 'alt', 'width', 'height'],
-            p: ['style'],
-            h2: ['style'],
-            h3: ['style'],
-            h4: ['style'],
-          },
-          allowedStyles: {
-            '*': {
-              'text-align': [/^left$/, /^center$/, /^right$/],
-            },
-          },
-          allowedSchemes: ['http', 'https', 'mailto', 'data'],
-          disallowedTagsMode: 'discard',
-        });
+      transformPastedHTML: (html: string) => {
+        return safeSanitizeHtml(html, true);
       },
-    },
+    }),
+    []
+  );
+  const editor = useEditor({
+    extensions: TIPTAP_EXTENSIONS,
+    content: '',
+    autofocus: isEditMode,
+    editorProps,
     immediatelyRender: false,
   });
 
-  //테스트용 디바운스 짧게
-  const { lastSavedAt, draft, clearDraft, runWithoutSaving } = useEditorDraft(
+  // 임시 테스트용 디바운스 짧게 -> 나중에 디바운스 시간 고칠 것
+  const {
+    lastSavedAt,
+    draft,
+    clearDraft,
+    runWithoutSaving,
     title,
-    filterOptions,
-    editor,
-    draftKey,
-    {
-      debounceMs: 100,
-    }
-  );
-  // const { lastSavedAt, draft, clearDraft, runWithoutSaving } = useEditorDraft(title, filterOptions, editor, draftKey);
+    categories,
+    setTitle,
+    setCategories,
+  } = useEditorDraft(editor, DRAFT_KEY, initialData, {
+    debounceMs: 1000,
+  });
 
+  // 초기 데이터 로드
   useEffect(() => {
-    if (!draft) return;
+    if (!editor || editor.options.content) return;
 
-    if (isBlank(title)) setTitle(draft.title ?? '');
-    if ((filterOptions.length ?? 0) === 0) setFilterOptions(draft.filterOptions ?? []);
-    if (editor && isDocEmpty(editor) && draft.json) editor.commands.setContent(draft.json);
-  }, [title, filterOptions, draft, editor]);
+    let contentToLoad = initialData?.content;
+
+    // draft 있으면 덮어쓰기
+    if (draft && draft.json && !isDocEmpty(draft.json)) {
+      contentToLoad = draft.json;
+    }
+    if (contentToLoad) {
+      editor.commands.setContent(contentToLoad);
+    }
+  }, [editor, initialData?.content, draft]);
 
   const handleSubmit = async (formData: FormData) => {
     if (!editor) return;
@@ -144,7 +97,7 @@ function CommunityEditor({
       setSubmitting(false);
       runWithoutSaving(() => {
         setTitle('');
-        setFilterOptions([]);
+        setCategories([]);
         editor?.chain().focus().clearContent().run();
         clearDraft();
       });
@@ -156,7 +109,7 @@ function CommunityEditor({
     if (confirmOk) {
       runWithoutSaving(() => {
         setTitle('');
-        setFilterOptions([]);
+        setCategories([]);
         editor?.chain().focus().clearContent().run();
         clearDraft();
       });
@@ -165,7 +118,7 @@ function CommunityEditor({
   };
 
   const setFilter = (idx: 0 | 1 | 2, val: string) =>
-    setFilterOptions((prev) => {
+    setCategories((prev) => {
       const next = [...(prev ?? [])];
       next[idx] = val;
       return next;
@@ -176,7 +129,14 @@ function CommunityEditor({
       <h3 className="font-bold text-xl sm:text-2xl w-full text-left">
         {isEditMode ? '그룹 모집글 수정' : '그룹 모집글 작성'}
       </h3>
-      <form className="flex flex-col gap-4 w-full editor" ref={formRef} action={handleSubmit}>
+      <form
+        className="flex flex-col gap-4 w-full editor"
+        ref={formRef}
+        action={handleSubmit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.preventDefault();
+        }}
+      >
         <div className="flex w-full gap-4">
           {/* 제목 */}
           <div className="flex flex-col w-1/2 gap-2">
@@ -198,13 +158,15 @@ function CommunityEditor({
           {/* 옵션 1 */}
           <div className="flex flex-col w-1/2 gap-2">
             <SubjectCombobox
-              value={filterOptions[0] ?? ''}
+              value={categories[0] ?? ''}
               onChange={(v) => {
                 const normalized = Array.isArray(v) ? (v[0] ?? '') : v;
                 setFilter(0, normalized);
               }}
               placeholder="공부 과목을 입력하세요"
               allowMultiSelect={false}
+              // 원하는 과목이 없으면 직접 입력
+              allowCustom={true}
               label="Subject"
             />
           </div>
@@ -213,7 +175,7 @@ function CommunityEditor({
           {/* 옵션 2 */}
           <div className="flex flex-col w-1/2 gap-2">
             <DemographicSelect
-              value={filterOptions[1] ?? ''}
+              value={categories[1] ?? ''}
               onChange={(v) => {
                 const normalized = Array.isArray(v) ? (v[1] ?? '') : v;
                 setFilter(1, normalized);
@@ -225,7 +187,7 @@ function CommunityEditor({
           {/* 옵션 3 */}
           <div className="flex flex-col w-1/2 gap-2">
             <GroupSizeSelect
-              value={filterOptions[2] ?? ''}
+              value={categories[2] ?? ''}
               onChange={(v) => {
                 const normalized = Array.isArray(v) ? (v[2] ?? '') : v;
                 setFilter(2, normalized);
@@ -279,4 +241,4 @@ function CommunityEditor({
     </div>
   );
 }
-export default CommunityEditor;
+export default PostEditor;

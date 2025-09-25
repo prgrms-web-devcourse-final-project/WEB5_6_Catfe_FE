@@ -1,7 +1,7 @@
 'use client';
 
 import CommentList from '@/components/community/CommentList';
-import CommunityContents from '@/components/community/CommunityContents';
+import PostContents from '@/components/community/PostContents';
 import Spinner from '@/components/Spinner';
 import { useComments, usePost } from '@/hook/useCommunityPost';
 import { useEffect } from 'react';
@@ -14,6 +14,7 @@ function ContentsDetail({ postId }: { postId: string }) {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [postId]);
 
+  // api 연결 전 UI 확인용 임시
   // const loadingPost = true;
   // const loadingComments = true;
 
@@ -34,7 +35,7 @@ function ContentsDetail({ postId }: { postId: string }) {
 
   return (
     <div className="mx-auto flex flex-col gap-3">
-      <CommunityContents post={post} />
+      <PostContents post={post} />
       {comments && <CommentList comments={comments} />}
     </div>
   );

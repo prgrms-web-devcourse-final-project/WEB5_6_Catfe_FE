@@ -6,8 +6,12 @@ import TiptapRenderer from './TiptapRenderer';
 import UserProfile from './UserProfile';
 import LikeButton from '../LikeButton';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import showToast from '@/utils/showToast';
 
-function CommunityContents({ post }: { post: Post }) {
+function PostContents({ post }: { post: Post }) {
+  const router = useRouter();
+
   const {
     post_id: postId,
     title,
@@ -32,6 +36,26 @@ function CommunityContents({ post }: { post: Post }) {
     setLikeCount((c) => c + (liked ? -1 : 1));
   };
 
+  const handleEdit = () => {
+    router.push(`/community/editor?id=${postId}`);
+  };
+
+  const handleDelete = () => {
+    // 나중에 confirm modal로 수정
+    const confirmOk = confirm('정말 삭제하시겠습니까?');
+    if (!confirmOk) return;
+
+    try {
+      // api delete 호출
+      setTimeout(() => {
+        console.log(`게시글 ${postId} 삭제 요청`);
+      }, 1000);
+      showToast('success', '게시글이 삭제되었습니다.');
+    } catch (err) {
+      console.error('게시글 삭제 요청 실패:', err);
+    }
+  };
+
   return (
     <article className="flex flex-col gap-4 relative">
       <header className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -54,11 +78,7 @@ function CommunityContents({ post }: { post: Post }) {
       <div className="flex gap-4 items-center justify-center absolute top-0 right-0 sm:top-2 sm:right-2">
         {isAuthor ? (
           <>
-            <button
-              onClick={() => console.log('수정')}
-              aria-label="게시글 수정"
-              className="cursor-pointer"
-            >
+            <button onClick={handleEdit} aria-label="게시글 수정" className="cursor-pointer">
               <Image
                 src="/icon/community/pencil.svg"
                 alt=""
@@ -68,11 +88,7 @@ function CommunityContents({ post }: { post: Post }) {
                 priority={false}
               />
             </button>
-            <button
-              onClick={() => console.log('삭제')}
-              aria-label="게시글 삭제"
-              className="cursor-pointer"
-            >
+            <button onClick={handleDelete} aria-label="게시글 삭제" className="cursor-pointer">
               <Image
                 src="/icon/community/trash.svg"
                 alt=""
@@ -133,4 +149,4 @@ function CommunityContents({ post }: { post: Post }) {
     </article>
   );
 }
-export default CommunityContents;
+export default PostContents;

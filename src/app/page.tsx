@@ -1,10 +1,12 @@
 import Spinner from '@/components/Spinner';
+import TimerPanel from '@/components/study-room/timer/TimerPanel';
 
 export default function Home() {
   return (
     <div className="w-screen min-h-screen flex flex-col justify-center items-center gap-7">
       <h1 className="text-2xl">Hello World</h1>
       <h2 className="text-xl">안녕하세요</h2>
+      <TimerPanel/>
       <div className="w-60 h-60 border border-gray-500 p-4 overflow-y-auto">
         <h3>Scroll Test</h3>
         <p className="">

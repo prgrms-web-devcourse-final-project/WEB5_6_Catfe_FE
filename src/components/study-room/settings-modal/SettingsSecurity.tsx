@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import Button from "../Button";
-import RoomPassword from "./RoomPassword";
+import Button from "@/components/Button";
+import RoomPassword from "../RoomPassword";
 
 type SecurityValue = {
   isPrivate: boolean;

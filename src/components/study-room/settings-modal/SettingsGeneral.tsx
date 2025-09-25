@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import RoomInfo, { RoomInfoValue } from "./RoomInfo";
-import StudyRoomCard from "./StudyRoomCard";
+import RoomInfo, { RoomInfoValue } from "../RoomInfo";
+import StudyRoomCard from "../StudyRoomCard";
 import Button from "@/components/Button";
 
 type Props = {

@@ -4,11 +4,11 @@ import { useState } from "react";
 import clsx from "clsx";
 import BigModal from "@/components/study-room/BigModalLayout";
 import ModalSideBar from "@/components/study-room/ModalSideBar";
-import SettingsGeneral from "@/components/study-room/SettingsGeneral";
-import SettingsSecurity from "@/components/study-room/SettingsSecurity";
-import SettingsRoles from "@/components/study-room/SettingsRoles";
-import SettingsNotice from "@/components/study-room/SettingsNotice";
-import { RoomInfoValue } from "./RoomInfo";
+import SettingsGeneral from "./SettingsGeneral";
+import SettingsSecurity from "./SettingsSecurity";
+import SettingsRoles from "./SettingsRoles";
+import SettingsNotice from "./SettingsNotice";
+import { RoomInfoValue } from "../RoomInfo";
 
 export type TabKey = "general" | "security" | "roles" | "notice";
 

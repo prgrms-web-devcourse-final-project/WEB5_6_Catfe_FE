@@ -6,13 +6,17 @@ import UserProfile from './UserProfile';
 import Image from 'next/image';
 import CommentChildItem from './CommentChildItem';
 import LikeButton from '../LikeButton';
+import { useParams } from 'next/navigation';
+import CommentEditor from './CommentEditor';
 
 interface CommentProps {
   comment: RootComment;
 }
 
 function CommentRootItem({ comment }: CommentProps) {
+  const { id: postId } = useParams<{ id: string }>();
   const {
+    comment_id,
     author,
     content,
     likeCount: likeCountProp = 0,
@@ -36,6 +40,19 @@ function CommentRootItem({ comment }: CommentProps) {
   };
 
   const replyCount = replyCountProp ?? children?.length ?? 0;
+
+  const handleSubmitReply = async ({
+    postId,
+    parentCommentId,
+    content,
+  }: {
+    postId: string;
+    parentCommentId?: string;
+    content: string;
+  }) => {
+    // !! 임시 콘솔 -> API 기능 붙여야함
+    console.log('reply submit', { postId, parentCommentId, content });
+  };
 
   return (
     <article className="bg-secondary-50 rounded-lg w-full p-4 flex flex-col gap-3">
@@ -91,22 +108,25 @@ function CommentRootItem({ comment }: CommentProps) {
             priority={false}
           />
           <span className="text-sm">{replyCount}</span>
-          {replyCount > 0 && (
-            <>
-              <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
-              <span className="text-xs text-text-secondary">
-                {openReplies ? '숨기기' : '답글 보기'}
-              </span>
-            </>
-          )}
+          <>
+            <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
+            <span className="text-xs text-text-secondary">
+              {openReplies ? '숨기기' : '답글 보기'}
+            </span>
+          </>
         </button>
       </footer>
 
-      {openReplies && children && children.length > 0 && (
+      {openReplies && (
         <div className="bg-secondary-100 w-11/12 ml-auto">
-          {children.map((reply) => (
-            <CommentChildItem key={reply.comment_id} reply={reply} />
-          ))}
+          <CommentEditor
+            target={{ postId, parentCommentId: comment_id }}
+            onSubmit={handleSubmitReply}
+            className="mx-2 mt-2"
+          />
+          {children &&
+            children.length > 0 &&
+            children.map((reply) => <CommentChildItem key={reply.comment_id} reply={reply} />)}
         </div>
       )}
     </article>

@@ -104,6 +104,7 @@ function PostFilters({ value, onChange }: PostFilterProps) {
           onChange({ subjects: normalized });
         }}
         allowMultiSelect={true}
+        allowCustom={false}
       />
       <div className="w-full flex gap-4">
         <DemographicSelect

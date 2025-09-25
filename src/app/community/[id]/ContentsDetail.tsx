@@ -18,7 +18,7 @@ function ContentsDetail({ postId }: { postId: string }) {
   // const loadingPost = true;
   // const loadingComments = true;
 
-  if (loadingPost || loadingComments)
+  if (loadingPost)
     return (
       <div className="h-full w-full">
         <Spinner />
@@ -36,7 +36,7 @@ function ContentsDetail({ postId }: { postId: string }) {
   return (
     <div className="mx-auto flex flex-col gap-3">
       <PostContents post={post} />
-      {comments && <CommentList comments={comments} />}
+      <CommentList comments={comments} isLoading={loadingComments} />
     </div>
   );
 }

@@ -13,7 +13,7 @@ interface ComboboxHookProps {
   config: ComboboxConfig;
 }
 
-export const useComboboxLogic = ({ value, onChange, config }: ComboboxHookProps) => {
+export function useComboboxLogic({ value, onChange, config }: ComboboxHookProps) {
   const { options, allowMultiSelect, allowCustom, maxOptions } = config;
 
   const vArr = useMemo(() => (Array.isArray(value) ? value : value ? [value] : []), [value]);
@@ -124,4 +124,4 @@ export const useComboboxLogic = ({ value, onChange, config }: ComboboxHookProps)
     handleSelect,
     handleKeydown,
   };
-};
+}

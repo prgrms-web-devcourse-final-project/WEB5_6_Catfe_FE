@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Timer from "./Timer";
+import Stopwatch from "./Stopwatch";
 
 export default function TimerPanel() {
   const [activeTab, setActiveTab] = useState<"timer" | "record">("timer");
@@ -33,13 +34,13 @@ export default function TimerPanel() {
           </button>
         </div>
       </div>
-
-      {/* 콘텐츠 */}
       <div className="flex min-h-[140] items-center justify-center mt-6">
-        {activeTab === "timer" && <Timer />}
-        {activeTab === "record" && (
-          <div className="text-gray-600">기록은 여기에 표시됩니다</div>
-        )}
+        <div className={activeTab === "timer" ? "block" : "hidden"}>
+           <Timer />
+        </div>
+        <div className={activeTab === "record" ? "block" : "hidden"}>
+           <Stopwatch />
+        </div>
       </div>
     </div>
   );

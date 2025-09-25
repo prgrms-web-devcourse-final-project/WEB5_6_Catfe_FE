@@ -15,3 +15,13 @@ export type UserProfile = {
   bio: string;
   point: number;
 };
+
+export type PaginationItemType = 'first' | 'prev' | 'page' | 'ellipsis' | 'next' | 'last';
+
+export type PaginationItem = {
+  key: string;
+  type: PaginationItemType;
+  page?: number;
+  selected?: boolean;
+  disabled?: boolean;
+};

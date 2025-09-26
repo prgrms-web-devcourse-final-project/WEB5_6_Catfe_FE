@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import Sidebar from "@/components/study-room/page-layout/Sidebar";
 import Button from "@/components/Button";
 import Image from "next/image";
-import SettingsModal from "@/components/study-room/SettingsModal";
+import SettingsModal from "@/components/study-room/settings-modal/SettingsModal";
 
 type Props = {
   memberCount: number;

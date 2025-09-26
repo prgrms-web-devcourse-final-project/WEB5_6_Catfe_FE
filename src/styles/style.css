@@ -248,7 +248,7 @@
 
   /* Error Fallback Cat */
   .cat-fall {
-    animation: catFall var(--fall-dur) ease-in-out infinite;
+    animation: catFall var(--fall-dur) ease-in-out forwards;
     object-fit: contain;
     will-change: transform;
   }

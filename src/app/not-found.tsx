@@ -19,12 +19,16 @@ function NotFound() {
 
   return (
     <main className="h-dvh flex flex-col gap-6 items-center justify-center w-dvw max-w-[1200px] mx-auto">
-      <div className="flex items-center text-center gap-3 w-3/4 h-50">
-        <span className="inline-flex justify-center items-center w-1/3 h-full text-9xl">4</span>
+      <div className="flex items-center text-center gap-3 sm:gap-1 w-3/4 h-50">
+        <span className="inline-flex justify-end items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
+          4
+        </span>
         <div className="w-1/3 h-2/3 relative">
           <Image src="/image/cat-default.svg" alt="" fill />
         </div>
-        <span className="inline-flex justify-center items-center w-1/3 h-full text-9xl">4</span>
+        <span className="inline-flex justify-start items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
+          4
+        </span>
       </div>
       <div className="flex flex-col w-3/4 items-center justify-center gap-5">
         <hr className="w-full" />
@@ -33,7 +37,13 @@ function NotFound() {
           <br /> 존재하지 않는 주소를 입력하셨거나,
           <br /> 요청하신 페이지의 주소가 변경, 삭제되었습니다.
         </p>
-        <Button borderType="solid" color="secondary" className="mx-auto" onClick={handleClick}>
+        <Button
+          borderType="solid"
+          color="secondary"
+          className="mx-auto"
+          size="md"
+          onClick={handleClick}
+        >
           돌아가기
         </Button>
       </div>

@@ -1,0 +1,51 @@
+'use client';
+
+import Button from '@/components/Button';
+import CryingCat from '@/components/fallback/CryingCat';
+import { useRouter } from 'next/navigation';
+
+function NotFound() {
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (document.referrer && document.referrer.startsWith(window.location.origin)) {
+      // 사이트 안에서 이동한 경우 뒤로가기
+      router.back();
+    } else {
+      // 직접 진입 or 외부 링크 진입 -> home으로
+      router.push('/');
+    }
+  };
+
+  return (
+    <main className="h-dvh flex flex-col gap-6 items-center justify-center w-dvw max-w-[1200px] mx-auto">
+      <div className="flex items-center text-center gap-3 sm:gap-1 w-3/4 h-50">
+        <span className="inline-flex justify-end items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
+          4
+        </span>
+        <CryingCat />
+        <span className="inline-flex justify-start items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
+          4
+        </span>
+      </div>
+      <div className="flex flex-col w-3/4 items-center justify-center gap-5">
+        <hr className="w-full" />
+        <p className="text-center font-light text-text-secondary text-sm">
+          페이지를 찾을 수 없습니다.
+          <br /> 존재하지 않는 주소를 입력하셨거나,
+          <br /> 요청하신 페이지의 주소가 변경, 삭제되었습니다.
+        </p>
+        <Button
+          borderType="solid"
+          color="secondary"
+          className="mx-auto"
+          size="md"
+          onClick={handleClick}
+        >
+          돌아가기
+        </Button>
+      </div>
+    </main>
+  );
+}
+export default NotFound;

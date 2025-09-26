@@ -4,7 +4,6 @@ import localFont from 'next/font/local';
 import '@/styles/style.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-import Header from '@/components/common/Header';
 import QueryProvider from '@/provider/QueryProvider';
 
 const orbitron = Orbitron({
@@ -14,7 +13,7 @@ const orbitron = Orbitron({
 });
 
 const nanumSquareNeo = localFont({
-  src: './fonts/NanumSquareNeo-Variable.ttf',
+  src: '../assets/fonts/NanumSquareNeo-Variable.ttf',
   variable: '--font-nanum',
   weight: '100 900',
   style: 'normal',
@@ -34,7 +33,6 @@ export default function RootLayout({
   return (
     <html lang="ko-KR">
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
-        <Header />
         <QueryProvider>
           <main>{children}</main>
         </QueryProvider>

@@ -8,7 +8,12 @@ function CryingCat({ className }: { className?: string }) {
   return (
     <div
       className={tw(
-        'w-1/3 h-2/3 relative select-none [--eye-left-x:29%] [--eye-left-y:38%] [--eye-right-x:55%] [--eye-right-y:38%] sm:[--eye-left-x:38%] sm:[--eye-left-y:34%] sm:[--eye-right-x:55%] sm:[--eye-right-y:34%] lg:[--eye-left-x:41%] lg:[--eye-left-y:35%] lg:[--eye-right-x:54%] lg:[--eye-right-y:35%] ',
+        [
+          'w-1/3 h-2/3 relative select-none',
+          '[--eye-left-x:29%] [--eye-left-y:38%] [--eye-right-x:55%] [--eye-right-y:38%]',
+          'sm:[--eye-left-x:38%] sm:[--eye-left-y:34%] sm:[--eye-right-x:55%] sm:[--eye-right-y:34%]',
+          'lg:[--eye-left-x:41%] lg:[--eye-left-y:35%] lg:[--eye-right-x:54%] lg:[--eye-right-y:35%]',
+        ].join(' '),
         className
       )}
     >

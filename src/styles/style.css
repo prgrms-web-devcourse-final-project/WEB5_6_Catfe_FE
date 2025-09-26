@@ -266,6 +266,8 @@
     }
     100% {
       transform: scale(1) rotate(0deg);
+    }
+  }
   @keyframes tearFall {
     0% {
       opacity: 0;

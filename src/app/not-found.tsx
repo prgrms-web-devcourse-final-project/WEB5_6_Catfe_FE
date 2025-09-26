@@ -1,7 +1,7 @@
 'use client';
 
 import Button from '@/components/Button';
-import Image from 'next/image';
+import CryingCat from '@/components/fallback/CryingCat';
 import { useRouter } from 'next/navigation';
 
 function NotFound() {
@@ -23,9 +23,7 @@ function NotFound() {
         <span className="inline-flex justify-end items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
           4
         </span>
-        <div className="w-1/3 h-2/3 relative">
-          <Image src="/image/cat-default.svg" alt="" fill />
-        </div>
+        <CryingCat />
         <span className="inline-flex justify-start items-center w-1/3 h-full text-8xl sm:text-9xl font-bold">
           4
         </span>

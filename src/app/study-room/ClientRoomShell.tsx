@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import Sidebar from "@/components/study-room/page-layout/Sidebar";
 import Button from "@/components/Button";
 import Image from "next/image";
+import SettingsModal from "@/components/study-room/SettingsModal";
 
 type Props = {
   memberCount: number;
@@ -11,7 +13,11 @@ type Props = {
 };
 
 export default function ClientRoomShell({ memberCount, children }: Props) {
-  const onOpenSettings = () => console.log("settings open");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const onOpenSettings = () => setSettingsOpen(true);
+  const onCloseSettings = () => setSettingsOpen(false);
+
   const onOpenTimer = () => console.log("timer open");
   const onOpenNotice = () => console.log("notice open");
   const onOpenChat = () => console.log("chat open");
@@ -42,7 +48,7 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
                 hasIcon
                 onClick={onOpenUsers}
               >
-                <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16}></Image>
+                <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
                 {memberCount}
               </Button>
 
@@ -54,12 +60,15 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
               >
                 초대하기
               </Button>
+
             </div>
           </header>
 
           <main className="px-6">{children}</main>
         </div>
       </div>
+
+      <SettingsModal open={settingsOpen} onClose={onCloseSettings} defaultTab="general" />
     </div>
   );
 }

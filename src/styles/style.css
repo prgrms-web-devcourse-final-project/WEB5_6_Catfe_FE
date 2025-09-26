@@ -101,7 +101,8 @@
     background-color: var(--color-background-base);
   }
 
-  .editor :where(.ProseMirror, .ProseMirror *) {
+  .editor :where(.ProseMirror, .ProseMirror *),
+  .tiptap-renderer {
     font-family:
       var(--font-nanum),
       -apple-system,
@@ -209,6 +210,24 @@
     }
     to {
       translate: 500%;
+    }
+  }
+
+  .animate-like-pop {
+    animation: like-pop 360ms cubic-bezier(.2, .8, .2, 1);
+  }
+  @keyframes like-pop {
+    0% {
+      transform: scale(1) rotate(0deg);
+    }
+    30% {
+      transform: scale(1.2) rotate(-8deg);
+    }
+    60% {
+      transform: scale(1.1) rotate(8deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
     }
   }
 }

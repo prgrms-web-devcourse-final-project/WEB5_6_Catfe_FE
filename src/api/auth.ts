@@ -1,18 +1,20 @@
 import api from "@/utils/api";
+import { User } from "@/store/useAuthStore";
+import { setAccessToken } from "@/utils/api";
 
-interface LoginRequest {
+export interface LoginRequest {
   username: string;
   password: string;
 }
 
-export async function login(data: LoginRequest) {
-  const res = await api.post("/auth/login", data);
+export interface LoginResponse {
+  accessToken: string;
+  user: User;
+}
 
-  const accessToken = res.headers["authorization"];
-  if (accessToken) {
-    const token = accessToken.replace("Bearer ", "");
-    localStorage.setItem("accessToken", token);
-  }
-
-  return res.data; // data 안에 user 정보 있음
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  const res = await api.post<{ data: LoginResponse }>("/auth/login", data);
+  const { accessToken, user } = res.data.data;
+  setAccessToken(accessToken);
+  return { accessToken, user };
 }

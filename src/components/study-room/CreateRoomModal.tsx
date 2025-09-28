@@ -20,6 +20,7 @@ export default function CreateRoomModal() {
     isPrivate: false,
     coverPreviewUrl: null,
     coverUploadFile: null,
+    password: "",
   });
   const [privacy, setPrivacy] = useState({ enabled: false, password: "" });
   const [mediaEnabled, setMediaEnabled] = useState(false);

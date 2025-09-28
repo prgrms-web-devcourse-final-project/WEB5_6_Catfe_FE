@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import ClientRoomShell from "./study-room/ClientRoomShell";
+import ClientRoomShell from "./ClientRoomShell";
 
 export const dynamic = "force-dynamic";
 

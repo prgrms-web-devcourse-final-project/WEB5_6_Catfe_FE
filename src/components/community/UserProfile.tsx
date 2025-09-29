@@ -16,7 +16,7 @@ function UserProfile({
   className = '',
 }: UserProfileProps) {
   return (
-    <div className={['flex gap-2 items-center', className].join(' ')}>
+    <div className={tw('flex gap-2 items-center', className)}>
       <div
         className={tw(
           'size-8 rounded-full border-2 border-gray-400 overflow-hidden',

@@ -5,6 +5,8 @@ import '@/styles/style.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import QueryProvider from '@/provider/QueryProvider';
+import InitAuth from './InitAuth';
+import Header from '@/components/common/Header';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -25,15 +27,19 @@ export const metadata: Metadata = {
   description: '고양이들이 가득한 온라인 스터디 카페에서 친구들과 함께 공부하세요',
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="ko-KR">
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
         <QueryProvider>
+          <InitAuth/>
+          <Header />
           <main>{children}</main>
         </QueryProvider>
         <ToastContainer

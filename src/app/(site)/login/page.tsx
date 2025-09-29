@@ -19,8 +19,7 @@ function LoginPage() {
 
   const setUser = useAuthStore((state) => state.setUser);
 
-  const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
-    console.log("소셜버튼 클릭됨:", provider);
+  const handleSocialLogin = (provider: "google" | "naver" | "kakao" |"github") => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
     window.location.href = url;
   };
@@ -126,7 +125,7 @@ function LoginPage() {
             <button type="button" aria-label="naver 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("naver")}>
               <Image src="/socialIcon/naver.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="github 로그인" className="cursor-pointer">
+            <button type="button" aria-label="github 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("github")}>
               <Image src="/socialIcon/git.svg" alt="" width={36} height={36} />
             </button>
             <button type="button" aria-label="kakao 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("kakao")}>

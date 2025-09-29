@@ -1,6 +1,6 @@
-// src/store/useAuthStore.ts
 import { create } from "zustand";
 import { setAccessToken } from "@/utils/api";
+import { logoutApi } from "@/api/auth";
 
 export interface User {
   userId: number;
@@ -15,69 +15,71 @@ export interface User {
 
 export interface AuthState {
   user: User | null;
-  isHydrated: boolean;        
+  isHydrated: boolean;
   setUser: (user: User | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   init: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isHydrated: false,           
+  isHydrated: false,
 
   setUser: (user) => {
     if (typeof window !== "undefined") {
       if (user) {
-        console.log("[setUser] user 저장:", user);
         localStorage.setItem("user", JSON.stringify(user));
       } else {
-        console.log("[setUser] user 삭제");
         localStorage.removeItem("user");
       }
     }
     set({ user });
   },
 
-  logout: () => {
-    console.log("[logout] 실행 → accessToken, user 삭제");
-    setAccessToken(null);
+logout: async () => {
+  // 1) accessToken 먼저 제거해서 interceptor가 동작하지 않게 함
+  setAccessToken(null);
+
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      await logoutApi(token); // 서버에 refresh token 무효화 
+    }
+  } catch (err) {
+    console.error("[logout] 서버 로그아웃 실패:", err);
+  } finally {
+    // 로컬 초기화
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
     }
     set({ user: null });
-  },
+  }
+},
+
 
   init: async () => {
-    console.log("[init] 실행");
     try {
       if (typeof window !== "undefined") {
         // accessToken 복구
         const storedToken = localStorage.getItem("accessToken");
         if (storedToken) {
-          console.log("[init] accessToken 복구 완료:", storedToken);
           setAccessToken(storedToken);
-        } else {
-          console.log("[init] accessToken 없음");
         }
+
         // user 복구
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           try {
             const parsedUser: User = JSON.parse(storedUser);
-            console.log("[init] user 복구 완료:", parsedUser);
             set({ user: parsedUser });
-          } catch (err) {
-            console.error("[init] user 복구 실패 → JSON 파싱 에러:", err);
+          } catch {
             localStorage.removeItem("user");
           }
-        } else {
-          console.log("[init] user 없음");
         }
       }
     } finally {
-      set({ isHydrated: true });    
-      console.log("[init] hydration 완료");
+      set({ isHydrated: true });
     }
   },
 }));

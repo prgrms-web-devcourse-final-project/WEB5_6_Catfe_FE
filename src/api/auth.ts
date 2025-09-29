@@ -18,3 +18,18 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
   setAccessToken(accessToken);
   return { accessToken, user };
 }
+
+
+export async function logoutApi(accessToken: string | null): Promise<void> {
+  if (!accessToken) return;
+
+  await api.post(
+    "/api/auth/logout",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+}

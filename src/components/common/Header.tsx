@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useRouter } from "next/navigation";
 
 function Header() {
   const { user, logout, isHydrated } = useAuthStore();
@@ -11,6 +12,7 @@ function Header() {
   const [hidden, setHidden] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const HEADER_HEIGHT = 56;
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -34,7 +36,6 @@ function Header() {
       } else {
         setHidden(false);
       }
-
       lastScrollY = currentScrollY;
     };
 
@@ -106,9 +107,10 @@ console.log("[Header] 렌더링됨, user:", user, "isHydrated:", isHydrated);
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-md">
                 <button
-                  onClick={() => {
-                    logout();
+                  onClick={async () => {
+                    await logout();
                     setMenuOpen(false);
+                    router.push("/login"); 
                   }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >

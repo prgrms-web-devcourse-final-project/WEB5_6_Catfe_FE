@@ -1,7 +1,7 @@
 import { UserProfile } from './type';
 import { JSONContent } from '@tiptap/react';
 
-export type UserSummary = Pick<UserProfile, 'user_id' | 'nickname' | 'profile_image_url'>;
+export type UserSummary = Pick<UserProfile, 'nickname' | 'profileImageUrl'> & { userId: number };
 
 export type Post = {
   post_id: string;

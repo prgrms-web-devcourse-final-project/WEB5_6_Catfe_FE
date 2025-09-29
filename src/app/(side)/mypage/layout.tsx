@@ -8,7 +8,7 @@ export default function MypageLayout({
   return (
     <div className="w-full h-full flex">
       <MyPageSidebar />
-      <div className="p-8 min-h-dvh overflow-auto">{children}</div>
+      <div className="p-8 min-h-dvh overflow-auto flex-1">{children}</div>
     </div>
   );
 }

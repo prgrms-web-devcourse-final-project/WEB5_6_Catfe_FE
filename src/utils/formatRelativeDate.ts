@@ -23,8 +23,8 @@ export function formatRelativeDate(isoDate: string): string {
     return `${diffHours}시간 전`;
   }
 
-  // 7일 이내 -> 일 단위
-  if (diffDays < 7) {
+  // 30일 이내 -> 일 단위
+  if (diffDays < 30) {
     return `${diffDays}일 전`;
   }
 

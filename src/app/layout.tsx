@@ -5,6 +5,7 @@ import '@/styles/style.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import QueryProvider from '@/provider/QueryProvider';
+import InitAuth from './InitAuth';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="ko-KR">
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
         <QueryProvider>
+          <InitAuth />
           <main>{children}</main>
         </QueryProvider>
         <ToastContainer

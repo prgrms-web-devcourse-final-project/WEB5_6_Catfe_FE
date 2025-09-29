@@ -19,6 +19,12 @@ function LoginPage() {
 
   const setUser = useAuthStore((state) => state.setUser);
 
+  const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
+    console.log("소셜버튼 클릭됨:", provider);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
+    window.location.href = url;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,19 +120,16 @@ function LoginPage() {
             </Link>
           </form>
           <div className="flex justify-center gap-4 lg:gap-6 mt-2">
-            <button type="button" aria-label="Google 로그인">
+            <button type="button" aria-label="Google 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("google")}>
               <Image src="/socialIcon/google.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="naver 로그인">
+            <button type="button" aria-label="naver 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("naver")}>
               <Image src="/socialIcon/naver.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="github 로그인">
+            <button type="button" aria-label="github 로그인" className="cursor-pointer">
               <Image src="/socialIcon/git.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="facebook 로그인">
-              <Image src="/socialIcon/facebook.svg" alt="" width={36} height={36} />
-            </button>
-            <button type="button" aria-label="kakao 로그인">
+            <button type="button" aria-label="kakao 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("kakao")}>
               <Image src="/socialIcon/kakao.svg" alt="" width={36} height={36} />
             </button>
           </div>

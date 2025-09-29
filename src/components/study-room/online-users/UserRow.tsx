@@ -34,11 +34,10 @@ export default function UserRow({
           <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full ring-2 ring-background-white bg-success-500" />
         </div>
 
-        {/* 이름 + 역할 강조(오너는 강조) */}
         <span
           className={clsx(
-            "truncate text-sm",
-            user.role === "owner" ? "text-primary-500 font-semibold" : "text-gray-800"
+            "truncate text-xs",
+            user.role === "owner" ? "text-primary-500 font-semibold" : "text-text-primary-800"
           )}
           title={user.name}
         >

@@ -21,7 +21,6 @@ export type RoomMember = {
 export type RoomSnapshot = {
   info: RoomInfo;
   members: RoomMember[];
-  // 추후 필요 타입 추가 예정
 };
 
 export type VoiceState = {
@@ -35,5 +34,12 @@ export type Presence = "online" | "idle" | "offline";
 export type UsersListItem = RoomMember & {
   avatarUrl?: string | null;
   voice?: VoiceState;
+  presence?: Presence;
   isMe?: boolean;
 };
+
+export type RoomSnapshotUI = Omit<RoomSnapshot, "members"> & {
+  members: UsersListItem[];
+};
+
+  // 추후 필요 타입 추가 예정

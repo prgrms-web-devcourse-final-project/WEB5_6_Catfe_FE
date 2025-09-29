@@ -6,6 +6,7 @@ import UsersHeader from "./UserHeader";
 import UsersSearchBar from "./UserSearchBar";
 import UsersSection from "./UserSection";
 import UserRow from "./UserRow";
+import clsx from "clsx";
 
 type Props = {
   users: UsersListItem[];
@@ -13,10 +14,16 @@ type Props = {
   onToggleMute?: (id: string) => void;
   onClose?: () => void;
   className?: string;
+  maxBodyHeight?: string;
 };
 
-export default function UsersPanel({
-  users, canControl = false, onToggleMute, onClose,
+export default function UsersModal({
+  users,
+  canControl = false,
+  onToggleMute,
+  onClose,
+  className,
+  maxBodyHeight = "60vh",
 }: Props) {
   const titleId = useId();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -34,7 +41,16 @@ export default function UsersPanel({
   }, [users, search]);
 
   return (
-    <div className="border rounded-2xl p-3 w-[15vw] min-w-[250px] max-w-300px bg-background-white">
+    <div
+      role="dialog"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      className={clsx(
+        "border rounded-2xl p-5 bg-background-white shadow-lg",
+        "w-[15vw] min-w-[270px] max-w-[300px]",
+        className
+      )}
+    >
       <UsersHeader
         titleId={titleId}
         onToggleSearch={() => setSearchOpen(v => !v)}
@@ -49,7 +65,7 @@ export default function UsersPanel({
         />
       )}
 
-      <div className="overflow-y-auto" style={{ maxHeight: "60vh" }}>
+      <div className="overflow-y-auto" style={{ maxHeight: maxBodyHeight }}>
         <UsersSection
           title="관리자"
           collapsed={adminCollapsed}

@@ -1,3 +1,4 @@
+// ClientRoomShell.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -7,11 +8,12 @@ import Button from "@/components/Button";
 import Image from "next/image";
 import SettingsModal from "@/components/study-room/settings-modal/SettingsModal";
 import InviteShareModal from "@/components/study-room/InviteShareModal";
+import UsersModal from "@/components/study-room/online-users/UsersModal";
 import { useRoomStore } from "@/stores/room.store";
 import useEscapeKey from "@/hook/useEscapeKey";
 
 type Props = {
-  memberCount: number;
+  memberCount: number; // users.length
   children: ReactNode;
 };
 
@@ -21,7 +23,12 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
 
+  const [usersOpen, setUsersOpen] = useState(false);
+  const usersRef = useRef<HTMLDivElement>(null);
+
   const info = useRoomStore((s) => s.info);
+  const users = useRoomStore((s) => s.members);
+
   const roomUrl = useMemo(() => {
     if (!info) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -29,18 +36,27 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
   }, [info]);
 
   useEscapeKey(inviteOpen, () => setInviteOpen(false));
+  useEscapeKey(usersOpen, () => setUsersOpen(false));
 
   useEffect(() => {
     if (!inviteOpen) return;
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (popRef.current && !popRef.current.contains(t)) {
-        setInviteOpen(false);
-      }
+      if (popRef.current && !popRef.current.contains(t)) setInviteOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [inviteOpen]);
+
+  useEffect(() => {
+    if (!usersOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (usersRef.current && !usersRef.current.contains(t)) setUsersOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [usersOpen]);
 
   const onOpenSettings = () => setSettingsOpen(true);
   const onCloseSettings = () => setSettingsOpen(false);
@@ -50,8 +66,8 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
   const onOpenChat = () => console.log("chat open");
   const onOpenPlanner = () => console.log("planner open");
   const onOpenProfile = () => console.log("profile open");
-  const onOpenUsers = () => console.log("users open");
 
+  const onToggleUsers = () => setUsersOpen((v) => !v);
   const onToggleInvite = () => setInviteOpen((v) => !v);
 
   return (
@@ -69,18 +85,33 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
         <div className="relative">
           <header className="h-14 flex items-center justify-end px-6">
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                borderType="outline"
-                color="primary"
-                hasIcon
-                onClick={onOpenUsers}
-              >
-                <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
-                {memberCount}
-              </Button>
+              {/* Users */}
+              <div className="relative inline-block" ref={usersRef}>
+                <Button
+                  size="sm"
+                  borderType="outline"
+                  color="primary"
+                  hasIcon
+                  onClick={onToggleUsers}
+                  aria-expanded={usersOpen}
+                  aria-haspopup="dialog"
+                >
+                  <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
+                  {memberCount /* 추후 users.length 로 교체*/}
+                </Button>
 
-              {/* ✅ 초대하기 버튼 + 팝오버 패널 */}
+                {usersOpen && (
+                  <div className="absolute right-0 top-full mt-2 z-50">
+                    <UsersModal
+                      users={users}
+                      canControl
+                      onClose={() => setUsersOpen(false)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 초대하기 버튼 */}
               <div className="relative inline-block" ref={popRef}>
                 <Button
                   size="sm"
@@ -94,7 +125,7 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
                 </Button>
 
                 {inviteOpen && (
-                  <div className="absolute right-0 mt-2 z-50">
+                  <div className="absolute right-0 top-full mt-2 z-50">
                     <InviteShareModal
                       roomUrl={roomUrl}
                       password={info?.password ?? undefined}

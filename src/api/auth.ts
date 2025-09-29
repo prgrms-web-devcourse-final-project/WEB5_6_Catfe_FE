@@ -13,8 +13,23 @@ export interface LoginResponse {
 }
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const res = await api.post<{ data: LoginResponse }>("/auth/login", data);
+  const res = await api.post<{ data: LoginResponse }>("/api/auth/login", data);
   const { accessToken, user } = res.data.data;
   setAccessToken(accessToken);
   return { accessToken, user };
+}
+
+
+export async function logoutApi(accessToken: string | null): Promise<void> {
+  if (!accessToken) return;
+
+  await api.post(
+    "/api/auth/logout",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 }

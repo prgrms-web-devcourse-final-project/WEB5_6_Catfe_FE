@@ -100,7 +100,6 @@ export default function Sidebar({
 
           {profileOpen && (
             <div className="absolute left-full ml-8 bottom-0 z-50">
-              {/* 오른쪽으로, 버튼 하단선(bottom) 맞춰 출력 */}
               <UserProfileModal />
             </div>
           )}

@@ -40,3 +40,5 @@ export const useRoomStore = create<State & Actions>()((set) => ({
 
   clear: () => set({ info: null, members: [] }),
 }));
+
+// 추후 API 연결하며 온라인사용자 / 스터디룸에 멤버로 등록된 사용자 분리 예정

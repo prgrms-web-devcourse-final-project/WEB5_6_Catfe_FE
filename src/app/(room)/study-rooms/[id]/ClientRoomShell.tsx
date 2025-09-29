@@ -13,11 +13,10 @@ import { useRoomStore } from "@/stores/room.store";
 import useEscapeKey from "@/hook/useEscapeKey";
 
 type Props = {
-  memberCount: number; // users.length
   children: ReactNode;
 };
 
-export default function ClientRoomShell({ memberCount, children }: Props) {
+export default function ClientRoomShell({children }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -65,7 +64,6 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
   const onOpenNotice = () => console.log("notice open");
   const onOpenChat = () => console.log("chat open");
   const onOpenPlanner = () => console.log("planner open");
-  const onOpenProfile = () => console.log("profile open");
 
   const onToggleUsers = () => setUsersOpen((v) => !v);
   const onToggleInvite = () => setInviteOpen((v) => !v);
@@ -79,7 +77,6 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
           onOpenNotice={onOpenNotice}
           onOpenChat={onOpenChat}
           onOpenPlanner={onOpenPlanner}
-          onOpenProfile={onOpenProfile}
         />
 
         <div className="relative">
@@ -97,7 +94,7 @@ export default function ClientRoomShell({ memberCount, children }: Props) {
                   aria-haspopup="dialog"
                 >
                   <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
-                  {memberCount /* 추후 users.length 로 교체*/}
+                  {users.length}
                 </Button>
 
                 {usersOpen && (

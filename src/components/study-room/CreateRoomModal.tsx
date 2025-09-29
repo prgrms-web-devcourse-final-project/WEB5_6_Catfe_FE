@@ -7,7 +7,6 @@ import StudyRoomCard from "./StudyRoomCard";
 import Toggle from "@/components/Toggle";
 import Button from "@/components/Button";
 import Image from "next/image";
-import clsx from "clsx";
 
 import BigModal from "@/components/study-room/BigModalLayout";
 
@@ -59,9 +58,9 @@ export default function CreateRoomModal() {
       onClose={() => setOpen(false)}
       title="스터디룸 생성"
       titleId={titleId}
-      className={clsx("p-8 gap-5")}
+      className="h-[70vh] overflow-auto"
     >
-      <BigModal.Body>
+      <BigModal.Body className="p-8">
         <p className="flex gap-2.5 mb-6 items-center">
           <Image src="/icon/study-room/makeUp.svg" alt="생성 아이콘" width={16} height={16} />
           스터디룸 정보
@@ -117,7 +116,7 @@ export default function CreateRoomModal() {
         </div>
       </BigModal.Body>
 
-      <BigModal.Footer>
+      <BigModal.Footer className="p-8">
         <Button
           size="md"
           borderType="solid"

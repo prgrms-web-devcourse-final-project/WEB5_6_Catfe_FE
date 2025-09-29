@@ -163,9 +163,16 @@
     -webkit-text-fill-color: var(--color-text-primary) !important;
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  :root {
+    --fall-dur: 1.8s; /* 고양이 넘어짐 전체 시간 */
+    --shake-dur: 0.5s; /* 흔들림 시간 */
+    --star-dur: 1.6s; /* 별 한 바퀴 */
+  }
 }
 
 @layer utilities {
+  /* scroll bar */
   .scrollbar-none {
     scrollbar-width: none;
   }
@@ -174,6 +181,7 @@
     display: none;
   }
 
+  /* spinner */
   .animation-spinner {
     aspect-ratio: 2;
     border-bottom: 3px solid var(--color-secondary-900);
@@ -195,6 +203,12 @@
     }
   }
 
+  /* like button */
+  .animate-like-pop {
+    animation: like-pop 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* 404 Cat */
   .tear-drop {
     position: absolute;
     left: 0;
@@ -232,6 +246,65 @@
     animation-delay: 0.3s;
   }
 
+  /* Error Fallback Cat */
+  .cat-fall {
+    animation: catFall var(--fall-dur) ease-in-out forwards;
+    object-fit: contain;
+    will-change: transform;
+  }
+  .shake {
+    animation: shake var(--shake-dur, 0.5s) ease-in-out;
+  }
+  .stars {
+    position: absolute;
+    left: 22%;
+    top: 32%;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scaleX(0.8) scaleY(0.65);
+  }
+  .star {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    animation: spinStar var(--star-dur, 1.6s) linear infinite;
+    animation-play-state: paused;
+    opacity: 0;
+  }
+  .stars.active {
+    opacity: 1;
+  }
+  .star--1 {
+    --orbit: 40px;
+    animation-delay: 0.5s;
+  }
+  .star--2 {
+    --orbit: 40px;
+    animation-delay: 1s;
+  }
+  .star--3 {
+    --orbit: 40px;
+    animation-delay: 1.5s;
+  }
+  .stars.active .star {
+    animation-play-state: running;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cat-fall,
+    .shake,
+    .star {
+      animation: none !important;
+    }
+    .stars {
+      opacity: 0.2;
+    }
+  }
+
+  /* animation keyframes */
   @keyframes spinner-0 {
     0%,
     2% {
@@ -249,10 +322,6 @@
     to {
       translate: 500%;
     }
-  }
-
-  .animate-like-pop {
-    animation: like-pop 360ms cubic-bezier(.2, .8, .2, 1);
   }
   @keyframes like-pop {
     0% {
@@ -308,6 +377,60 @@
     }
     100% {
       transform: scale(1.12);
+      opacity: 0;
+    }
+  }
+  @keyframes catFall {
+    0% {
+      transform: translateX(0%) translateY(0) rotate(0) rotateY(0deg);
+    }
+    20% {
+      transform: translateX(25%) translateY(0) rotate(-8deg) rotateY(180deg);
+    }
+    35% {
+      transform: translateX(10%) translateY(-5px) rotate(8deg) rotateY(0deg);
+    }
+    50% {
+      transform: translateX(0%) translateY(0) rotate(-12deg) rotateY(180deg);
+    }
+    65% {
+      transform: translateX(0%) translateY(0) rotate(12deg) rotateY(0deg);
+    }
+    80% {
+      transform: translateX(-10%) translateY(10px) rotate(-18deg) rotateY(180deg);
+    }
+    100% {
+      transform: translateX(-12%) translateY(30px) rotate(-90deg) rotateY(0deg);
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-10px);
+    }
+    40% {
+      transform: translateX(10px);
+    }
+    60% {
+      transform: translateX(-6px);
+    }
+    80% {
+      transform: translateX(6px);
+    }
+  }
+  @keyframes spinStar {
+    0% {
+      transform: rotate(0deg) translate(var(--orbit, 30px)) rotate(0deg);
+      opacity: 0;
+    }
+    1% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(360deg) translate(var(--orbit, 30px)) rotate(-360deg);
       opacity: 0;
     }
   }

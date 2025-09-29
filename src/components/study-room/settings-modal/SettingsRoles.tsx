@@ -5,22 +5,24 @@ import clsx from "clsx";
 import Image from "next/image";
 import CustomSelect from "@/components/CustomSelect";
 import Button from "@/components/Button";
+import type { Role as AppRole } from "@/@types/room";
 
-type Role = "staff" | "member" | "delete";
-type Filter = "all" | Exclude<Role, "delete">;
+type RoleEditable = Extract<AppRole, "staff" | "member">;
+type RoleSelectValue = RoleEditable | "delete";
+type Filter = "all" | RoleEditable;
 
 type User = {
   id: string;
   name: string;
   email: string;
-  role: Exclude<Role, "delete">;
-  isOwner?: boolean;
+  role: AppRole;      // owner 포함
+  isOwner?: boolean;  // 표시/잠금용
 };
 
 type RolesPatch = {
   added: User[];
   removed: string[];
-  updated: Array<{ id: string; role: User["role"] }>;
+  updated: Array<{ id: string; role: RoleEditable }>;
 };
 
 type Props = {
@@ -28,11 +30,6 @@ type Props = {
   className?: string;
   onSave?: (patch: RolesPatch, current: User[]) => Promise<void> | void;
 };
-
-const initialUsers: User[] = [
-  { id: "1", name: "김유하", email: "[userEmail@naver.com]", role: "member", isOwner: true },
-  { id: "2", name: "[userName]", email: "[userEmail@naver.com]", role: "member" },
-];
 
 const filterOptions = [
   { label: "전체", value: "all" as const },
@@ -46,7 +43,7 @@ const roleOptions = [
   { label: "삭제", value: "delete" as const, intent: "danger" as const },
 ] satisfies ReadonlyArray<{
   label: string;
-  value: Role;
+  value: RoleSelectValue;
   disabled?: boolean;
   intent?: "default" | "danger";
 }>;
@@ -57,14 +54,16 @@ function computePatch(base: User[], current: User[]): RolesPatch {
 
   const added: User[] = [];
   const removed: string[] = [];
-  const updated: Array<{ id: string; role: User["role"] }> = [];
+  const updated: Array<{ id: string; role: RoleEditable }> = [];
 
   for (const u of current) {
     const prev = baseMap.get(u.id);
     if (!prev) {
       added.push(u);
     } else if (prev.role !== u.role) {
-      updated.push({ id: u.id, role: u.role });
+      if (u.role === "staff" || u.role === "member") {
+        updated.push({ id: u.id, role: u.role });
+      }
     }
   }
   for (const u of base) {
@@ -74,16 +73,16 @@ function computePatch(base: User[], current: User[]): RolesPatch {
 }
 
 export default function SettingsRoles({ defaultUsers, className, onSave }: Props) {
-  const seed = defaultUsers ?? initialUsers;
-
+  // ✅ initialUsers 제거: defaultUsers ?? [] 로 시작
   const [inviteEmail, setInviteEmail] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [base, setBase] = useState<User[]>(seed);
-  const [users, setUsers] = useState<User[]>(seed);
+  const [base, setBase] = useState<User[]>(defaultUsers ?? []);
+  const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
   const [saving, setSaving] = useState(false);
 
+  // defaultUsers 변경 시 동기화
   useEffect(() => {
-    const next = defaultUsers ?? initialUsers;
+    const next = defaultUsers ?? [];
     setBase(next);
     setUsers(next);
   }, [defaultUsers]);
@@ -93,12 +92,14 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
     return users.filter((u) => u.role === filter || u.isOwner);
   }, [users, filter]);
 
-  const updateRole = (userId: string, next: Role) => {
+  const updateRole = (userId: string, next: RoleSelectValue) => {
     if (next === "delete") {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       return;
     }
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: next } : u)));
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: next } : u))
+    );
   };
 
   const onInvite = (e: React.FormEvent) => {
@@ -127,7 +128,6 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
       if (onSave) {
         await onSave(patch, users);
       } else {
-        // API 미연결
         console.log("[SettingsRoles] PATCH payload:", patch);
         console.log("[SettingsRoles] current snapshot:", users);
       }
@@ -164,7 +164,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
         <div className="mb-3 flex items-center justify-start">
           <CustomSelect<Filter>
             value={filter}
-            onChange={(v) => setFilter(v as Filter)}
+            onChange={(v) => setFilter(v)}
             options={filterOptions}
             placeholder="전체"
             size="md"
@@ -173,29 +173,35 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
         </div>
 
         {/* 사용자 리스트 */}
-        <ul className="flex flex-col gap-4 justify-center">
-          {visibleUsers.map((u) => (
-            <li key={u.id} className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate text-xs font-semibold text-text-primary">{u.name}</div>
-                <div className="truncate text-[10px] text-text-secondary">{u.email}</div>
-              </div>
+        {visibleUsers.length === 0 ? (
+          <div className="mt-8 text-center text-xs text-text-secondary">
+            아직 멤버가 없어요. 상단에서 이메일로 멤버를 초대해보세요!
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-4 justify-center">
+            {visibleUsers.map((u) => (
+              <li key={u.id} className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-text-primary">{u.name}</div>
+                  <div className="truncate text-[10px] text-text-secondary">{u.email}</div>
+                </div>
 
-              {u.isOwner ? (
-                <OwnerBadge />
-              ) : (
-                <CustomSelect<Role>
-                  value={u.role}
-                  onChange={(v) => updateRole(u.id, v as Role)}
-                  options={roleOptions}
-                  placeholder="멤버"
-                  size="sm"
-                  menuWidth="trigger"
-                />
-              )}
-            </li>
-          ))}
-        </ul>
+                {u.isOwner || u.role === "owner" ? (
+                  <OwnerBadge />
+                ) : (
+                  <CustomSelect<RoleSelectValue>
+                    value={u.role as RoleSelectValue} // 현재는 "staff" | "member"
+                    onChange={(v) => updateRole(u.id, v)}
+                    options={roleOptions}
+                    placeholder="멤버"
+                    size="sm"
+                    menuWidth="trigger"
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* 하단 우측 저장 버튼 */}

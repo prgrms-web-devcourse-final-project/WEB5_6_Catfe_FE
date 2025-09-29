@@ -4,7 +4,6 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import CustomSelect from "../CustomSelect";
 import Button from "../Button";
-import RoomPassword from "./RoomPassword";
 
 export type RoomInfoValue = {
   title: string;
@@ -91,12 +90,12 @@ function RoomInfo({
     [maxCap]
   );
 
-  const handlePrivacyChange = (s: { enabled: boolean; password: string }) => {
-    setIsPrivate(s.enabled);
-    const nextPwd =
-      s.enabled && s.password.trim().length > 0 ? s.password : null;
-    setPassword(nextPwd);
-  };
+  // const handlePrivacyChange = (s: { enabled: boolean; password: string }) => {
+  //   setIsPrivate(s.enabled);
+  //   const nextPwd =
+  //     s.enabled && s.password.trim().length > 0 ? s.password : null;
+  //   setPassword(nextPwd);
+  // };
 
   useEffect(() => {
     onChange?.({
@@ -156,14 +155,6 @@ function RoomInfo({
             className="w-full resize-none rounded-xl border border-text-secondary/60 bg-background-white px-3.5 py-2.5 outline-none focus:border-text-primary text-[10px]"
           />
         </div>
-
-        {/* 공개/비밀번호 섹션 */}
-        <RoomPassword
-          className="mt-1"
-          defaultEnabled={isPrivate}
-          defaultPassword={password ?? ""}
-          onChange={handlePrivacyChange}
-        />
 
         {/* 썸네일 변경 */}
         <div className="flex items-center justify-between">

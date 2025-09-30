@@ -29,8 +29,6 @@ export default function GuestHome() {
       {/* logo */}
       <section className="w-full flex flex-col justify-center items-center gap-16 py-5 md:py-6">
         <WalkingCat />
-        <h1 className="text-6xl font-bold tracking-wide">catfé</h1>
-        <WalkingCat />
       </section>
 
       {/* 2x2 썸네일 그리드 */}

@@ -1,7 +1,8 @@
 "use client";
+
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 
 import cat1 from "@/assets/cats/cat-1.svg";
 import cat2 from "@/assets/cats/cat-2.svg";
@@ -20,10 +21,20 @@ import cat14 from "@/assets/cats/cat-14.svg";
 import cat15 from "@/assets/cats/cat-15.svg";
 import cat16 from "@/assets/cats/cat-16.svg";
 
-function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
-  const trackRef = useRef(null);
-  const aRef = useRef(null);
-  const bRef = useRef(null);
+type Direction = "rtl" | "ltr";
+type ImgSrc = StaticImageData | string;
+
+type MarqueeRowProps = {
+  items: ImgSrc[];
+  direction?: Direction;
+  speed?: number;
+  gap?: number;
+};
+
+function MarqueeRow({ items, direction = "rtl", speed = 120 }: MarqueeRowProps) {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const aRef = useRef<HTMLDivElement | null>(null);
+  const bRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -31,10 +42,17 @@ function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
     const b = bRef.current;
     if (!track || !a || !b) return;
 
-    const faces = track.querySelectorAll(".cat-face");
-    gsap.set(faces, { scaleX: direction === "rtl" ? -1 : 1, transformOrigin: "50% 50%", force3D: true });
+    // 이미지 좌우 반전
+    const faces = track.querySelectorAll<HTMLImageElement>(".cat-face");
+    gsap.set(faces, {
+      scaleX: direction === "rtl" ? 1 : -1,
+      transformOrigin: "50% 50%",
+      force3D: true,
+    });
 
-    gsap.to(track.querySelectorAll(".cat-wrap"), {
+    // 살짝 위아래 튕김
+    const wraps = track.querySelectorAll<HTMLDivElement>(".cat-wrap");
+    gsap.to(wraps, {
       y: -10,
       repeat: -1,
       yoyo: true,
@@ -62,7 +80,7 @@ function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
         ease: "none",
         repeat: -1,
         onUpdate: () => {
-          const t = state.x % w; // 0~w
+          const t = state.x % w;
           if (direction === "rtl") {
             gsap.set(a, { x: -t, autoRound: false });
             gsap.set(b, { x: -t + w, autoRound: false });
@@ -81,7 +99,7 @@ function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
     return () => {
       gsap.killTweensOf(state);
       ro.disconnect();
-      gsap.killTweensOf(track.querySelectorAll(".cat-wrap"));
+      gsap.killTweensOf(wraps);
     };
   }, [direction, speed]);
 
@@ -90,24 +108,37 @@ function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
       {/* 블록 A */}
       <div
         ref={aRef}
-        className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end"
-        style={{ gap }}
+        className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end px-2 gap-4"
       >
         {items.map((src, i) => (
           <div key={`a-${i}`} className="cat-wrap">
-            <Image src={src} alt={`cat-${i + 1}`} width={40} height={40} className="cat-face" draggable={false} />
+            <Image
+              src={src}
+              alt={`cat-${i + 1}`}
+              width={40}
+              height={40}
+              className="cat-face"
+              draggable={false}
+            />
           </div>
         ))}
       </div>
+
       {/* 블록 B (동일 콘텐츠) */}
       <div
         ref={bRef}
-        className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end"
-        style={{ gap }}
+        className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end px-2 gap-4"
       >
         {items.map((src, i) => (
           <div key={`b-${i}`} className="cat-wrap">
-            <Image src={src} alt={`cat-${i + 1}`} width={40} height={40} className="cat-face" draggable={false} />
+            <Image
+              src={src}
+              alt={`cat-${i + 1}`}
+              width={40}
+              height={40}
+              className="cat-face"
+              draggable={false}
+            />
           </div>
         ))}
       </div>
@@ -116,14 +147,18 @@ function MarqueeRow({ items, direction = "rtl", speed = 120, gap = 18 }) {
 }
 
 export default function WalkingCat() {
-  const sources = [cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8, cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16];
+  const sources: ImgSrc[] = [
+    cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8,
+    cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16,
+  ];
 
   return (
     <div className="w-full flex flex-col gap-6">
       {/* 위 줄: 오른쪽 → 왼쪽 */}
-      <MarqueeRow items={sources} direction="rtl" speed={120} gap={18} />
-      {/* 아래 줄: 왼쪽 → 오른쪽 (살짝 다른 속도로 리듬감) */}
-      <MarqueeRow items={sources} direction="ltr" speed={140} gap={18} />
+      <MarqueeRow items={sources} direction="ltr" speed={120} />
+      <h1 className="text-6xl font-bold tracking-wide text-center py-5">catfé</h1>
+      {/* 아래 줄: 왼쪽 → 오른쪽 */}
+      <MarqueeRow items={sources} direction="rtl" speed={120} />
     </div>
   );
 }

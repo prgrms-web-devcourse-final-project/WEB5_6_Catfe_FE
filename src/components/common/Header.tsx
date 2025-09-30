@@ -57,7 +57,6 @@ function Header() {
   if (!isHydrated) {
     return null;
   }
-console.log("[Header] 렌더링됨, user:", user, "isHydrated:", isHydrated);
   return (
     <>
     <header className={`fixed top-0 left-0 w-full h-[56px] flex items-center justify-between px-10 border-b border-[var(--color-primary-500)] bg-[var(--color-background-base)] transition-transform duration-300 ${

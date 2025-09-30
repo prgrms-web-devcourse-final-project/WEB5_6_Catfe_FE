@@ -33,17 +33,19 @@ export default function GuestHome() {
 
       {/* 2x2 썸네일 그리드 */}
       <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12.5 py-5 md:py-6 justify-items-center">
-        <div className="aspect-[16/10] w-full bg-secondary-200 border border-black/10 rounded-xl grid place-items-center">
-          📷
+        <div
+          className="aspect-[16/10] w-full border border-black/10 rounded-xl grid place-items-center bg-[url('/image/home-descript-1.png')] bg-[length:100%_100%] bg-no-repeat"
+        >
+          캣페 서비스 소개 1
         </div>
         <div className="aspect-[16/10] w-full bg-secondary-200 border border-black/10 rounded-xl grid place-items-center">
-          📷
+          캣페 서비스 소개 2
         </div>
         <div className="aspect-[16/10] w-full bg-secondary-200 border border-black/10 rounded-xl grid place-items-center">
-          📷
+          캣페 특징 소개 1
         </div>
         <div className="aspect-[16/10] w-full bg-secondary-200 border border-black/10 rounded-xl grid place-items-center">
-          📷
+          캣페 특징 소개 2
         </div>
       </section>
 

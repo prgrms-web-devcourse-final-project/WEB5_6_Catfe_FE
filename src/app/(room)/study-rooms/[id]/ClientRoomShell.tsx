@@ -9,7 +9,7 @@ import Image from "next/image";
 import SettingsModal from "@/components/study-room/settings-modal/SettingsModal";
 import InviteShareModal from "@/components/study-room/InviteShareModal";
 import UsersModal from "@/components/study-room/online-users/UsersModal";
-import { useRoomStore } from "@/stores/room.store";
+import { useRoomStore } from "@/store/room.store";
 import useEscapeKey from "@/hook/useEscapeKey";
 
 type Props = {

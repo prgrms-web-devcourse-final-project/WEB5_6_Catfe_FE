@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StudyRoomCard from "@/components/study-room/StudyRoomCard";
 import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
-import { useRoomStore } from "@/stores/room.store";
+import { useRoomStore } from "@/store/room.store";
 import type { RoomSnapshot } from "@/@types/room";
 
 export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {

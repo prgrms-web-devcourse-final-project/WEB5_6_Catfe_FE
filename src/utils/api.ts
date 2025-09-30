@@ -1,5 +1,5 @@
 // src/utils/api.ts
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig } from 'axios';
 
 let accessToken: string | null = null;
 let isRefreshing = false;
@@ -8,25 +8,25 @@ let refreshSubscribers: ((token: string) => void)[] = [];
 // 토큰 저장 및 localStorage 반영
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     if (token) {
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem('accessToken', token);
     } else {
-      localStorage.removeItem("accessToken");
+      localStorage.removeItem('accessToken');
     }
   }
 };
 
 // 앱 시작 시 localStorage → 메모리 복구
-if (typeof window !== "undefined") {
-  accessToken = localStorage.getItem("accessToken");
+if (typeof window !== 'undefined') {
+  accessToken = localStorage.getItem('accessToken');
   if (accessToken) {
   }
 }
 
 // refreshToken 쿠키 자동 전송
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   withCredentials: true,
 });
 
@@ -37,7 +37,6 @@ api.interceptors.request.use((config) => {
       ...config.headers,
       Authorization: `Bearer ${accessToken}`,
     };
-  } else {
   }
   return config;
 });
@@ -57,7 +56,7 @@ api.interceptors.response.use(
     // 401 → AccessToken 만료
     if (err.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.warn("[401 감지] AccessToken 만료 → refresh 시도");
+      console.warn('[401 감지] AccessToken 만료 → refresh 시도');
 
       if (isRefreshing) {
         return new Promise((resolve) => {
@@ -74,7 +73,7 @@ api.interceptors.response.use(
       isRefreshing = true;
       try {
         const refreshRes = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/refresh`,
           null,
           { withCredentials: true }
         );
@@ -92,7 +91,7 @@ api.interceptors.response.use(
 
         return api.request(originalRequest);
       } catch (refreshErr) {
-        console.error("[refresh 실패] → 강제 로그아웃");
+        console.error('[refresh 실패] → 강제 로그아웃');
         setAccessToken(null);
         return Promise.reject(refreshErr);
       } finally {

@@ -1,7 +1,7 @@
 'use client';
 
 import { UpdateUserBody, User } from '@/@types/type';
-import { apiGetMe, apiPatchMe } from '@/utils/api/apiUsersMe';
+import { apiGetMe, apiPatchMe } from '@/api/apiUsersMe';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useProfileSetting() {

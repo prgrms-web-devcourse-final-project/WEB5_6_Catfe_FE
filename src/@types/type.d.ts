@@ -1,19 +1,38 @@
+export type ApiResponse<T> = {
+  success: boolean;
+  code: string;
+  message: string;
+  data: T;
+};
+
 export type User = {
-  user_id: string;
+  userId: number;
   username: string;
   email: string;
   role: 'USER' | 'ADMIN';
-  provider: string;
-  provider_id: string;
   status: string; // 실제 STATUS ENUM으로 수정 필요
+  provider: string;
+  providerId: string | null;
+  profile: UserProfile;
+  createdAt: string;
+  updatedAt: string;
 };
 
+// 최초 회원가입 시 받는 정보(nickname)가 아니면 undefined? null??
 export type UserProfile = {
-  user_id: string;
   nickname: string;
-  profile_image_url?: string | null;
-  bio: string;
-  point: number;
+  profileImageUrl?: string;
+  bio?: string;
+  birthDate?: string | null;
+  point?: number;
+};
+
+// /api/users/me PATCH 용 Requset Body
+export type UpdateUserBody = {
+  nickname: string;
+  profileImageUrl: string | null;
+  bio: string | null;
+  birthDate: string | null;
 };
 
 export type PaginationItemType = 'first' | 'prev' | 'page' | 'ellipsis' | 'next' | 'last';
@@ -24,4 +43,16 @@ export type PaginationItem = {
   page?: number;
   selected?: boolean;
   disabled?: boolean;
+};
+
+export type ConfirmTone = 'default' | 'success' | 'danger';
+
+export type ConfirmOptions = {
+  title?: string;
+  description?: React.ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  tone?: ConfirmTone;
+  icon?: React.ReactNode;
+  busy?: boolean;
 };

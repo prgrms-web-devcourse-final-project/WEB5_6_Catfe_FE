@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import QueryProvider from '@/provider/QueryProvider';
 import InitAuth from './InitAuth';
+import { ConfirmHost } from '@/components/ConfirmModal';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -38,6 +39,7 @@ export default function RootLayout({
           <InitAuth />
           <main>{children}</main>
         </QueryProvider>
+        <ConfirmHost />
         <ToastContainer
           position="top-right"
           theme="colored"

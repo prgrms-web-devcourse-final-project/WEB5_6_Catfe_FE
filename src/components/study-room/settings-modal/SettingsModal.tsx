@@ -9,7 +9,7 @@ import SettingsSecurity from "./SettingsSecurity";
 import SettingsRoles from "./SettingsRoles";
 import SettingsNotice from "./SettingsNotice";
 import type { RoomInfo } from "@/@types/room";
-import { useRoomStore } from "@/stores/room.store";
+import { useRoomStore } from "@/store/room.store";
 import { RoomInfoValue } from "../RoomInfo";
 
 export type TabKey = "general" | "security" | "roles" | "notice";

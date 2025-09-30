@@ -11,7 +11,7 @@ export type ChangePasswordReqBody = {
 export async function apiChangePassword(
   payload: ChangePasswordReqBody
 ): Promise<ApiResponse<null>> {
-  const { data: res } = await api.patch<ApiResponse<null>>('/users/me/password', payload);
+  const { data: res } = await api.patch<ApiResponse<null>>('/api/users/me/password', payload);
   if (!res.success) throw new Error(`PATCH /api/users/me/ failed: ${res.message}`);
   return res;
 }

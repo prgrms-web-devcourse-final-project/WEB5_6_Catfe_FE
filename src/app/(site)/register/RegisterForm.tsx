@@ -28,11 +28,10 @@ function RegisterForm() {
       return;
     }
 
-  const passwordRegex =
-    /^(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
+  const passwordRegex = /^(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
 
   if (!passwordRegex.test(password)) {
-    setError("비밀번호는 최소 8자 이상이며, 특수문자를 1개 이상 포함해야 합니다.");
+    setError("비밀번호는 최소 8자 이상이며, 숫자와 특수문자를 각각 1개 이상 포함해야 합니다.");
     return;
   }
 
@@ -158,10 +157,10 @@ function RegisterForm() {
           />
         </button>
       </div>
-      {/* 이름 */}
+      {/* 닉네임 */}
       <div className="relative">
         <label htmlFor="register-name" className="sr-only">
-          이름
+          닉네임
         </label>
         <input
           id="register-name"

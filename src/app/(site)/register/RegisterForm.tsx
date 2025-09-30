@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Button from '@/components/Button';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { register } from '@/api/auth';
+import { AxiosError } from "axios";
+import showToast from '@/utils/showToast';
 
 function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +19,7 @@ function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -24,17 +28,37 @@ function RegisterForm() {
       return;
     }
 
-    setError('');
+  const passwordRegex =
+    /^(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
 
+  if (!passwordRegex.test(password)) {
+    setError("비밀번호는 최소 8자 이상이며, 특수문자를 1개 이상 포함해야 합니다.");
+    return;
+  }
+
+    setError('');
     setLoading(true);
+
     try {
-      router.replace('/');
+      await register({
+        username: id,
+        email,
+        password,
+        nickname: name,
+      });
+      showToast("success", "회원가입이 완료되었습니다. 로그인 해주세요.");
+      router.replace('/login'); 
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '회원가입 처리 중 오류가 발생했습니다. ';
+      const axiosError = err as AxiosError<{ message: string }>;
+      const msg =
+        axiosError.response?.data?.message || "회원가입 처리 중 오류가 발생했습니다.";
       setError(msg);
-      setLoading(false);
-    }
-  };
+      showToast("error", msg);
+    } finally {
+          setLoading(false);
+        }
+      };
+
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -142,7 +166,7 @@ function RegisterForm() {
         <input
           id="register-name"
           type="text"
-          placeholder="Name"
+          placeholder="Nickname"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full h-[64px] pl-10 pr-4 border border-black rounded-md"

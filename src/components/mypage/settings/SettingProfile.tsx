@@ -94,7 +94,7 @@ function SettingProfile() {
   if (isLoading) return <Spinner />;
 
   return (
-    <div className="flex flex-col gap-5 w-full">
+    <section className="flex flex-col gap-5 w-full">
       <h3>프로필 설정</h3>
       <hr />
       <div className="flex gap-8">
@@ -181,7 +181,7 @@ function SettingProfile() {
           취소
         </Button>
       )}
-    </div>
+    </section>
   );
 }
 export default SettingProfile;

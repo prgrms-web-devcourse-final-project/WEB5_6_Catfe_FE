@@ -94,64 +94,29 @@ function ChangePassword() {
     setShowCurPw(false);
     setShowNewPw(false);
     setShowPwConfirm(false);
+    setErrorMsg('');
   };
 
   return (
-    <div className="flex flex-col gap-5 w-full">
+    <section className="flex flex-col gap-5 w-full">
       <h3>비밀번호 변경</h3>
       <hr />
       <form onSubmit={onSubmit} className="flex flex-col gap-5 w-full">
         {/* 현재 비밀번호 */}
-        <div className="relative w-1/2 h-[64px]">
+        <div className="w-1/2 flex flex-col gap-2">
           <label htmlFor="current-password" className="font-light text-sm">
             현재 비밀번호
           </label>
-          <input
-            id="current-password"
-            name="current-password"
-            type={showCurPw ? 'text' : 'password'}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Current Password"
-            required
-            className="w-full h-full pl-10 pr-10 border border-gray-400 rounded-md"
-          />
-          <Image
-            src="/icon/pwIcon.svg"
-            alt=""
-            width={20}
-            height={20}
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-          />
-          <button
-            type="button"
-            onClick={() => setShowCurPw((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            aria-label={showCurPw ? '비밀번호 숨기기' : '비밀번호 보기'}
-          >
-            <Image
-              src={showCurPw ? '/icon/blind.svg' : '/icon/closed.svg'}
-              alt="비밀번호 보기"
-              width={20}
-              height={20}
-            />
-          </button>
-        </div>
-        <div className="flex gap-2">
-          {/* 새로운 비밀번호 */}
-          <div className="relative w-full h-[64px]">
-            <label htmlFor="new-password" className="font-light text-sm">
-              새로운 비밀번호
-            </label>
+          <div className="relative focus-within:outline-none focus-within:ring-2 focus-within:ring-secondary-400 py-2 border border-gray-400 rounded-md">
             <input
-              id="new-password"
-              name="new-password"
-              type={showNewPw ? 'text' : 'password'}
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              id="current-password"
+              name="current-password"
+              type={showCurPw ? 'text' : 'password'}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current Password"
               required
-              className="w-full h-full pl-10 pr-10 border border-gray-400 rounded-md"
+              className="w-full h-full px-10 focus:outline-none"
             />
             <Image
               src="/icon/pwIcon.svg"
@@ -162,53 +127,95 @@ function ChangePassword() {
             />
             <button
               type="button"
-              onClick={() => setShowNewPw((prev) => !prev)}
+              onClick={() => setShowCurPw((prev) => !prev)}
               className="absolute right-3 top-1/2 -translate-y-1/2"
-              aria-label={showNewPw ? '비밀번호 숨기기' : '비밀번호 보기'}
+              aria-label={showCurPw ? '비밀번호 숨기기' : '비밀번호 보기'}
             >
               <Image
-                src={showNewPw ? '/icon/blind.svg' : '/icon/closed.svg'}
+                src={showCurPw ? '/icon/blind.svg' : '/icon/closed.svg'}
                 alt="비밀번호 보기"
                 width={20}
                 height={20}
               />
             </button>
           </div>
+        </div>
+        <div className="flex gap-2">
+          {/* 새로운 비밀번호 */}
+          <div className="w-full flex flex-col gap-2">
+            <label htmlFor="new-password" className="font-light text-sm">
+              새로운 비밀번호
+            </label>
+            <div className="relative focus-within:outline-none focus-within:ring-2 focus-within:ring-secondary-400 py-2 border border-gray-400 rounded-md">
+              <input
+                id="new-password"
+                name="new-password"
+                type={showNewPw ? 'text' : 'password'}
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="w-full h-full px-10 focus:outline-none"
+              />
+              <Image
+                src="/icon/pwIcon.svg"
+                alt=""
+                width={20}
+                height={20}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPw((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-label={showNewPw ? '비밀번호 숨기기' : '비밀번호 보기'}
+              >
+                <Image
+                  src={showNewPw ? '/icon/blind.svg' : '/icon/closed.svg'}
+                  alt="비밀번호 보기"
+                  width={20}
+                  height={20}
+                />
+              </button>
+            </div>
+          </div>
           {/* 비밀번호 확인 */}
-          <div className="relative w-full h-[64px]">
+          <div className="w-full flex flex-col gap-2">
             <label htmlFor="confirm-password" className="font-light text-sm">
               새로운 비밀번호 확인
             </label>
-            <input
-              id="confirm-password"
-              name="confirm-password"
-              type={showPwConfirm ? 'text' : 'password'}
-              placeholder="Password Confirm"
-              value={pwConfirm}
-              onChange={(e) => setPwConfirm(e.target.value)}
-              required
-              className="w-full h-full pl-10 pr-10 border border-gray-400 rounded-md"
-            />
-            <Image
-              src="/icon/pwIcon.svg"
-              alt="비밀번호 확인"
-              width={20}
-              height={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPwConfirm((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-              aria-label={showPwConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
-            >
+            <div className="relative focus-within:outline-none focus-within:ring-2 focus-within:ring-secondary-400 py-2 border border-gray-400 rounded-md">
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type={showPwConfirm ? 'text' : 'password'}
+                placeholder="Password Confirm"
+                value={pwConfirm}
+                onChange={(e) => setPwConfirm(e.target.value)}
+                required
+                className="w-full h-full px-10 focus:outline-none"
+              />
               <Image
-                src={showPwConfirm ? '/icon/blind.svg' : '/icon/closed.svg'}
-                alt="비밀번호 보기"
+                src="/icon/pwIcon.svg"
+                alt="비밀번호 확인"
                 width={20}
                 height={20}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
               />
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowPwConfirm((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-label={showPwConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
+              >
+                <Image
+                  src={showPwConfirm ? '/icon/blind.svg' : '/icon/closed.svg'}
+                  alt="비밀번호 보기"
+                  width={20}
+                  height={20}
+                />
+              </button>
+            </div>
           </div>
         </div>
         {errorMsg && <p className="text-error-500">{errorMsg}</p>}
@@ -231,7 +238,7 @@ function ChangePassword() {
           </Button>
         )}
       </form>
-    </div>
+    </section>
   );
 }
 export default ChangePassword;

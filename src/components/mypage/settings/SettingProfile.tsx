@@ -8,12 +8,16 @@ import { useConfirm } from '@/hook/useConfirm';
 import { useProfileSetting } from '@/hook/useProfileSetting';
 import showToast from '@/utils/showToast';
 import Spinner from '@/components/Spinner';
+import { Info } from 'lucide-react';
+
+const MAX_BIO_LIMIT = 300;
+
+// !! Error 처리 아직 안함 추가 필요 !!
 
 function SettingProfile() {
   const confirm = useConfirm();
   const { data: me, isLoading, saveProfile, saving } = useProfileSetting();
 
-  // !! 임시 데이터 (apiGetMe로 초기 데이터 받아야함)
   const initial = useMemo(() => {
     if (!me) return null;
     const flat: Partial<User> & UserProfile = {
@@ -32,6 +36,7 @@ function SettingProfile() {
   const [nickname, setNickname] = useState<string>('');
   const [bio, setBio] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const maxLength = MAX_BIO_LIMIT;
 
   useEffect(() => {
     if (!initial) return;
@@ -89,7 +94,7 @@ function SettingProfile() {
   if (isLoading) return <Spinner />;
 
   return (
-    <div className="flex flex-col gap-5 w-full">
+    <section className="flex flex-col gap-5 w-full">
       <h3>프로필 설정</h3>
       <hr />
       <div className="flex gap-8">
@@ -117,7 +122,8 @@ function SettingProfile() {
               }}
               className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400 appearance-none"
             />
-            <span className="font-light text-sm text-text-secondary">
+            <span className="font-light text-xs text-zinc-400 text-left flex gap-1">
+              <Info className="w-4 h-4" />
               스터디룸에서 표시될 이름입니다.
             </span>
           </div>
@@ -126,21 +132,30 @@ function SettingProfile() {
               자기소개
             </label>
             <textarea
-              id="user-bio-setting"
-              placeholder="Bio"
               value={bio}
               onChange={(e) => {
                 setBio(e.target.value);
                 setIsEditing(true);
               }}
-              maxLength={300}
-              className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400 appearance-none"
+              rows={6}
+              placeholder="자기소개를 입력해주세요"
+              aria-describedby="bio-help bio-error"
+              className="w-full rounded-lg border border-zinc-300 p-3 outline-none focus:ring-1 focus:ring-secondary-400 bg-background-white text-sm resize-none"
+              maxLength={maxLength}
             />
+            <div className="flex items-center justify-end text-sm text-text-secondary/50">
+              <span>
+                <strong className={bio.length > maxLength ? 'text-error-500' : ''}>
+                  {bio.length}
+                </strong>{' '}
+                / {maxLength}
+              </span>
+            </div>
           </div>
         </div>
         <div className="w-1/3">
           <SettingAvatar
-            avatarUrl={avatarUrl ?? ''}
+            avatarUrl={avatarUrl}
             onChange={(v) => {
               setAvatarUrl(v);
               setIsEditing(true);
@@ -166,7 +181,7 @@ function SettingProfile() {
           취소
         </Button>
       )}
-    </div>
+    </section>
   );
 }
 export default SettingProfile;

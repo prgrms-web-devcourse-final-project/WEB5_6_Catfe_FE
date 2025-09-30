@@ -3,6 +3,7 @@
 import { NotificationType } from '@/@types/notification';
 import Button from '@/components/Button';
 import ToggleButton from '@/components/ToggleButton';
+import { useConfirm } from '@/hook/useConfirm';
 import showToast from '@/utils/showToast';
 import { useMemo, useState } from 'react';
 
@@ -20,6 +21,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 function SettingNotification() {
+  const confirm = useConfirm();
+
   const [initial, setInitial] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
@@ -63,6 +66,20 @@ function SettingNotification() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = async () => {
+    if (hasChanged) {
+      const ok = await confirm({
+        title: '알림 설정 변경을 취소하시겠습니까?',
+        description: <>변경 중인 사항은 저장되지 않습니다.</>,
+        confirmText: '취소하기',
+        cancelText: '돌아가기',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
+    setSettings(initial);
   };
 
   return (
@@ -121,6 +138,16 @@ function SettingNotification() {
       >
         {saving ? '저장 중...' : '변경사항 저장'}
       </Button>
+      {hasChanged && (
+        <Button
+          size="md"
+          borderType="outline"
+          className="rounded-full mx-auto"
+          onClick={handleCancel}
+        >
+          취소
+        </Button>
+      )}
     </section>
   );
 }

@@ -70,7 +70,7 @@ export default function SettingsGeneral({
         {/* 좌측: 입력 영역 */}
         <div className="flex-1">
           <RoomInfo
-            defaultValue={info}
+            value={info}
             onChange={setInfo}
             mediaEnabled={!!info.mediaEnabled}
           />

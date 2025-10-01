@@ -86,8 +86,8 @@ export default function SettingsSecurity({
       <div>
         <RoomPassword
           className="mb-4"
-          defaultEnabled={info.isPrivate}
-          defaultPassword={info.password ?? ""}
+          enabled={info.isPrivate}
+          password={info.password ?? ""}
           onChange={(s) =>
             setInfo(prev => ({
               ...prev,

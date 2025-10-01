@@ -1,43 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import Toggle from "@/components/Toggle";
 import Image from "next/image";
 
 type Props = {
-  defaultEnabled?: boolean;
-  defaultPassword?: string;
-  onChange?: (s: { enabled: boolean; password: string }) => void;
+  enabled: boolean;
+  password: string;
+  onChange: (s: { enabled: boolean; password: string }) => void;
   className?: string;
 };
 
-function RoomPassword({
-  defaultEnabled = false,
-  defaultPassword = "",
-  onChange,
-  className,
-}: Props) {
-  const [enabled, setEnabled] = useState(defaultEnabled);
-  const [password, setPassword] = useState(defaultPassword);
+function RoomPassword({ enabled, password, onChange, className }: Props) {
   const [show, setShow] = useState(false);
 
-  const onChangeRef = useRef<typeof onChange>(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
+  const setEnabled = useCallback(
+    (next: boolean) => {
+      onChange({ enabled: next, password: next ? password : "" });
+    },
+    [onChange, password]
+  );
 
-  useEffect(() => {
-    onChangeRef.current?.({ enabled, password });
-  }, [enabled, password]);
-
-  useEffect(() => {
-    setEnabled(defaultEnabled);
-  }, [defaultEnabled]);
-
-  useEffect(() => {
-    setPassword(defaultPassword);
-  }, [defaultPassword]);
+  const setPassword = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange({ enabled, password: e.target.value });
+    },
+    [onChange, enabled]
+  );
 
   return (
     <div className={clsx("w-full", className)}>
@@ -60,7 +50,7 @@ function RoomPassword({
           <input
             type={show ? "text" : "password"}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             placeholder="비밀번호를 입력해 주세요"
             className="w-full text-[10px] rounded-xl border border-text-secondary/60 bg-background-white px-3.5 py-2.5 text-text-primary outline-none pr-9"
             tabIndex={enabled ? 0 : -1}

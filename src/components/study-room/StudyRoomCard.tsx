@@ -33,7 +33,7 @@ export default function StudyRoomCard({
     >
       {/* 상단: 썸네일 영역 */}
       <div className="relative">
-        <div className="relative h-full w-full bg-secondary-500 sm:h-40">
+        <div className="relative min-h-40 w-full flex justify-center items-center bg-secondary-500">
           {coverSrc ? (
             <Image
               src={coverSrc}

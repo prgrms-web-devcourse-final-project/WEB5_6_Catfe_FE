@@ -61,7 +61,7 @@ function MyPageSidebar() {
   // 유저 정보 (!! 임시 -> 전역 상태에서 받아서 관리할 것 !!)
   const user: Partial<UserProfile> = {
     nickname: 'Prong FE',
-    profile_image_url: Cat7,
+    profileImageUrl: Cat7,
   };
 
   return (
@@ -141,7 +141,7 @@ function MyPageSidebar() {
         >
           <div className="size-8 rounded-full border-2 border-gray-400 overflow-hidden relative">
             <Image
-              src={user.profile_image_url ?? '/image/cat-default.svg'}
+              src={user.profileImageUrl ?? '/image/cat-default.svg'}
               alt={user.nickname ?? '프로필 사진'}
               fill
             />

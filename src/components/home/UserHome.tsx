@@ -38,7 +38,7 @@ export default function UserHome({ user }: { user: User }) {
       </section>
 
       {/* 콘텐츠 컨테이너 */}
-      <div className="max-w-[1200px] w-full pt-8">
+      <div className="max-w-[1200px] w-full pt-8  px-10 py-8 sm:px-[100px] sm:pb-[60px]">
         {/* 인사 + 검색 + 새로 만들기 */}
         <div className="flex justify-between mb-10">
           <div className="flex items-center gap-2">

@@ -5,7 +5,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2001',
     type: 'room_join',
-    actor: { nickname: users[3].nickname, avatarUrl: users[3].profile_image_url as string }, // Dana
+    actor: { nickname: users[3].nickname, avatarUrl: users[3].profileImageUrl as string }, // Dana
     entity: { roomId: 'r42' },
     title: '모각코: 리액트 상태관리',
     message:
@@ -17,7 +17,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2002',
     type: 'room_notice',
-    actor: { nickname: users[6].nickname, avatarUrl: users[6].profile_image_url as string }, // Grace
+    actor: { nickname: users[6].nickname, avatarUrl: users[6].profileImageUrl as string }, // Grace
     entity: { roomId: 'r42' },
     title: '모각코: 리액트 상태관리',
     message:
@@ -29,7 +29,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2003',
     type: 'post_comment',
-    actor: { nickname: users[12].nickname, avatarUrl: users[12].profile_image_url as string }, // Milo
+    actor: { nickname: users[12].nickname, avatarUrl: users[12].profileImageUrl as string }, // Milo
     entity: { postId: 'p88' },
     title: 'Next.js 이미지 최적화 팁',
     message:
@@ -41,7 +41,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2004',
     type: 'like_received_post',
-    actor: { nickname: users[0].nickname, avatarUrl: users[0].profile_image_url as string }, // Alice
+    actor: { nickname: users[0].nickname, avatarUrl: users[0].profileImageUrl as string }, // Alice
     entity: { postId: 'p88' },
     title: 'Next.js 이미지 최적화 팁',
     message:
@@ -52,7 +52,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2005',
     type: 'like_received_comment',
-    actor: { nickname: users[1].nickname, avatarUrl: users[1].profile_image_url as string }, // Bob
+    actor: { nickname: users[1].nickname, avatarUrl: users[1].profileImageUrl as string }, // Bob
     entity: { postId: 'p92', commentId: 'c12' },
     title: '댓글: 상태 관리는 신중하게',
     message:
@@ -63,7 +63,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2006',
     type: 'room_join',
-    actor: { nickname: users[4].nickname, avatarUrl: users[4].profile_image_url as string }, // Eden
+    actor: { nickname: users[4].nickname, avatarUrl: users[4].profileImageUrl as string }, // Eden
     entity: { roomId: 'r7' },
     title: '모각코: TypeScript 치트시트',
     message:
@@ -74,7 +74,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2007',
     type: 'room_notice',
-    actor: { nickname: users[10].nickname, avatarUrl: users[10].profile_image_url as string }, // Kane
+    actor: { nickname: users[10].nickname, avatarUrl: users[10].profileImageUrl as string }, // Kane
     entity: { roomId: 'r7' },
     title: '모각코: TypeScript 치트시트',
     message:
@@ -86,7 +86,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2008',
     type: 'post_comment',
-    actor: { nickname: users[14].nickname, avatarUrl: users[14].profile_image_url as string }, // Orin
+    actor: { nickname: users[14].nickname, avatarUrl: users[14].profileImageUrl as string }, // Orin
     entity: { postId: 'p71' },
     title: 'React 19 Actions 정리',
     message:
@@ -97,7 +97,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2009',
     type: 'like_received_post',
-    actor: { nickname: users[8].nickname, avatarUrl: users[8].profile_image_url as string }, // Iris
+    actor: { nickname: users[8].nickname, avatarUrl: users[8].profileImageUrl as string }, // Iris
     entity: { postId: 'p71' },
     title: 'React 19 Actions 정리',
     message:
@@ -108,7 +108,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2010',
     type: 'post_comment',
-    actor: { nickname: users[2].nickname, avatarUrl: users[2].profile_image_url as string }, // Charlie
+    actor: { nickname: users[2].nickname, avatarUrl: users[2].profileImageUrl as string }, // Charlie
     entity: { postId: 'p95' },
     title: 'Edge Functions로 웹훅 처리하기',
     message:
@@ -119,7 +119,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2011',
     type: 'like_received_comment',
-    actor: { nickname: users[7].nickname, avatarUrl: users[7].profile_image_url as string }, // Hugh
+    actor: { nickname: users[7].nickname, avatarUrl: users[7].profileImageUrl as string }, // Hugh
     entity: { postId: 'p95', commentId: 'c44' },
     title: '댓글: 함수형 업데이트가 필요한 순간',
     message:
@@ -130,7 +130,7 @@ export const MOCK_ASIDE_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2012',
     type: 'room_join',
-    actor: { nickname: users[15].nickname, avatarUrl: users[15].profile_image_url as string }, // Pia
+    actor: { nickname: users[15].nickname, avatarUrl: users[15].profileImageUrl as string }, // Pia
     entity: { roomId: 'r108' },
     title: '모각코: 픽셀아트 배경 꾸미기 ✨☕️🎨',
     message:

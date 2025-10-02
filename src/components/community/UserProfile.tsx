@@ -24,7 +24,7 @@ function UserProfile({
         )}
       >
         <Image
-          src={author.profile_image_url ?? '/image/cat-default.svg'}
+          src={author.profileImageUrl ?? '/image/cat-default.svg'}
           alt={author.nickname}
           width={isComment ? 20 : 30}
           height={isComment ? 20 : 30}

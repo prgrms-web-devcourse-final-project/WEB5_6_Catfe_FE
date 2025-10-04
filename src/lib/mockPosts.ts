@@ -21,22 +21,22 @@ import Cat16 from '@/assets/cats/cat-16.svg';
 // ────────────────────────────────────────────
 // Users
 export const users: UserSummary[] = [
-  { user_id: 'u1', nickname: 'Alice', profile_image_url: Cat1 },
-  { user_id: 'u2', nickname: 'Bob', profile_image_url: Cat2 },
-  { user_id: 'u3', nickname: 'Charlie', profile_image_url: Cat3 },
-  { user_id: 'u4', nickname: 'Dana', profile_image_url: Cat4 },
-  { user_id: 'u5', nickname: 'Eden', profile_image_url: Cat5 },
-  { user_id: 'u6', nickname: 'Finn', profile_image_url: Cat6 },
-  { user_id: 'u7', nickname: 'Grace', profile_image_url: Cat7 },
-  { user_id: 'u8', nickname: 'Hugh', profile_image_url: Cat8 },
-  { user_id: 'u9', nickname: 'Iris', profile_image_url: Cat9 },
-  { user_id: 'u10', nickname: 'Juno', profile_image_url: Cat10 },
-  { user_id: 'u11', nickname: 'Kane', profile_image_url: Cat11 },
-  { user_id: 'u12', nickname: 'Lia', profile_image_url: Cat12 },
-  { user_id: 'u13', nickname: 'Milo', profile_image_url: Cat13 },
-  { user_id: 'u14', nickname: 'Nina', profile_image_url: Cat14 },
-  { user_id: 'u15', nickname: 'Orin', profile_image_url: Cat15 },
-  { user_id: 'u16', nickname: 'Pia', profile_image_url: Cat16 },
+  { userId: 1, nickname: 'Alice', profileImageUrl: Cat1 },
+  { userId: 2, nickname: 'Bob', profileImageUrl: Cat2 },
+  { userId: 3, nickname: 'Charlie', profileImageUrl: Cat3 },
+  { userId: 4, nickname: 'Dana', profileImageUrl: Cat4 },
+  { userId: 5, nickname: 'Eden', profileImageUrl: Cat5 },
+  { userId: 6, nickname: 'Finn', profileImageUrl: Cat6 },
+  { userId: 7, nickname: 'Grace', profileImageUrl: Cat7 },
+  { userId: 8, nickname: 'Hugh', profileImageUrl: Cat8 },
+  { userId: 9, nickname: 'Iris', profileImageUrl: Cat9 },
+  { userId: 10, nickname: 'Juno', profileImageUrl: Cat10 },
+  { userId: 11, nickname: 'Kane', profileImageUrl: Cat11 },
+  { userId: 12, nickname: 'Lia', profileImageUrl: Cat12 },
+  { userId: 13, nickname: 'Milo', profileImageUrl: Cat13 },
+  { userId: 14, nickname: 'Nina', profileImageUrl: Cat14 },
+  { userId: 15, nickname: 'Orin', profileImageUrl: Cat15 },
+  { userId: 16, nickname: 'Pia', profileImageUrl: Cat16 },
 ];
 const user = (n: number) => users[n - 1];
 

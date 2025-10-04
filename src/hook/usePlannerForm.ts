@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
 import { combineYmdHM, formatWeekday } from '@/lib/datetime';
 
-interface PlannerFormInitial extends Partial<CreatePlanRequestBody> {
+export interface PlannerFormInitial extends Partial<CreatePlanRequestBody> {
   planId?: number;
   repeatRule?: RepeatRuleRequest | null;
 }

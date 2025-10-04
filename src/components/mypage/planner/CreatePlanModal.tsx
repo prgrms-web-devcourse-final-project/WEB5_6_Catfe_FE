@@ -51,16 +51,17 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
       >
         <header className="mb-4 flex items-center justify-between">
           <h3 id="plan-modal-title" className="text-lg font-semibold">
-            {isEditMode ? '공부 계획 등록' : '공부 계획 수정'}
+            {isEditMode ? '공부 계획 수정' : '공부 계획 등록'}
           </h3>
           {/* X icon으로 바꿀 것 */}
           <button onClick={onClose} aria-label="닫기" className="rounded p-1 hover:bg-white/10">
             X
           </button>
         </header>
+
         <div className="space-y-4">
           {/* 주제 */}
-          <div>
+          <div className="flex flex-col gap-2">
             <label htmlFor="plan-subject">주제/과목</label>
             <input
               type="text"
@@ -73,7 +74,7 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
             />
           </div>
           {/* 시간 */}
-          <div>
+          <div className="flex flex-col gap-2">
             <label htmlFor="plan-time">시간 설정</label>
             <div className="flex items-center gap-2">
               <input
@@ -82,7 +83,7 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
                 onChange={(e) => setStartHM(e.target.value)}
                 aria-invalid={timeInvalid}
                 className={tw(
-                  'w-36 rounded-md border px-3 py-2',
+                  'w-1/3 rounded-md border px-3 py-2',
                   timeInvalid
                     ? 'border-error-500 bg-error-500/10 focus:outline-none'
                     : 'border-neutral-700 bg-background-white focus:outline-none focus:border-secondary-400'
@@ -96,23 +97,23 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
                 onChange={(e) => setEndHM(e.target.value)}
                 aria-invalid={timeInvalid}
                 className={tw(
-                  'w-36 rounded-md border px-3 py-2',
+                  'w-1/3 rounded-md border px-3 py-2',
                   timeInvalid
                     ? 'border-error-500 bg-error-500/10 focus:outline-none'
                     : 'border-neutral-700 bg-background-white focus:outline-none focus:border-secondary-400'
                 )}
                 step={60}
               />
-              {timeInvalid && (
-                <p role="alert" aria-live="polite" className="my-2 text-xs text-error-500">
-                  끝나는 시간은 시작 시간보다 앞설 수 없습니다.
-                </p>
-              )}
             </div>
+            {timeInvalid && (
+              <p role="alert" aria-live="polite" className="text-xs text-error-500">
+                끝나는 시간은 시작 시간보다 앞설 수 없습니다.
+              </p>
+            )}
 
             {/* 반복 설정 */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div className="flex flex-col gap-2">
                 <label htmlFor="plan-repeat-rule">반복</label>
                 <select
                   id="plan-repeat-rule"
@@ -144,44 +145,59 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
                   </div>
                 </div>
               )}
-              {frequency === 'WEEKLY' && <WeekdayChips value={byDay} onChange={setByDay} />}
             </div>
+
+            {frequency === 'WEEKLY' && (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="plan-repeat-day" className="mb-1 block text-sm text-text-secondary">
+                  반복 요일 선택
+                </label>
+                <WeekdayChips id="plan-repeat-day" value={byDay} onChange={setByDay} />
+              </div>
+            )}
+
             {/* 색상 */}
-            <div className="flex flex-wrap gap-2">
-              {COLOR_ORDER.map((i) => {
-                const swatch = PLAN_SWATCH[i];
-                const selected = color === i;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    className={tw(
-                      'h-6 w-6 rounded border',
-                      swatch.fill,
-                      swatch.border,
-                      selected && 'ring-2 ring-offset-2 ring-offset-primary-300 ring-white'
-                    )}
-                    onClick={() => setColor(i)}
-                    aria-label={`color ${i}`}
-                    title={i}
-                  />
-                );
-              })}
+            <div className="flex flex-col gap-2 mb-4">
+              <label htmlFor="plan-color">표시 색상 선택</label>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_ORDER.map((i) => {
+                  const swatch = PLAN_SWATCH[i];
+                  const selected = color === i;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={tw(
+                        'h-6 w-6 rounded border',
+                        swatch.fill,
+                        swatch.border,
+                        selected && 'ring-2 ring-offset-2 ring-offset-primary-300 ring-white'
+                      )}
+                      onClick={() => setColor(i)}
+                      aria-label={`color ${i}`}
+                      title={i}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button borderType="outline" color="secondary" size="md" onClick={onClose}>
+          <Button borderType="outline" color="secondary" size="sm" onClick={onClose}>
             취소
+          </Button>
+          <Button borderType="outline" color="secondary" size="sm" onClick={onClose}>
+            삭제
           </Button>
           <Button
             borderType="solid"
             color="primary"
-            size="md"
+            size="sm"
             disabled={disabled}
             onClick={handleSubmit}
           >
-            등록
+            {isEditMode ? '수정' : '등록'}
           </Button>
         </div>
       </div>

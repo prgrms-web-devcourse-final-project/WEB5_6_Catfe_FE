@@ -2,39 +2,25 @@
 
 import { RawDayPlan } from '@/@types/planner';
 import { useSelectedDate } from '@/hook/useSelectedDate';
-import { HOURS } from '@/lib/datetime';
 import dayjs from '@/lib/dayjs';
 import { PLAN_SWATCH } from '@/lib/plannerSwatch';
 import tw from '@/utils/tw';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 interface PlannerGridProps {
   plans: RawDayPlan[];
+  hourHeight: number;
   onSelectedRange?: (startTime: string, endTime: string) => void;
   onPlanClick?: (plan: RawDayPlan) => void;
 }
 
-function PlannerGrid({ plans, onSelectedRange, onPlanClick }: PlannerGridProps) {
+/* Plan 영역 UI/상호작용 */
+function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: PlannerGridProps) {
   const { date } = useSelectedDate();
   const dayStart = useMemo(() => dayjs(date).startOf('day'), [date]);
-  const [hourHeight, setHourHeight] = useState(48);
-  const isToday = dayjs().isSame(dayStart, 'day');
-  const nowTop = isToday ? (dayjs().diff(dayStart, 'minute') / 60) * hourHeight : -9999;
-
-  useEffect(() => {
-    const compute = () => {
-      const vh = window.innerHeight;
-      const target = Math.floor((vh * 0.8) / 24); // 화면 높이 80%를 24h로 분배
-      const clamped = Math.max(40, Math.min(60, target)); // 최대 최소 높이 설정
-      setHourHeight(clamped);
-    };
-    compute();
-    window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
-  });
-  const gridHeight = hourHeight * 24;
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const gridHeight = hourHeight * 24;
   const [drag, setDrag] = useState<null | { startMin: number; curMin: number }>(null);
 
   const minutesToY = (mins: number) => (mins / 60) * hourHeight;
@@ -74,10 +60,12 @@ function PlannerGrid({ plans, onSelectedRange, onPlanClick }: PlannerGridProps) 
   };
 
   const onGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!onSelectedRange || drag !== null) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-plan="1"]') || drag !== null) return;
+    if (!onSelectedRange) return;
     const grid = gridRef.current!;
     const rect = grid.getBoundingClientRect();
-    const y = e.clientY - rect.top + grid.scrollTop;
+    const y = e.clientY - rect.top;
     const startMin = yToMinutes(y);
     const start = dayStart.add(startMin, 'minute');
     const end = start.add(1, 'hour');
@@ -87,38 +75,11 @@ function PlannerGrid({ plans, onSelectedRange, onPlanClick }: PlannerGridProps) 
   return (
     <div
       ref={gridRef}
-      className="relative overflow-auto"
-      style={{ height: hourHeight * 12, maxHeight: hourHeight * 24 }}
+      className="relative h-full w-full bg-transparent"
+      style={{ minHeight: gridHeight }}
       onMouseDown={onMouseDown}
       onClick={onGridClick}
     >
-      {/* 시간 label */}
-      <div className="flex flex-col pointer-events-none select-none">
-        {HOURS.map((hour) => (
-          <div
-            key={hour}
-            className="text-xs text-text-secondary font-bold"
-            style={{ height: `${hourHeight}px`, lineHeight: `${hourHeight}px` }}
-          >
-            {hour.toString().padStart(2, '0')}
-          </div>
-        ))}
-      </div>
-      {/* 시간 line */}
-      {Array.from({ length: 25 }).map((_, i) => (
-        <div
-          key={i}
-          className="absolute left-0 right-0 border-t border-neutral-700"
-          style={{ top: i * hourHeight }}
-        >
-          {i < 24 && (
-            <div className="absolute -left-12 top-0 text-xs text-text-secondary">
-              {String(i).padStart(2, '0')}:00
-            </div>
-          )}
-        </div>
-      ))}
-
       {/* Drag 범위 표시 */}
       {drag && (
         <div
@@ -142,8 +103,8 @@ function PlannerGrid({ plans, onSelectedRange, onPlanClick }: PlannerGridProps) 
           return (
             <div
               key={plan.id}
-              data-plan={plan.id}
-              className="absolute left-0 right-0 px-1"
+              data-plan="1"
+              className="absolute left-0 right-0 pl-3 pr-9"
               style={{ top, height }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -157,22 +118,16 @@ function PlannerGrid({ plans, onSelectedRange, onPlanClick }: PlannerGridProps) 
                   sw.border
                 )}
               >
-                <div className="font-medium truncate">{plan.subject}</div>
-                <div className="opacity-70">
+                <div className="font-medium truncate select-none pointer-events-none">
+                  {plan.subject}
+                </div>
+                <div className="opacity-70 select-none pointer-events-none whitespace-nowrap overflow-ellipsis">
                   {dayjs(plan.startDate).format('HH:mm')} ~ {dayjs(plan.endDate).format('HH:mm')}
                 </div>
               </div>
             </div>
           );
         })}
-
-      {/* 현재 시간 indicator */}
-      {isToday && nowTop >= 0 && nowTop <= gridHeight && (
-        <div className="pointer-events-none absolute left-8 right-0 z-10" style={{ top: nowTop }}>
-          <div className="h-0 border-t-2 border-primary-700" />
-          <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-primary-700" />
-        </div>
-      )}
     </div>
   );
 }

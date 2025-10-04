@@ -8,13 +8,12 @@ import { useMemo, useState } from 'react';
 import { CreatePlanRequestBody, RawDayPlan } from '@/@types/planner';
 import CreatePlanModal from './CreatePlanModal';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
+import { PlannerFormInitial } from '@/hook/usePlannerForm';
 
-type ModalInitialData = Partial<CreatePlanRequestBody> & {
-  planId?: number;
-};
-type ModalState = ModalInitialData | null;
+type ModalState = (PlannerFormInitial & { planId?: number }) | null;
 
-function PlanAndRecord() {
+/* Plan 영역 데이터/상태 제어 */
+function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
   const { date } = useSelectedDate();
   const ymd = formatToYMD(date);
 
@@ -34,7 +33,7 @@ function PlanAndRecord() {
     []
   );
 
-  // 신규 생성 모달 열기
+  // 시간 Range 선택 -> 신규 생성 모달 열기
   const handleSelectRange = (startDate: string, endDate: string) => {
     setModal({
       ...defaultInitial,
@@ -43,7 +42,7 @@ function PlanAndRecord() {
     });
   };
 
-  // 편집 모달 열기
+  // 기존 Plan 클릭 -> 편집 모달 열기
   const handlePlanClick = (plan: RawDayPlan) => {
     setModal({
       planId: plan.id,
@@ -60,7 +59,6 @@ function PlanAndRecord() {
   const submitModal = (payload: CreatePlanRequestBody) => {
     if (!modal) return;
     const { planId } = modal;
-
     if (!planId) {
       // 기존 id가 없으면 신규 생상
       createPlan.mutate(payload, { onSuccess: closeModal });
@@ -70,24 +68,22 @@ function PlanAndRecord() {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="ml-8 mb-2 flex items-center justify-between">
-        <span className="font-semibold whitespace-nowrap">PLAN</span>
-        <span className="font-semibold whitespace-nowrap">RECORD</span>
-      </div>
-      <div className="p-4">
-        {isLoading ? (
-          <div style={{ height: 48 * 24 }} className="animate-pulse rounded-lg bg-neutral-600/40" />
-        ) : (
-          <PlannerGrid
-            plans={plans}
-            onSelectedRange={handleSelectRange}
-            onPlanClick={handlePlanClick}
-          />
-        )}
-      </div>
+  if (isLoading)
+    return (
+      <div
+        style={{ height: hourHeight * 24 }}
+        className="absolute inset-0 animate-pulse rounded-lg bg-neutral-600/40"
+      />
+    );
 
+  return (
+    <>
+      <PlannerGrid
+        plans={plans}
+        hourHeight={hourHeight}
+        onSelectedRange={handleSelectRange}
+        onPlanClick={handlePlanClick}
+      />
       {modal && (
         <CreatePlanModal
           isEditMode={!!modal.planId}
@@ -96,7 +92,7 @@ function PlanAndRecord() {
           onClose={closeModal}
         />
       )}
-    </div>
+    </>
   );
 }
-export default PlanAndRecord;
+export default PlanDataContainer;

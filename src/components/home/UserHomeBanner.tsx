@@ -64,8 +64,8 @@ export default function UserHomeBanner() {
           <Image
             src="/image/banner-wall.svg"
             alt="벽"
-            width={470}
-            height={300}
+            width={450}
+            height={310}
             priority
           />
         </div>

@@ -1,31 +1,38 @@
-export type RoomMember = {
-  userId: number;
-  nickname: string;
-  role: "HOST" | "MEMBER";
-  joinedAt: string;
-  lastActiveAt: string;
-  online: boolean;
-};
-
-export type RoomDetail = {
-  roomId: number;
+export type CreateRoomDto = {
   title: string;
   description: string;
+  isPrivate: boolean;
+  password?: string;
   maxParticipants: number;
-  currentParticipants: number;
-  status: "WAITING" | "IN_PROGRESS" | "ENDED";
-  allowCamera: boolean;
-  allowAudio: boolean;
-  allowScreenShare: boolean;
-  createdBy: string;
-  createdAt: string;
-  members: RoomMember[];
-  private: boolean;
+  useWebRTC: boolean;
 };
 
-export type ApiResponse<T> = {
+export type CreateRoomRes = {
   code: string;
   message: string;
-  data: T;
+  data: {
+    roomId: number;
+    title: string;
+    description: string;
+    currentParticipants: number;
+    maxParticipants: number;
+    status: string;
+    createdBy: string;
+    createdAt: string;
+    allowCamera:boolean;
+    allowAudio: boolean;
+    allowScreenShare: boolean;
+  };
   success: boolean;
 };
+
+export type MyRoomsList = {
+  roomId : number;
+  title: string;
+  description: string;
+  currentParticipants: number;
+  maxParticipants: number;
+  status: string;
+  myRole: "HOST" | "SUB_HOST" | "MEMBER";
+  createdAt: string;
+}

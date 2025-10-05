@@ -10,6 +10,8 @@ import Button from "@/components/Button";
 import CreateRoomModal from "@/components/study-room/CreateRoomModal";
 import cat12 from "@/assets/cats/cat-12.svg";
 import cat13 from "@/assets/cats/cat-13.svg";
+import UserHomeBanner from "./UserHomeBanner";
+import MyList from "./UserHomeMyList";
 
 export default function UserHome({ user }: { user: User }) {
   const rooms: RoomSnapshot[] = Object.values(DUMMY_ROOMS);
@@ -32,14 +34,22 @@ export default function UserHome({ user }: { user: User }) {
 
   return (
     <main className="min-h-screen w-full bg-background-base flex flex-col items-center justify-center">
-      {/* 상단 임시 배너 */}
-      <section className="w-full h-60 flex items-center justify-center bg-secondary-300">
-        <h1 className="text-4xl font-semibold tracking-wide text-text-primary">Title Banner</h1>
+      <section className="w-full bg-secondary-300">
+        <div className="mx-auto max-w-[1200px] px-10 sm:px-[100px]
+                        flex flex-row items-center justify-between">
+          <div className="flex flex-col gap-4">
+            <span className="text-2xl md:text-xl font-bold text-text-primary shrink-0">
+              고양이와 함께하는 온라인 스터디 공간
+            </span>
+            <Image src="/image/logo-light.svg" alt="캣페 로고" width={348} height={84}></Image>
+          </div>
+
+          {/* 배너는 자체 stage가 shrink-0이라 폭 유지됨 */}
+          <UserHomeBanner />
+        </div>
       </section>
 
-      {/* 콘텐츠 컨테이너 */}
-      <div className="max-w-[1200px] w-full pt-8  px-10 py-8 sm:px-[100px] sm:pb-[60px]">
-        {/* 인사 + 검색 + 새로 만들기 */}
+      <div className="max-w-[1200px] w-full pt-8 px-10 py-8 sm:px-[100px] sm:pb-[60px]">
         <div className="flex justify-between mb-10">
           <div className="flex items-center gap-2">
             <Image src={cat13} alt="cat" width={40} height={40} />
@@ -84,13 +94,11 @@ export default function UserHome({ user }: { user: User }) {
 
         <hr className="mb-10"/>
 
-        {/* 최근 방문 */}
         <section className="flex flex-col gap-5">
           <h2 className="text-sm font-semibold text-text-primary">최근 방문</h2>
             <RoomList rooms={recent} />
         </section>
 
-        {/* 임시 cat line */}
         <div className="flex justify-between py-20">
           <Image src={cat13} alt="cat13" width={40} height={40} />
           <Image src={cat12} alt="cat12" width={40} height={40} />
@@ -105,15 +113,9 @@ export default function UserHome({ user }: { user: User }) {
           <Image src={cat13} alt="cat13" width={40} height={40} />
         </div>
 
-        {/* 내 캣페 */}
-        <section className="flex flex-col gap-5 mb-10">
-          <h2 className="text-sm font-semibold text-text-primary">내 캣페</h2>
-            <RoomList rooms={rooms} />
-            <RoomList rooms={recent} />
-        </section>
+        <MyList></MyList>
       </div>
 
-      {/* 생성 모달 */}
       <CreateRoomModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </main>
   );

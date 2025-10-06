@@ -9,6 +9,7 @@ import { ApplyScope, RawDayPlan } from '@/@types/planner';
 import CreatePlanModal, { SubmitPayload } from './CreatePlanModal';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
 import { PlannerFormInitial } from '@/hook/usePlannerForm';
+import showToast from '@/utils/showToast';
 
 type ModalState = (PlannerFormInitial & { planId?: number }) | null;
 
@@ -60,29 +61,33 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
   const submitModal = (payload: SubmitPayload) => {
     if (!modal) return;
     const { planId } = modal;
+    const onSuccess = () => {
+      closeModal();
+      showToast('success', `계획이 ${planId ? '수정' : '등록'}되었습니다.`);
+    };
     if (!planId) {
       // 기존 id가 없으면 신규 생상
-      createPlan.mutate(payload, { onSuccess: closeModal });
+      createPlan.mutate(payload, { onSuccess });
     } else {
       // id가 있으면 수정
       const { applyScope } = payload;
-      updatePlan.mutate(
-        { id: modal.planId!, payload: payload, applyScope },
-        { onSuccess: closeModal }
-      );
+      updatePlan.mutate({ id: modal.planId!, payload: payload, applyScope }, { onSuccess });
     }
   };
 
   const deleteModal = (scope: { applyScope: ApplyScope }) => {
     if (!modal?.planId) return;
-
+    const onSuccess = () => {
+      closeModal();
+      showToast('success', `계획이 삭제되었습니다.`);
+    };
     deletePlan.mutate(
       {
         id: modal.planId,
         selectedDate: ymd,
         applyScope: scope.applyScope,
       },
-      { onSuccess: closeModal }
+      { onSuccess }
     );
   };
 

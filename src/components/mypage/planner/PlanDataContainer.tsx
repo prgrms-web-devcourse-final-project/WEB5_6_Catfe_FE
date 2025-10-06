@@ -110,6 +110,7 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
       {modal && (
         <CreatePlanModal
           isEditMode={!!modal.planId}
+          selectedYmd={ymd}
           initial={modal}
           onSubmit={submitModal}
           onDelete={deleteModal}

@@ -10,6 +10,8 @@ import { useConfirm } from '@/hook/useConfirm';
 import { useRef, useState } from 'react';
 import SelectScopeChip from './SelectScopeChip';
 import useClickOutside from '@/hook/useClickOutside';
+import dayjs from 'dayjs';
+import showToast from '@/utils/showToast';
 
 export type SubmitPayload = CreatePlanRequestBody & {
   applyScope?: ApplyScope;
@@ -17,6 +19,7 @@ export type SubmitPayload = CreatePlanRequestBody & {
 
 interface PlanModalProps {
   isEditMode?: boolean;
+  selectedYmd: string;
   initial?: Partial<CreatePlanRequestBody>;
   onSubmit: (plan: SubmitPayload) => void;
   onDelete: (scope: { applyScope: ApplyScope }) => void;
@@ -25,6 +28,7 @@ interface PlanModalProps {
 
 function CreatePlanModal({
   isEditMode = false,
+  selectedYmd,
   initial,
   onSubmit,
   onDelete,
@@ -71,24 +75,45 @@ function CreatePlanModal({
     getPayload,
   } = usePlannerForm(initial);
 
-  const handleSubmit = () => {
-    if (disabled) return;
-    onSubmit(getPayload());
+  const validateRepeatRule = (payload: CreatePlanRequestBody) => {
+    const { repeatRule } = payload;
+    if (repeatRule && repeatRule.untilDate) {
+      const selectedDate = dayjs(selectedYmd).startOf('day');
+      const repeatEndDate = dayjs(repeatRule.untilDate).startOf('day');
+      if (repeatEndDate.isBefore(selectedDate, 'day')) {
+        showToast('error', '반복 일정의 종료일은 현재 선택된 날짜보다 미래여야 합니다.');
+        return false;
+      }
+    }
+    return true;
   };
 
+  // 등록
+  const handleSubmit = () => {
+    if (disabled) return;
+    const payload = getPayload();
+    onSubmit(payload);
+  };
+
+  // 수정
   const handleInitialUpdateClick = () => {
     if (disabled) return;
     if (!hasRepeatRule) {
-      onSubmit(getPayload());
+      // 단발성 계획 수정
+      const payload = getPayload();
+      onSubmit(payload);
       onClose();
     } else {
+      // 반복 계획일 경우 Scope 선택
       setShowUpdateScope((prev) => !prev);
     }
   };
 
+  // 반복 계획 수정
   const handleUpdate = () => {
     if (disabled) return;
     const payload = getPayload();
+    if (!validateRepeatRule(payload)) return;
     if (hasRepeatRule && showUpdateScope) {
       onSubmit({
         ...payload,

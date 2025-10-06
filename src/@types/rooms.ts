@@ -2,7 +2,7 @@ export type CreateRoomDto = {
   title: string;
   description: string;
   isPrivate: boolean;
-  password?: string;
+  password?: string | null;
   maxParticipants: number;
   useWebRTC: boolean;
 };
@@ -16,7 +16,7 @@ export type CreateRoomRes = {
     description: string;
     currentParticipants: number;
     maxParticipants: number;
-    status: string;
+    status: "WAITING" | "ACTIVE" | "CLOSED";
     createdBy: string;
     createdAt: string;
     allowCamera:boolean;

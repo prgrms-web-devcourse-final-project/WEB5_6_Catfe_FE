@@ -1,4 +1,3 @@
-// src/api/apiRooms.ts
 import api from "@/utils/api";
 import type { CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
 

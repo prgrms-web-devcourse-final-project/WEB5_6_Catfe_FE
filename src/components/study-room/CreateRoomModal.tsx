@@ -31,7 +31,6 @@ const INITIAL_INFO: RoomInfoValue = {
 export default function CreateRoomModal({ open, onClose }: Props) {
   const router = useRouter();
 
-  // 상태
   const [info, setInfo] = useState<RoomInfoValue>(INITIAL_INFO);
   const [privacy, setPrivacy] = useState({ enabled: false, password: "" });
   const [mediaEnabled, setMediaEnabled] = useState(false);
@@ -68,7 +67,7 @@ export default function CreateRoomModal({ open, onClose }: Props) {
  const onCreate = async () => {
   setErrorMsg(null);
 
-  // 1) 기본 DTO (password 제외)
+  // Data Transfer Object
   const base = {
     title: info.title.trim(),
     description: info.description.trim(),
@@ -77,10 +76,10 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     useWebRTC: mediaEnabled,
   };
 
-  // 2) 비공개일 때만 password 포함
+  // 비공개/공개방에 따른 dto
   const dto: CreateRoomDto = privacy.enabled
-    ? { ...base, password: privacy.password }
-    : base;
+   ? { ...base, password: privacy.password }
+   : { ...base };
 
   // 프론트 유효성
   if (!dto.title) {
@@ -94,8 +93,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
 
   try {
     setSubmitting(true);
-    // 디버그: 실제 전송 바디 확인
-    // console.log("[createRoom payload]", dto);
 
     const res = await createRoom(dto);
     const id = res?.data?.roomId;

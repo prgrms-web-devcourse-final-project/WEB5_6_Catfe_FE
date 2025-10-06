@@ -2,6 +2,7 @@ import {
   CreatePlanRequestBody,
   DeletePlanPayload,
   PlannerRawEnvelop,
+  RawDayPlan,
   UpdatePlanPayload,
 } from '@/@types/planner';
 import api from '@/utils/api';
@@ -64,6 +65,8 @@ export function useUpdatePlan(ymd: string) {
  */
 export function useDeletePlan(ymd: string) {
   const qc = useQueryClient();
+  const queryKey = PlannerQueryKey.dayPlans(ymd);
+
   return useMutation({
     mutationFn: async ({ id, selectedDate, applyScope }: DeletePlanPayload) => {
       let url = `/api/plans/${id}`;
@@ -75,6 +78,31 @@ export function useDeletePlan(ymd: string) {
 
       await api.delete(url);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: PlannerQueryKey.dayPlans(ymd) }),
+    onMutate: async (deletedPayload) => {
+      await qc.cancelQueries({ queryKey });
+      const previousPlans = qc.getQueryData(queryKey);
+      qc.setQueryData<PlannerRawEnvelop | undefined>(
+        queryKey,
+        (oldData?: PlannerRawEnvelop): PlannerRawEnvelop | undefined => {
+          if (!oldData) return oldData;
+          const newPlans: RawDayPlan[] = (oldData.data.plans as RawDayPlan[]).filter(
+            (plan: RawDayPlan) => plan.id !== deletedPayload.id
+          );
+          return {
+            ...oldData,
+            data: { ...oldData.data, plans: newPlans },
+          };
+        }
+      );
+      return { previousPlans };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    onError: (err, deletedPayload, context) => {
+      if (context?.previousPlans) {
+        qc.setQueryData(queryKey, context.previousPlans);
+        console.error(err, deletedPayload);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey }),
   });
 }

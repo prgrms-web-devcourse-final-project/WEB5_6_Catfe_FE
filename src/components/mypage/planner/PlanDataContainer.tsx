@@ -4,7 +4,7 @@ import { useSelectedDate } from '@/hook/useSelectedDate';
 import { formatToYMD } from '@/lib/datetime';
 import PlannerGrid from './PlannerGrid';
 import { useCreatePlan, useDayPlans, useDeletePlan, useUpdatePlan } from '@/hook/usePlanner';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ApplyScope, RawDayPlan } from '@/@types/planner';
 import CreatePlanModal, { SubmitPayload } from './CreatePlanModal';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
@@ -36,16 +36,19 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
   );
 
   // 시간 Range 선택 -> 신규 생성 모달 열기
-  const handleSelectRange = (startDate: string, endDate: string) => {
-    setModal({
-      ...defaultInitial,
-      startDate,
-      endDate,
-    });
-  };
+  const handleSelectRange = useCallback(
+    (startDate: string, endDate: string) => {
+      setModal({
+        ...defaultInitial,
+        startDate,
+        endDate,
+      });
+    },
+    [defaultInitial]
+  );
 
   // 기존 Plan 클릭 -> 편집 모달 열기
-  const handlePlanClick = (plan: RawDayPlan) => {
+  const handlePlanClick = useCallback((plan: RawDayPlan) => {
     setModal({
       planId: plan.id,
       subject: plan.subject,
@@ -54,7 +57,7 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
       endDate: plan.endDate,
       repeatRule: plan.repeatRule ? { ...plan.repeatRule } : null,
     });
-  };
+  }, []);
 
   const closeModal = () => setModal(null);
 

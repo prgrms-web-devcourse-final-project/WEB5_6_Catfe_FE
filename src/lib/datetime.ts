@@ -9,7 +9,7 @@ export const formatHM = (date: Date) => dayjs(date).format('HH:mm');
 export const formatWeekday = (date: Date | string | number): DayOfWeekEnum =>
   dayjs(date).locale('en').format('ddd').toUpperCase() as DayOfWeekEnum;
 
-export const fromYMD = (s?: string | null) => (s ? dayjs.tz(s).startOf('day').toDate() : null);
+export const fromYMD = (s?: string | null) => (s ? dayjs(s).startOf('day').toDate() : null);
 
 export const startOfDay = (date: Date) => dayjs(date).startOf('day').toDate();
 export const addDays = (date: Date, n: number) => dayjs(date).add(n, 'day').startOf('day').toDate();

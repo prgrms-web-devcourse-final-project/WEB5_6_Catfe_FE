@@ -75,15 +75,14 @@ function CreatePlanModal({
     getPayload,
   } = usePlannerForm(initial);
 
-  const validateRepeatRule = (payload: CreatePlanRequestBody) => {
-    const { repeatRule } = payload;
-    if (repeatRule && repeatRule.untilDate) {
-      const selectedDate = dayjs(selectedYmd).startOf('day');
-      const repeatEndDate = dayjs(repeatRule.untilDate).startOf('day');
-      if (repeatEndDate.isBefore(selectedDate, 'day')) {
-        showToast('error', '반복 일정의 종료일은 현재 선택된 날짜보다 미래여야 합니다.');
-        return false;
-      }
+  const validateRepeatRule = (untilDate?: string | null) => {
+    if (!untilDate) return true;
+
+    const selectedDate = dayjs(selectedYmd).startOf('day');
+    const repeatEndDate = dayjs(untilDate).startOf('day');
+    if (repeatEndDate.isBefore(selectedDate, 'day')) {
+      showToast('error', '반복 일정의 종료일은 현재 선택된 날짜보다 미래여야 합니다.');
+      return false;
     }
     return true;
   };
@@ -92,6 +91,7 @@ function CreatePlanModal({
   const handleSubmit = () => {
     if (disabled) return;
     const payload = getPayload();
+    if (!validateRepeatRule(payload.repeatRule?.untilDate)) return;
     onSubmit(payload);
   };
 
@@ -113,7 +113,7 @@ function CreatePlanModal({
   const handleUpdate = () => {
     if (disabled) return;
     const payload = getPayload();
-    if (!validateRepeatRule(payload)) return;
+    if (!validateRepeatRule(payload.repeatRule?.untilDate)) return;
     if (hasRepeatRule && showUpdateScope) {
       onSubmit({
         ...payload,
@@ -269,7 +269,13 @@ function CreatePlanModal({
                       type="date"
                       value={untilDate}
                       onChange={(e) => setUntilDate(e.target.value)}
-                      className="w-full rounded-md border border-neutral-700 bg-background-white px-3 py-2"
+                      className={tw(
+                        'w-full rounded-md border px-3 py-2',
+                        validateRepeatRule(untilDate)
+                          ? 'border-neutral-700 bg-background-white focus:outline-none'
+                          : 'border-error-500 bg-error-500/10 focus:outline-none',
+                        'focus:border-secondary-400'
+                      )}
                     />
                   </div>
                 </div>

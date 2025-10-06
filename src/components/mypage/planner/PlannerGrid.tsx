@@ -41,19 +41,27 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
       const y2 = ev.clientY - rect.top + grid?.scrollTop;
       setDrag((d) => (d ? { ...d, curMin: yToMinutes(y2) } : d));
     };
-    const onUp = () => {
+    const onUp = (ev: MouseEvent) => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      setDrag((d) => {
-        if (!d) return null;
-        const a = Math.min(d.startMin, d.curMin);
-        const b = Math.max(d.startMin, d.curMin);
-        const start = dayStart.add(a, 'minute');
-        const end = dayStart.add(b, 'minute');
+
+      const y2 = ev.clientY - rect.top + grid.scrollTop;
+      const finalCurMin = yToMinutes(y2);
+      setDrag(null);
+
+      const dragStart = Math.min(startMin, finalCurMin);
+      const dragEnd = Math.max(startMin, finalCurMin);
+      if (dragStart === dragEnd) return;
+
+      setTimeout(() => {
+        const start = dayStart.add(dragStart, 'minute');
+        const end = dayStart.add(dragEnd, 'minute');
         const fixedEnd = end.isAfter(start) ? end : start.add(1, 'hour');
-        onSelectedRange?.(start.toISOString(), fixedEnd.toISOString());
-        return null;
-      });
+        onSelectedRange?.(
+          start.format('YYYY-MM-DDTHH:mm:ss'),
+          fixedEnd.format('YYYY-MM-DDTHH:mm:ss')
+        );
+      }, 0);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);

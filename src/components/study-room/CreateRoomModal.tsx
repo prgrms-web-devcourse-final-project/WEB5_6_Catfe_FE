@@ -74,6 +74,7 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     isPrivate: privacy.enabled,
     maxParticipants: info.maxMember,
     useWebRTC: mediaEnabled,
+    password:"",
   };
 
   // 비공개/공개방에 따른 dto

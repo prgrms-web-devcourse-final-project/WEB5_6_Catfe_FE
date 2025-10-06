@@ -3,10 +3,10 @@
 import { useSelectedDate } from '@/hook/useSelectedDate';
 import { formatToYMD } from '@/lib/datetime';
 import PlannerGrid from './PlannerGrid';
-import { useCreatePlan, useDayPlans, useUpdatePlan } from '@/hook/usePlanner';
+import { useCreatePlan, useDayPlans, useDeletePlan, useUpdatePlan } from '@/hook/usePlanner';
 import { useMemo, useState } from 'react';
-import { CreatePlanRequestBody, RawDayPlan } from '@/@types/planner';
-import CreatePlanModal from './CreatePlanModal';
+import { ApplyScope, RawDayPlan } from '@/@types/planner';
+import CreatePlanModal, { SubmitPayload } from './CreatePlanModal';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
 import { PlannerFormInitial } from '@/hook/usePlannerForm';
 
@@ -23,6 +23,7 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
   const [modal, setModal] = useState<ModalState>(null);
   const createPlan = useCreatePlan(ymd);
   const updatePlan = useUpdatePlan(ymd);
+  const deletePlan = useDeletePlan(ymd);
 
   const defaultInitial = useMemo(
     () => ({
@@ -56,7 +57,7 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
 
   const closeModal = () => setModal(null);
 
-  const submitModal = (payload: CreatePlanRequestBody) => {
+  const submitModal = (payload: SubmitPayload) => {
     if (!modal) return;
     const { planId } = modal;
     if (!planId) {
@@ -64,8 +65,25 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
       createPlan.mutate(payload, { onSuccess: closeModal });
     } else {
       // id가 있으면 수정
-      updatePlan.mutate({ id: modal.planId!, payload }, { onSuccess: closeModal });
+      const { applyScope } = payload;
+      updatePlan.mutate(
+        { id: modal.planId!, payload: payload, applyScope },
+        { onSuccess: closeModal }
+      );
     }
+  };
+
+  const deleteModal = (scope: { applyScope: ApplyScope }) => {
+    if (!modal?.planId) return;
+
+    deletePlan.mutate(
+      {
+        id: modal.planId,
+        selectedDate: ymd,
+        applyScope: scope.applyScope,
+      },
+      { onSuccess: closeModal }
+    );
   };
 
   if (isLoading)
@@ -89,6 +107,7 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
           isEditMode={!!modal.planId}
           initial={modal}
           onSubmit={submitModal}
+          onDelete={deleteModal}
           onClose={closeModal}
         />
       )}

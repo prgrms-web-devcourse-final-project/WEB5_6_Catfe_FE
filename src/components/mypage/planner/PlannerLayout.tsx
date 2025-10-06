@@ -68,7 +68,9 @@ function PlannerLayout() {
         </div>
 
         {/* Record */}
-        <RecordDataContainer hourHeight={hourHeight} />
+        <div className="flex-1 relative overflow-auto">
+          <RecordDataContainer hourHeight={hourHeight} />
+        </div>
 
         {/* 현재 시간 indicator */}
         {isToday && nowTop >= 0 && nowTop <= gridHeight && (

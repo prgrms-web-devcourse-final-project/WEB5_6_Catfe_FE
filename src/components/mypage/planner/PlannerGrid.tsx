@@ -86,7 +86,7 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
           className="absolute left-0 right-0 bg-yellow-300/20 border border-yellow-300/60 rounded"
           style={{
             top: minutesToY(Math.min(drag.startMin, drag.curMin)),
-            height: Math.max(6, minutesToY(Math.abs(drag.curMin - drag.startMin))),
+            height: Math.max(hourHeight, minutesToY(Math.abs(drag.curMin - drag.startMin))),
           }}
         ></div>
       )}
@@ -104,7 +104,7 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
             <div
               key={plan.id}
               data-plan="1"
-              className="absolute left-0 right-0 pl-3 pr-9"
+              className="absolute left-0 right-0 px-3"
               style={{ top, height }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -113,7 +113,7 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
             >
               <div
                 className={tw(
-                  'h-full rounded-md border px-2 py-1 text-xs text-text-secondary shadow',
+                  'h-full rounded-md border px-2 py-1 text-xs text-text-secondary shadow overflow-hidden',
                   sw.fill,
                   sw.border
                 )}

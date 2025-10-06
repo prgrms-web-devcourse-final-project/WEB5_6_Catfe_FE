@@ -1,20 +1,56 @@
 'use client';
 
-import { CreatePlanRequestBody, FrequencyEnum } from '@/@types/planner';
+import { ApplyScope, CreatePlanRequestBody, FrequencyEnum } from '@/@types/planner';
 import Button from '@/components/Button';
 import { COLOR_ORDER, PLAN_SWATCH } from '@/lib/plannerSwatch';
 import tw from '@/utils/tw';
 import WeekdayChips from './WeekdayChips';
 import { usePlannerForm } from '@/hook/usePlannerForm';
+import { useConfirm } from '@/hook/useConfirm';
+import { useRef, useState } from 'react';
+import SelectScopeChip from './SelectScopeChip';
+import useClickOutside from '@/hook/useClickOutside';
+
+export type SubmitPayload = CreatePlanRequestBody & {
+  applyScope?: ApplyScope;
+};
 
 interface PlanModalProps {
   isEditMode?: boolean;
   initial?: Partial<CreatePlanRequestBody>;
-  onSubmit: (plan: CreatePlanRequestBody) => void;
+  onSubmit: (plan: SubmitPayload) => void;
+  onDelete: (scope: { applyScope: ApplyScope }) => void;
   onClose: () => void;
 }
 
-function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: PlanModalProps) {
+function CreatePlanModal({
+  isEditMode = false,
+  initial,
+  onSubmit,
+  onDelete,
+  onClose,
+}: PlanModalProps) {
+  const confirm = useConfirm();
+  const hasRepeatRule = isEditMode && initial?.repeatRule?.frequency;
+  const [deleteScope, setDeleteScope] = useState<ApplyScope>('THIS_ONLY');
+  const [showDeleteScope, setShowDeleteScope] = useState(false);
+  const [updateScope, setUpdateScope] = useState<ApplyScope>('THIS_ONLY');
+  const [showUpdateScope, setShowUpdateScope] = useState(false);
+
+  const deleteScopeRef = useRef<HTMLDivElement>(null);
+  const updateScopeRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(deleteScopeRef, () => {
+    if (showDeleteScope) {
+      setShowDeleteScope(false);
+    }
+  });
+  useClickOutside(updateScopeRef, () => {
+    if (showUpdateScope) {
+      setShowUpdateScope(false);
+    }
+  });
+
   const {
     subject,
     setSubject,
@@ -40,7 +76,75 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
     onSubmit(getPayload());
   };
 
-  // !! 임시 html : createPortal 로 변경할 것
+  const handleInitialUpdateClick = () => {
+    if (disabled) return;
+    if (!hasRepeatRule) {
+      onSubmit(getPayload());
+      onClose();
+    } else {
+      setShowUpdateScope((prev) => !prev);
+    }
+  };
+
+  const handleUpdate = () => {
+    if (disabled) return;
+    const payload = getPayload();
+    if (hasRepeatRule && showUpdateScope) {
+      onSubmit({
+        ...payload,
+        applyScope: updateScope,
+      });
+    } else {
+      onSubmit(payload);
+    }
+    onClose();
+  };
+
+  const handleInitialDeleteClick = () => {
+    if (!isEditMode) return;
+    if (!hasRepeatRule) {
+      // 반복 계획 아닐 경우 바로 삭제
+      handleDelete(false);
+    } else {
+      // 반복 계획일 경우 범위 선택 UI 토글
+      setShowDeleteScope((prev) => !prev);
+    }
+  };
+
+  const handleDelete = async (showScopeUI: boolean) => {
+    if (showScopeUI && !deleteScope) return;
+
+    const isConfirmed = await confirm({
+      title: hasRepeatRule ? '반복 계획 삭제' : '계획 삭제',
+      description: hasRepeatRule ? (
+        deleteScope === 'THIS_ONLY' ? (
+          <>
+            선택된 오늘의 일정을 삭제하시겠습니까?
+            <br />
+            (이후 반복 일정은 유지됩니다.)
+          </>
+        ) : (
+          <>이 일정과 이후의 모든 반복 일정을 삭제하시겠습니까?</>
+        )
+      ) : (
+        '이 계획을 삭제하시겠습니까?'
+      ),
+      confirmText: '삭제',
+      tone: 'danger',
+    });
+
+    if (isConfirmed) {
+      if (!hasRepeatRule) {
+        onDelete({ applyScope: 'THIS_ONLY' });
+      } else {
+        onDelete({
+          applyScope: deleteScope,
+        });
+      }
+      setShowDeleteScope(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60">
       <div
@@ -183,22 +287,69 @@ function CreatePlanModal({ isEditMode = false, initial, onSubmit, onClose }: Pla
             </div>
           </div>
         </div>
-        <div className="flex justify-end gap-2">
-          <Button borderType="outline" color="secondary" size="sm" onClick={onClose}>
-            취소
-          </Button>
-          <Button borderType="outline" color="secondary" size="sm" onClick={onClose}>
-            삭제
-          </Button>
-          <Button
-            borderType="solid"
-            color="primary"
-            size="sm"
-            disabled={disabled}
-            onClick={handleSubmit}
-          >
-            {isEditMode ? '수정' : '등록'}
-          </Button>
+        <div className="flex justify-between mt-2 relative">
+          {isEditMode && (
+            <Button
+              borderType="outline"
+              color="primary"
+              size="sm"
+              onClick={handleInitialDeleteClick}
+            >
+              계획 삭제
+            </Button>
+          )}
+          {isEditMode && hasRepeatRule && showDeleteScope && (
+            <div
+              className="absolute bottom-full left-0 mb-3 p-3 border-neutral-400 rounded-lg bg-secondary-100 shadow-xl flex flex-col gap-2 z-50"
+              ref={deleteScopeRef}
+            >
+              <label className="sr-only">반복 계획 삭제 범위 선택</label>
+              <SelectScopeChip value={deleteScope} onChange={setDeleteScope} />
+              <Button
+                borderType="solid"
+                color="primary"
+                size="sm"
+                fullWidth
+                onClick={() => handleDelete(true)}
+                className="mt-2 text-sm"
+              >
+                선택 범위 삭제
+              </Button>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 w-full ml-auto relative">
+            <Button borderType="outline" color="secondary" size="sm" onClick={onClose}>
+              취소
+            </Button>
+            <Button
+              borderType="solid"
+              color="primary"
+              size="sm"
+              disabled={disabled}
+              onClick={isEditMode && hasRepeatRule ? handleInitialUpdateClick : handleSubmit}
+            >
+              {isEditMode ? '계획 수정' : '계획 등록'}
+            </Button>
+            {isEditMode && hasRepeatRule && showUpdateScope && (
+              <div
+                className="absolute bottom-full right-0 mb-3 p-3 border-neutral-400 rounded-lg bg-secondary-100 shadow-xl flex flex-col gap-2 z-50"
+                ref={updateScopeRef}
+              >
+                <label className="sr-only">반복 계획 수정 범위 선택</label>
+                <SelectScopeChip value={updateScope} onChange={setUpdateScope} />
+                <Button
+                  borderType="solid"
+                  color="primary"
+                  size="sm"
+                  fullWidth
+                  onClick={handleUpdate}
+                  className="mt-2 text-sm"
+                >
+                  선택 범위 수정
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

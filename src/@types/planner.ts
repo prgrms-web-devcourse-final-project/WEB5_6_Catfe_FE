@@ -1,6 +1,7 @@
 export type FrequencyEnum = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 export type ColorEnum = 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN' | 'BLUE' | 'PURPLE' | 'PINK';
 export type DayOfWeekEnum = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
+export type ApplyScope = 'THIS_ONLY' | 'FROM_THIS_DATE';
 
 /** POST /api/plans 요청 */
 export type RepeatRuleRequest = {
@@ -37,4 +38,18 @@ export type PlannerRawEnvelop = {
     totalCount: number;
   };
   success: boolean;
+};
+
+/** PUT /api/plans/{planId} 요청 */
+export type UpdatePlanPayload = {
+  id: number;
+  payload: CreatePlanRequestBody;
+  applyScope?: ApplyScope;
+};
+
+/** DELETE /api/plans/{planId} 요청 */
+export type DeletePlanPayload = {
+  id: number;
+  selectedDate: string;
+  applyScope: ApplyScope;
 };

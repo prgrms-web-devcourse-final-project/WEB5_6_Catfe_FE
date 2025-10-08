@@ -1,30 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import RoomList from "@/components/study-room/RoomList";
-import { DUMMY_ROOMS } from "@/mock/rooms";
-import type { User } from "@/store/useAuthStore";
-import type { RoomSnapshot } from "@/@types/room";
-import Button from "@/components/Button";
-import CreateRoomModal from "@/components/study-room/CreateRoomModal";
-import cat12 from "@/assets/cats/cat-12.svg";
-import cat13 from "@/assets/cats/cat-13.svg";
-import UserHomeBanner from "./UserHomeBanner";
-import MyList from "./UserHomeMyList";
+import { useState } from 'react';
+import Image from 'next/image';
+import type { User } from '@/store/useAuthStore';
+import Button from '@/components/Button';
+import CreateRoomModal from '@/components/study-room/CreateRoomModal';
+import cat12 from '@/assets/cats/cat-12.svg';
+import cat13 from '@/assets/cats/cat-13.svg';
+import UserHomeBanner from './UserHomeBanner';
+import MyList from './MyList';
+import HostingList from './HostingList';
 
 export default function UserHome({ user }: { user: User }) {
-  const rooms: RoomSnapshot[] = Object.values(DUMMY_ROOMS);
-  const recent = rooms.slice(0, 3);
   const [createOpen, setCreateOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
   const onCreateRoom = () => setCreateOpen(true);
 
-  const [search, setSearch] = useState("");
-
   const onSearch = (keyword: string) => {
-    console.log("검색 키워드:", keyword);
-    // TODO: API 연동 후 검색 기능 개발
+    console.log('검색 키워드:', keyword);
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,16 +29,13 @@ export default function UserHome({ user }: { user: User }) {
   return (
     <main className="min-h-screen w-full bg-background-base flex flex-col items-center justify-center">
       <section className="w-full bg-secondary-300">
-        <div className="mx-auto max-w-[1200px] px-10 sm:px-[100px]
-                        flex flex-row items-center justify-between">
+        <div className="mx-auto max-w-[1200px] px-10 sm:px-[100px] flex flex-row items-center justify-between">
           <div className="flex flex-col gap-4">
             <span className="text-2xl md:text-xl font-bold text-text-primary shrink-0">
               고양이와 함께하는 온라인 스터디 공간
             </span>
-            <Image src="/image/logo-light.svg" alt="캣페 로고" width={348} height={84}></Image>
+            <Image src="/image/logo-light.svg" alt="캣페 로고" width={348} height={84} />
           </div>
-
-          {/* 배너는 자체 stage가 shrink-0이라 폭 유지됨 */}
           <UserHomeBanner />
         </div>
       </section>
@@ -72,48 +63,35 @@ export default function UserHome({ user }: { user: User }) {
               aria-label="검색 버튼"
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 cursor-pointer"
             >
-              <Image
-                src="/icon/study-room/search.svg"
-                alt="검색 아이콘"
-                width={16}
-                height={16}
-              />
+              <Image src="/icon/study-room/search.svg" alt="검색 아이콘" width={16} height={16} />
             </button>
           </form>
 
           <Button
-              size="sm"
-              borderType="solid"
-              color="primary"
-              onClick={onCreateRoom}
-              aria-label="새로운 스터디룸 만들기"
-            >
-              + 새로운 캣페 만들기
+            size="sm"
+            borderType="solid"
+            color="primary"
+            onClick={onCreateRoom}
+            aria-label="새로운 스터디룸 만들기"
+          >
+            + 새로운 캣페 만들기
           </Button>
         </div>
 
-        <hr className="mb-10"/>
+        <hr className="mb-10" />
 
-        <section className="flex flex-col gap-5">
-          <h2 className="text-sm font-semibold text-text-primary">최근 방문</h2>
-            <RoomList rooms={recent} />
-        </section>
+        <HostingList />
 
+        {/* 추후 애니메이션 추가 예정 */}
         <div className="flex justify-between py-20">
-          <Image src={cat13} alt="cat13" width={40} height={40} />
-          <Image src={cat12} alt="cat12" width={40} height={40} />
-          <Image src={cat13} alt="cat13" width={40} height={40} />
-          <Image src={cat12} alt="cat12" width={40} height={40} />
-          <Image src={cat13} alt="cat13" width={40} height={40} />
-          <Image src={cat12} alt="cat12" width={40} height={40} />
-          <Image src={cat13} alt="cat13" width={40} height={40} />
-          <Image src={cat12} alt="cat12" width={40} height={40} />
-          <Image src={cat13} alt="cat13" width={40} height={40} />
-          <Image src={cat12} alt="cat12" width={40} height={40} />
-          <Image src={cat13} alt="cat13" width={40} height={40} />
+          {[cat13, cat12, cat13, cat12, cat13, cat12, cat13, cat12, cat13, cat12, cat13].map(
+            (src, i) => (
+              <Image key={i} src={src} alt={`cat${i}`} width={40} height={40} />
+            )
+          )}
         </div>
 
-        <MyList></MyList>
+        <MyList />
       </div>
 
       <CreateRoomModal open={createOpen} onClose={() => setCreateOpen(false)} />

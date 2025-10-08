@@ -30,6 +30,7 @@ export type MyRoomsList = {
   roomId : number;
   title: string;
   description: string;
+  isPrivate: boolean;
   currentParticipants: number;
   maxParticipants: number;
   status: string;

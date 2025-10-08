@@ -1,4 +1,3 @@
-// src/components/my-rooms/MyList.tsx
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -15,15 +14,12 @@ export default function MyList() {
   const router = useRouter();
   const params = useSearchParams();
 
-  // 기존 Pagination이 사용하는 쿼리키는 'page'
   const currentPage = Math.max(1, Number(params.get('page') ?? 1));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<MyRoomsList[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-
-  // (옵션) 비밀번호 모달 상태 — 현재는 private 정보가 없어 사용하지 않음
   const [pwOpen, setPwOpen] = useState(false);
   const [pending, setPending] = useState<MyRoomsList | null>(null);
 
@@ -35,10 +31,9 @@ export default function MyList() {
         setLoading(true);
         setError(null);
 
-        // Spring Data JPA: page는 0-based
         const data = await getMyRooms(currentPage - 1, PAGE_SIZE);
-
         if (!mounted) return;
+
         setRows(data?.content ?? []);
         setTotalPages(data?.totalPages ?? 1);
       } catch (err: unknown) {
@@ -55,12 +50,18 @@ export default function MyList() {
     };
   }, [currentPage]);
 
-  // 카드 클릭 → 내 방 상세로 이동
-  const enterRoom = useCallback((room: MyRoomsList) => {
-    router.push(`/study-rooms/${room.roomId}`);
-  }, [router]);
+  const enterRoom = useCallback(
+    (room: MyRoomsList) => {
+      if (room.isPrivate) {
+        setPending(room);
+        setPwOpen(true);
+      } else {
+        router.push(`/study-rooms/${room.roomId}`);
+      }
+    },
+    [router]
+  );
 
-  // (옵션) 비번 모달 관련 — 현재는 미사용
   const closePw = useCallback(() => {
     setPwOpen(false);
     setPending(null);
@@ -77,17 +78,12 @@ export default function MyList() {
     <section id="my-rooms" className="flex flex-col gap-5 mb-10">
       <h2 className="text-sm font-semibold text-text-primary">내 캣페</h2>
 
-      {/* 상태별 표시 */}
       {loading && (
-        <div className="w-full py-16 text-center text-text-secondary">
-          불러오는 중이에요...
-        </div>
+        <div className="w-full py-16 text-center text-text-secondary">불러오는 중이에요...</div>
       )}
 
       {!loading && error && (
-        <div className="w-full py-16 text-center text-red-500">
-          {error}
-        </div>
+        <div className="w-full py-16 text-center text-red-500">{error}</div>
       )}
 
       {!loading && !error && rows.length === 0 && (
@@ -98,8 +94,8 @@ export default function MyList() {
 
       {!loading && !error && rows.length > 0 && (
         <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"
           id="my-rooms-grid"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"
         >
           {rows.map((room) => (
             <StudyRoomCard
@@ -107,7 +103,7 @@ export default function MyList() {
               title={room.title}
               description={room.description}
               coverSrc={null}
-              isPrivate={false} // MyRoomsList에는 private 정보가 없으므로 false 고정
+              isPrivate={room.isPrivate}
               clickable
               onClick={() => enterRoom(room)}
             />
@@ -115,10 +111,8 @@ export default function MyList() {
         </div>
       )}
 
-      {/* 페이지네이션 (쿼리키: page) */}
       <Pagination totalPages={totalPages} scrollContainer="#my-rooms" />
 
-      {/* (옵션) 비밀번호 모달 — 현재 expectedPassword는 서버 검증 미연동이므로 null */}
       <EnterPasswordModal
         open={pwOpen}
         onClose={closePw}

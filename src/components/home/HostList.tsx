@@ -9,7 +9,7 @@ import type { MyRoomsList } from '@/@types/rooms';
 
 const PAGE_SIZE = 6;
 
-export default function HostingList() {
+export default function HostList({ search = '' }: { search?: string }) {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -46,6 +46,16 @@ export default function HostingList() {
     };
   }, [currentPage]);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.description ?? '').toLowerCase().includes(q)
+    );
+  }, [rows, search]);
+
   const enterRoom = useCallback(
     (room: MyRoomsList) => {
       router.push(`/study-rooms/${room.roomId}`);
@@ -61,16 +71,16 @@ export default function HostingList() {
         <div className="w-full py-16 text-center text-text-secondary">불러오는 중이에요...</div>
       )}
       {!loading && error && (
-        <div className="w-full py-16 text-center text-red-500">{error}</div>
+        <div className="w-full py-16 text-center text-error-500">{error}</div>
       )}
-      {!loading && !error && rows.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <div className="w-full py-16 text-center text-text-secondary">
-          아직 만든 캣페가 없어요 😺
+          {search.trim() ? '검색 결과가 없어요.' : '아직 만든 캣페가 없어요 😺'}
         </div>
       )}
-      {!loading && !error && rows.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
-          {rows.map((room) => (
+          {filtered.map((room) => (
             <StudyRoomCard
               key={room.roomId}
               title={room.title}

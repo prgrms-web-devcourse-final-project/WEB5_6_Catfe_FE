@@ -9,7 +9,7 @@ import type { MyRoomsList } from '@/@types/rooms';
 
 const PAGE_SIZE = 6;
 
-export default function MyListInfinite() {
+export default function JoinList({ search = '' }: { search?: string }) {
   const router = useRouter();
   const [rows, setRows] = useState<MyRoomsList[]>([]);
   const [page, setPage] = useState(0);
@@ -40,7 +40,7 @@ export default function MyListInfinite() {
         setTotalPages(data.totalPages);
       } catch {
         if (!alive) return;
-        setError('내 캣페 목록을 불러오지 못했어요.');
+        setError('내가 참여 중인 캣페 목록을 불러오지 못했어요.');
       } finally {
         if (alive) setInitialLoading(false);
       }
@@ -58,8 +58,8 @@ export default function MyListInfinite() {
     try {
       const nextPage = page + 1;
       const data = await getMyRooms(nextPage, PAGE_SIZE);
-      setRows(prev => {
-        const seen = new Set(prev.map(r => r.roomId));
+      setRows((prev) => {
+        const seen = new Set(prev.map((r) => r.roomId));
         const merged = [...prev];
         for (const r of data.content) {
           if (!seen.has(r.roomId)) {
@@ -83,7 +83,7 @@ export default function MyListInfinite() {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting) loadMore();
       },
@@ -92,6 +92,16 @@ export default function MyListInfinite() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [loadMore]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.description ?? '').toLowerCase().includes(q)
+    );
+  }, [rows, search]);
 
   const enterRoom = useCallback(
     (room: MyRoomsList) => {
@@ -125,22 +135,22 @@ export default function MyListInfinite() {
         <div className="w-full py-16 text-center text-text-secondary">불러오는 중이에요...</div>
       )}
 
-      {!initialLoading && error && rows.length === 0 && (
-        <div className="w-full py-16 text-center text-red-500">{error}</div>
+      {!initialLoading && error && filtered.length === 0 && (
+        <div className="w-full py-16 text-center text-error-500">{error}</div>
       )}
 
-      {!initialLoading && !error && rows.length === 0 && (
+      {!initialLoading && !error && filtered.length === 0 && (
         <div className="w-full py-16 text-center text-text-secondary">
-          아직 내가 참여 중인 캣페가 없어요 😿
+          {search.trim() ? '검색 결과가 없어요.' : '아직 내 캣페가 없어요 😿'}
         </div>
       )}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <div
           id="my-rooms-grid"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"
         >
-          {rows.map(room => (
+          {filtered.map((room) => (
             <StudyRoomCard
               key={room.roomId}
               title={room.title}

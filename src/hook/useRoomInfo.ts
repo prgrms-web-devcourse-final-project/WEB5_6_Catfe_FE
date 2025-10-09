@@ -10,6 +10,15 @@ export type ApiEnvelope<T> = {
   success: boolean;
 };
 
+export type RoomMemberDTO = {
+  userId: number;
+  nickname: string;
+  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+  joinedAt: string | null;
+  promotedAt: string | null;
+  profileImageUrl?: string | null;
+};
+
 export type RoomDetailDTO = {
   roomId: number;
   title: string;
@@ -23,6 +32,7 @@ export type RoomDetailDTO = {
   createdBy: string;
   createdAt: string;
   private: boolean;
+  members: RoomMemberDTO[];
 };
 
 export const roomInfoQk = {
@@ -45,7 +55,7 @@ export function useRoomInfoQuery(
     queryKey: roomInfoQk.detail(roomId),
     queryFn: () => getRoomDetail(roomId),
     staleTime: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     ...options,
   });
 }

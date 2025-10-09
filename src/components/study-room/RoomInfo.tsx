@@ -9,7 +9,7 @@ import Image from "next/image";
 export type RoomInfoValue = {
   title: string;
   description: string;
-  maxMember: number;
+  maxParticipants: number;
   isPrivate: boolean;
   password: string | null;
   coverPreviewUrl: string | null;
@@ -86,8 +86,8 @@ function RoomInfo({
 
   // cap 초과 시 부모값 보정
   useEffect(() => {
-    if (value.maxMember > maxCap) {
-      update({ maxMember: maxCap });
+    if (value.maxParticipants > maxCap) {
+      update({ maxParticipants: maxCap });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxCap]);
@@ -161,8 +161,8 @@ function RoomInfo({
         <div className="flex items-center justify-between">
           <span className="font-medium text-text-primary text-xs">최대 인원</span>
           <CustomSelect
-            value={value.maxMember}
-            onChange={(v) => update({ maxMember: (v as number) ?? value.maxMember })}
+            value={value.maxParticipants}
+            onChange={(v) => update({ maxParticipants: (v as number) ?? value.maxParticipants })}
             options={members.map((n) => ({ label: String(n), value: n }))}
             size="sm"
             placement="bottom"

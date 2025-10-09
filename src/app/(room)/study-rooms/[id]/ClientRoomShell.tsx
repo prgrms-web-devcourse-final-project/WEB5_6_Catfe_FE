@@ -178,6 +178,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         open={settingsOpen}
         onClose={onCloseSettings}
         defaultTab="general"
+        roomId={roomId}
       />
     </div>
   );

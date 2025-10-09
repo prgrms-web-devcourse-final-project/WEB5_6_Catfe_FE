@@ -8,7 +8,7 @@ export type RoomInfo = {
   isPrivate: boolean;
   coverPreviewUrl: string | null;
   currentParticipants: number;
-  status: "ACTIVE" | "INACTIVE";
+  status: "WAITING" | "ACTIVE" | "PAUSED";
   allowCamera: true;
   allowAudio: true;
   allowScreenShare: true;

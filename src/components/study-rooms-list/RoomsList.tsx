@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import StudyRoomCard from "@/components/study-room/StudyRoomCard";
 import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
 import { MOCK_PASSWORDS } from "@/lib/mockRoomPasswords";
-import type { RoomDetail } from "@/@types/rooms";
+import type { RoomDetail } from "@/@types/roomss";
 
 type Props = {
   rooms: RoomDetail[];

@@ -1,21 +1,29 @@
-export type Role = "owner" | "staff" | "member";
+// rooms/[id]에서 필요한 타입들 입니다. 
+// 추후 스터디룸에 대한 타입 합칠 예정
+
+export type Role = "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
 
 export type RoomInfo = {
-  id: string;
+  id: number;
   title: string;
   description: string;
   maxMember: number;
   isPrivate: boolean;
-  password?: string | null;
+  // password?: string | null;
   coverPreviewUrl: string | null;
-  mediaEnabled: boolean;
+  currentParticipants: number;
+  status: "ACTIVE" | "INACTIVE";
+  allowCamera: true;
+  allowAudio: true;
+  allowScreenShare: true;
+  ownerName?: string;
+  createdAt?: string;
 };
 
 export type RoomMember = {
-  id: string;
+  id: number;
   name: string;
   role: Role;
-  email: string;
 };
 
 export type RoomSnapshot = {
@@ -29,13 +37,11 @@ export type VoiceState = {
   speaking?: boolean;
 };
 
-export type Presence = "online" | "idle" | "offline";
-
 export type UsersListItem = RoomMember & {
   avatarUrl?: string | null;
   voice?: VoiceState;
-  presence?: Presence;
   isMe?: boolean;
+  joinedAt?: string | null;
 };
 
 export type RoomSnapshotUI = Omit<RoomSnapshot, "members"> & {

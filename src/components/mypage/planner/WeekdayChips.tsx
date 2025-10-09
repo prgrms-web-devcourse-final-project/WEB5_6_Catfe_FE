@@ -1,9 +1,11 @@
 import { DayOfWeekEnum } from '@/@types/planner';
 
 function WeekdayChips({
+  id,
   value,
   onChange,
 }: {
+  id?: string;
   value: DayOfWeekEnum;
   onChange: (v: DayOfWeekEnum) => void;
 }) {
@@ -17,7 +19,7 @@ function WeekdayChips({
     { code: 'SAT', label: '토' },
   ];
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2" id={id}>
       {DAYS.map((day) => {
         const active = value.includes(day.code);
         return (

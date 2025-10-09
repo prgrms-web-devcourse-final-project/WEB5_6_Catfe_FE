@@ -5,18 +5,18 @@ import clsx from "clsx";
 import Image from "next/image";
 import CustomSelect from "@/components/CustomSelect";
 import Button from "@/components/Button";
-import type { Role as AppRole } from "@/@types/room";
+import type { Role } from "@/@types/rooms";
 
-type RoleEditable = Extract<AppRole, "staff" | "member">;
-type RoleSelectValue = RoleEditable | "delete";
+type RoleEditable = Extract<Role, "SUB_HOST" | "MEMBER">;
+type RoleSelectValue = RoleEditable | "DELETE";
 type Filter = "all" | RoleEditable;
 
 type User = {
   id: string;
   name: string;
-  email: string;
-  role: AppRole;      // owner 포함
-  isOwner?: boolean;  // 표시/잠금용
+  email?: string;
+  role: Role;
+  isOwner?: boolean;
 };
 
 type RolesPatch = {
@@ -33,14 +33,14 @@ type Props = {
 
 const filterOptions = [
   { label: "전체", value: "all" as const },
-  { label: "스텝", value: "staff" as const },
-  { label: "멤버", value: "member" as const },
+  { label: "스텝", value: "SUB_HOST" as const },
+  { label: "멤버", value: "MEMBER" as const },
 ] satisfies ReadonlyArray<{ label: string; value: Filter }>;
 
 const roleOptions = [
-  { label: "스텝", value: "staff" as const },
-  { label: "멤버", value: "member" as const },
-  { label: "삭제", value: "delete" as const, intent: "danger" as const },
+  { label: "스텝", value: "SUB_HOST" as const },
+  { label: "멤버", value: "MEMBER" as const },
+  { label: "삭제", value: "DELETE" as const, intent: "danger" as const },
 ] satisfies ReadonlyArray<{
   label: string;
   value: RoleSelectValue;
@@ -61,7 +61,7 @@ function computePatch(base: User[], current: User[]): RolesPatch {
     if (!prev) {
       added.push(u);
     } else if (prev.role !== u.role) {
-      if (u.role === "staff" || u.role === "member") {
+      if (u.role === "SUB_HOST" || u.role === "MEMBER") {
         updated.push({ id: u.id, role: u.role });
       }
     }
@@ -73,14 +73,12 @@ function computePatch(base: User[], current: User[]): RolesPatch {
 }
 
 export default function SettingsRoles({ defaultUsers, className, onSave }: Props) {
-  // ✅ initialUsers 제거: defaultUsers ?? [] 로 시작
   const [inviteEmail, setInviteEmail] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [base, setBase] = useState<User[]>(defaultUsers ?? []);
   const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
   const [saving, setSaving] = useState(false);
 
-  // defaultUsers 변경 시 동기화
   useEffect(() => {
     const next = defaultUsers ?? [];
     setBase(next);
@@ -89,16 +87,18 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
 
   const visibleUsers = useMemo(() => {
     if (filter === "all") return users;
-    return users.filter((u) => u.role === filter || u.isOwner);
+    return users.filter((u) => u.role === filter || u.role === "HOST");
   }, [users, filter]);
 
   const updateRole = (userId: string, next: RoleSelectValue) => {
-    if (next === "delete") {
+    if (next === "DELETE") {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       return;
     }
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: next } : u))
+      prev.map((u) =>
+        u.id === userId ? { ...u, role: next } : u
+      )
     );
   };
 
@@ -112,7 +112,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
         id: String(Date.now()),
         name: "[userName]",
         email,
-        role: "member",
+        role: "MEMBER",
       },
     ]);
     setInviteEmail("");
@@ -125,12 +125,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
     if (!isDirty || saving) return;
     try {
       setSaving(true);
-      if (onSave) {
-        await onSave(patch, users);
-      } else {
-        console.log("[SettingsRoles] PATCH payload:", patch);
-        console.log("[SettingsRoles] current snapshot:", users);
-      }
+      await onSave?.(patch, users);
       setBase(users);
     } finally {
       setSaving(false);
@@ -186,11 +181,13 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
                   <div className="truncate text-[10px] text-text-secondary">{u.email}</div>
                 </div>
 
-                {u.isOwner || u.role === "owner" ? (
+                {u.role === "HOST" ? (
                   <OwnerBadge />
+                ) : u.role === "VISITOR" ? (
+                  <span className="text-[11px] text-text-secondary">게스트</span>
                 ) : (
                   <CustomSelect<RoleSelectValue>
-                    value={u.role as RoleSelectValue} // 현재는 "staff" | "member"
+                    value={u.role as RoleSelectValue}
                     onChange={(v) => updateRole(u.id, v)}
                     options={roleOptions}
                     placeholder="멤버"
@@ -204,7 +201,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
         )}
       </div>
 
-      {/* 하단 우측 저장 버튼 */}
+      {/* 하단 저장 */}
       <div className="mt-4 flex justify-end">
         <Button
           size="md"

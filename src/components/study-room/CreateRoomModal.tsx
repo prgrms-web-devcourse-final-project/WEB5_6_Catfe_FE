@@ -8,6 +8,9 @@ import Toggle from "@/components/Toggle";
 import Button from "@/components/Button";
 import Image from "next/image";
 import BigModal from "@/components/study-room/BigModalLayout";
+import { createRoom } from "@/api/apiRooms";
+import type { CreateRoomDto } from "@/@types/rooms";
+import { useRouter } from "next/navigation";
 
 type Props = {
   open: boolean;
@@ -26,10 +29,13 @@ const INITIAL_INFO: RoomInfoValue = {
 };
 
 export default function CreateRoomModal({ open, onClose }: Props) {
-  // 상태
+  const router = useRouter();
+
   const [info, setInfo] = useState<RoomInfoValue>(INITIAL_INFO);
   const [privacy, setPrivacy] = useState({ enabled: false, password: "" });
   const [mediaEnabled, setMediaEnabled] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // 모달 열릴 때마다 상태 리셋
   useEffect(() => {
@@ -37,6 +43,8 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     setInfo(INITIAL_INFO);
     setPrivacy({ enabled: false, password: "" });
     setMediaEnabled(false);
+    setSubmitting(false);
+    setErrorMsg(null);
   }, [open]);
 
   // 하위 컴포넌트 onChange 핸들러
@@ -46,30 +54,65 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     []
   );
 
-  // 생성
-  const onCreate = () => {
-    const payload = {
-      title: info.title,
-      description: info.description,
-      maxMember: info.maxMember,
-      isPrivate: privacy.enabled,
-      password: privacy.enabled ? privacy.password : undefined,
-      mediaEnabled,
-      coverUploadFile: info.coverUploadFile,
-    };
-    console.log("CREATE ROOM:", payload);
-    // TODO: 백엔드 API 연동
-    onClose();
-  };
-
   // 버튼 활성화 조건
   const canCreate = useMemo(() => {
     const hasTitle = info.title.trim().length > 0;
     const needPwd = privacy.enabled ? privacy.password.trim().length > 0 : true;
-    return hasTitle && needPwd;
-  }, [info.title, privacy.enabled, privacy.password]);
+    return hasTitle && needPwd && !submitting;
+  }, [info.title, privacy.enabled, privacy.password, submitting]);
 
   const titleId = "create-room-title";
+
+  // 생성 (POST /api/rooms)
+ const onCreate = async () => {
+  setErrorMsg(null);
+
+  // Data Transfer Object
+  const base = {
+    title: info.title.trim(),
+    description: info.description.trim(),
+    isPrivate: privacy.enabled,
+    maxParticipants: info.maxMember,
+    useWebRTC: mediaEnabled,
+    password:"",
+  };
+
+  // 비공개/공개방에 따른 dto
+  const dto: CreateRoomDto = privacy.enabled
+   ? { ...base, password: privacy.password }
+   : { ...base };
+
+  // 프론트 유효성
+  if (!dto.title) {
+    setErrorMsg("스터디룸 이름을 입력해주세요.");
+    return;
+  }
+  if (dto.isPrivate && !dto.password) {
+    setErrorMsg("비공개 스터디룸의 비밀번호를 입력해주세요.");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+
+    const res = await createRoom(dto);
+    const id = res?.data?.roomId;
+    onClose();
+    if (id) router.push(`/study-rooms/${id}`);
+  } catch (err) {
+    const msg =
+      (typeof err === "object" &&
+        err &&
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        (err.response?.data?.message as string | undefined)) ||
+      (err as Error)?.message ||
+      "방 생성 중 오류가 발생했습니다.";
+    setErrorMsg(msg);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <BigModal
@@ -128,6 +171,13 @@ export default function CreateRoomModal({ open, onClose }: Props) {
             />
           </div>
         </div>
+
+        {/* 에러 메시지 */}
+        {errorMsg ? (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            {errorMsg}
+          </div>
+        ) : null}
       </BigModal.Body>
 
       <BigModal.Footer className="px-8 pb-8 pt-2">
@@ -140,7 +190,7 @@ export default function CreateRoomModal({ open, onClose }: Props) {
           aria-label="스터디룸 생성"
           disabled={!canCreate}
         >
-          생성
+          {submitting ? "생성 중..." : "생성"}
           <Image src="/icon/study-room/right.svg" alt="스터디룸 생성 아이콘" width={16} height={16} />
         </Button>
       </BigModal.Footer>

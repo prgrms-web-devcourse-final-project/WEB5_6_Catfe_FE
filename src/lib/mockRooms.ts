@@ -1,6 +1,6 @@
 // 스터디룸 관련 더미데이터
 
-import type { ApiResponse, RoomDetail } from "@/@types/rooms";
+import type { ApiResponse, RoomDetail } from "@/@types/roomss";
 
 const now = new Date("2025-10-01T06:46:09.122Z");
 

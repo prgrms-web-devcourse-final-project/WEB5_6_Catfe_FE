@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MOCK_ROOMS_20 } from "@/lib/mockRooms";
-import type { RoomDetail } from "@/@types/rooms";
+import type { RoomDetail } from "@/@types/roomss";
 
 import SearchBar from "@/components/study-rooms-list/SearchBar";
 import FilterTabs from "@/components/study-rooms-list/FilterTabs";

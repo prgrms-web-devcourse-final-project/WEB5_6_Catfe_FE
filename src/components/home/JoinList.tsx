@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import StudyRoomCard from '@/components/study-room/StudyRoomCard';
 import EnterPasswordModal from '@/components/study-room/EnterPasswordModal';
 import { getMyRooms } from '@/api/apiRooms';
+import { joinRoom, JoinRoomHttpError } from '@/api/apiJoinRoom';
+import { connectRoomSocket } from '@/lib/connectRoomSocket';
 import type { MyRoomsList } from '@/@types/rooms';
 
 const PAGE_SIZE = 6;
@@ -104,12 +106,32 @@ export default function JoinList({ search = '' }: { search?: string }) {
   }, [rows, search]);
 
   const enterRoom = useCallback(
-    (room: MyRoomsList) => {
-      if (room.isPrivate) {
-        setPending(room);
-        setPwOpen(true);
-      } else {
+    async (room: MyRoomsList) => {
+      try {
+        await connectRoomSocket();
+
+        if (room.isPrivate) {
+          setPending(room);
+          setPwOpen(true);
+          return;
+        }
+
+        await joinRoom(room.roomId);
         router.push(`/study-rooms/${room.roomId}`);
+      } catch (e) {
+        if (e instanceof JoinRoomHttpError) {
+          if (e.status === 400 && e.data === 'FULL') {
+            alert('정원이 가득 찼어요.');
+          } else if (e.status === 404) {
+            alert('존재하지 않는 방입니다.');
+          } else if (e.status === 401) {
+            alert('로그인이 필요해요.');
+          } else {
+            alert(e.message);
+          }
+        } else {
+          alert('입장 중 오류가 발생했어요.');
+        }
       }
     },
     [router]
@@ -170,12 +192,14 @@ export default function JoinList({ search = '' }: { search?: string }) {
 
       <div ref={sentinelRef} />
 
-      <EnterPasswordModal
-        open={pwOpen}
-        onClose={closePw}
-        expectedPassword={null}
-        onSuccess={handleSuccess}
-      />
+      {pending && (
+        <EnterPasswordModal
+          open={pwOpen}
+          onClose={closePw}
+          roomId={pending.roomId}
+          onSuccess={handleSuccess}
+        />
+      )}
     </section>
   );
 }

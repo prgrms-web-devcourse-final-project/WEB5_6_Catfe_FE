@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import StudyRoomCard from '@/components/study-room/StudyRoomCard';
+import EnterPasswordModal from '@/components/study-room/EnterPasswordModal';
 import Pagination from '@/components/Pagination';
 import { getMyHostingRooms } from '@/api/apiRooms';
+import { joinRoom, JoinRoomHttpError } from '@/api/apiJoinRoom';
+import { connectRoomSocket } from '@/lib/connectRoomSocket';
 import type { MyRoomsList } from '@/@types/rooms';
 
 const PAGE_SIZE = 6;
@@ -23,6 +26,8 @@ export default function HostList({ search = '' }: { search?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<MyRoomsList[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pending, setPending] = useState<MyRoomsList | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -57,18 +62,57 @@ export default function HostList({ search = '' }: { search?: string }) {
   }, [rows, search]);
 
   const enterRoom = useCallback(
-    (room: MyRoomsList) => {
-      router.push(`/study-rooms/${room.roomId}`);
+    async (room: MyRoomsList) => {
+      try {
+        await connectRoomSocket();
+
+        if (room.isPrivate) {
+          setPending(room);
+          setPwOpen(true);
+          return;
+        }
+
+        await joinRoom(room.roomId);
+        router.push(`/study-rooms/${room.roomId}`);
+      } catch (e) {
+        if (e instanceof JoinRoomHttpError) {
+          if (e.status === 400 && e.data === 'FULL') {
+            alert('정원이 가득 찼어요.');
+          } else if (e.status === 404) {
+            alert('존재하지 않는 방입니다.');
+          } else if (e.status === 401) {
+            alert('로그인이 필요해요.');
+          } else {
+            alert(e.message);
+          }
+        } else {
+          alert('입장 중 오류가 발생했어요.');
+        }
+      }
     },
     [router]
   );
+
+  const closePw = useCallback(() => {
+    setPwOpen(false);
+    setPending(null);
+  }, []);
+
+  const handleSuccess = useCallback(() => {
+    if (!pending) return;
+    const id = pending.roomId;
+    closePw();
+    router.push(`/study-rooms/${id}`);
+  }, [pending, closePw, router]);
 
   return (
     <section id="my-hosting" className="flex flex-col gap-5 mb-10">
       <h2 className="font-semibold text-text-primary">내가 만든 캣페</h2>
 
       {loading && (
-        <div className="w-full py-16 text-center text-text-secondary">불러오는 중이에요...</div>
+        <div className="w-full py-16 text-center text-text-secondary">
+          불러오는 중이에요...
+        </div>
       )}
       {!loading && error && (
         <div className="w-full py-16 text-center text-error-500">{error}</div>
@@ -78,6 +122,7 @@ export default function HostList({ search = '' }: { search?: string }) {
           {search.trim() ? '검색 결과가 없어요.' : '아직 만든 캣페가 없어요 😺'}
         </div>
       )}
+
       {!loading && !error && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
           {filtered.map((room) => (
@@ -95,6 +140,15 @@ export default function HostList({ search = '' }: { search?: string }) {
       )}
 
       <Pagination totalPages={totalPages} scrollContainer="#my-hosting" />
+
+      {pending && (
+        <EnterPasswordModal
+          open={pwOpen}
+          onClose={closePw}
+          roomId={pending.roomId}
+          onSuccess={handleSuccess}
+        />
+      )}
     </section>
   );
 }

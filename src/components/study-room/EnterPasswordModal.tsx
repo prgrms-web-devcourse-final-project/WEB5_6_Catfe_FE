@@ -4,23 +4,25 @@ import { useEffect, useId, useState } from 'react';
 import Button from '@/components/Button';
 import Image from 'next/image';
 import clsx from 'clsx';
+import { joinRoom, JoinRoomHttpError } from '@/api/apiJoinRoom';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  expectedPassword?: string | null;
+  roomId: number;
   onSuccess: () => void;
 };
 
 export default function EnterPasswordModal({
   open,
   onClose,
-  expectedPassword,
+  roomId,
   onSuccess,
 }: Props) {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
 
   const errorId = useId();
   const hasError = Boolean(error);
@@ -31,22 +33,39 @@ export default function EnterPasswordModal({
       setPassword('');
       setShow(false);
       setError(undefined);
+      setLoading(false);
     }
   }, [open]);
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || loading) return;
 
-    const correct = (expectedPassword ?? '').trim();
-    if (!correct || password.trim() !== correct) {
-      setError('비밀번호가 틀렸습니다.');
-      return;
+    setLoading(true);
+    setError(undefined);
+
+    try {
+      await joinRoom(roomId, { password });
+      onSuccess();
+    } catch (err) {
+      if (err instanceof JoinRoomHttpError) {
+        if (err.status === 400 && err.data === 'WRONG_PASSWORD') {
+          setError('비밀번호가 올바르지 않습니다.');
+        } else if (err.status === 400 && err.data === 'FULL') {
+          setError('이미 인원이 가득 찬 방입니다.');
+        } else if (err.status === 404) {
+          setError('존재하지 않는 방입니다.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('입장 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    onSuccess();
   };
 
   return (
@@ -55,7 +74,12 @@ export default function EnterPasswordModal({
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">스터디룸 비밀번호</h2>
           <button onClick={onClose} aria-label="닫기" className="cursor-pointer">
-            <Image src="/icon/study-room/before.svg" alt="이전으로 돌아가기" width={14} height={14} />
+            <Image
+              src="/icon/study-room/before.svg"
+              alt="이전으로 돌아가기"
+              width={14}
+              height={14}
+            />
           </button>
         </div>
 
@@ -71,10 +95,13 @@ export default function EnterPasswordModal({
               placeholder="스터디룸 비밀번호를 입력해 주세요"
               className={clsx(
                 'w-full rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 pr-9 border',
-                hasError ? 'border-error-400 focus:ring-error-200 text-error-700' : 'border-text-secondary/70 focus:ring-secondary-300'
+                hasError
+                  ? 'border-error-400 focus:ring-error-200 text-error-700'
+                  : 'border-text-secondary/70 focus:ring-secondary-300'
               )}
               aria-invalid={hasError || undefined}
               aria-describedby={hasError ? errorId : undefined}
+              disabled={loading}
             />
 
             <button
@@ -105,10 +132,10 @@ export default function EnterPasswordModal({
             color="secondary"
             className="font-bold"
             fullWidth
-            disabled={!canSubmit}
-            aria-disabled={!canSubmit || undefined}
+            disabled={!canSubmit || loading}
+            aria-disabled={!canSubmit || loading || undefined}
           >
-            입장하기
+            {loading ? '입장 중...' : '입장하기'}
           </Button>
         </form>
       </div>

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 function Page() {
   return (
-    <div className="w-full h-dvh">
+    <div className="w-full max-w-[1200px] mx-auto ">
       <h2 className="sr-only">Community Page</h2>
       <CommunityListClient />
     </div>

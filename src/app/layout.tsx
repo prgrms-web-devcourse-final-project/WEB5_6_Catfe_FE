@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className={`${orbitron.variable} ${nanumSquareNeo.variable} antialiased`}>
         <QueryProvider>
           <InitAuth />
-          <main>{children}</main>
+          <div>{children}</div>
         </QueryProvider>
         <ConfirmHost />
         <ToastContainer

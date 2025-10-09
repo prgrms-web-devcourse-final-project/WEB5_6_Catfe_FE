@@ -1,5 +1,4 @@
 import { useComboboxLogic } from '@/hook/useComboboxLogic';
-import { ALL_CATEGORIES } from '@/lib/postCategories';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 import { useMemo } from 'react';
@@ -23,7 +22,7 @@ function SubjectCombobox({
   placeholder = '입력해서 검색...',
   value,
   onChange,
-  options = ALL_CATEGORIES.subjects as unknown as string[],
+  options = [],
   allowMultiSelect = false,
   allowCustom = true,
   disabled = false,

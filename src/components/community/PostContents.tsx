@@ -1,6 +1,6 @@
 'use client';
 
-import { Post } from '@/@types/community';
+import { PostDetail } from '@/@types/community';
 import Image from 'next/image';
 import TiptapRenderer from './TiptapRenderer';
 import UserProfile from './UserProfile';
@@ -9,11 +9,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
 
-function PostContents({ post }: { post: Post }) {
+function PostContents({ post }: { post: PostDetail }) {
   const router = useRouter();
 
   const {
-    post_id: postId,
+    postId,
     title,
     author,
     content,
@@ -63,12 +63,12 @@ function PostContents({ post }: { post: Post }) {
         <h2 className="mr-3 text-2xl font-bold">{title}</h2>
         <div className="flex gap-2">
           {categories &&
-            categories.map((c, idx) => (
+            categories.map((category, idx) => (
               <div
                 key={`${postId}-category-${idx}`}
                 className="px-2 py-1 border-0 bg-primary-500 rounded-sm text-background-white text-xs flex justify-center items-center"
               >
-                {c}
+                {category.name}
               </div>
             ))}
         </div>

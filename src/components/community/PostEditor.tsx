@@ -15,13 +15,13 @@ import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
 
 type EditorProps = {
   initialData?: InitialPost;
-  onSubmitAction?: (data: FormData) => Promise<{ ok: boolean; id?: string; error?: string }>;
+  onSubmitAction?: (data: FormData) => Promise<{ ok: boolean; id?: number; error?: string }>;
 };
 // Promise Props 는 API 명세에 따라 수정 필요
 
 function PostEditor({ initialData, onSubmitAction }: EditorProps) {
   const isEditMode = !!initialData;
-  const postId = initialData?.post_id;
+  const postId = initialData?.postId;
 
   const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);

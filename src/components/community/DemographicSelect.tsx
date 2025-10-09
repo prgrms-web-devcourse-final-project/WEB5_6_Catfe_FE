@@ -1,6 +1,5 @@
 'use client';
 
-import { ALL_CATEGORIES } from '@/lib/postCategories';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 
@@ -20,7 +19,7 @@ function DemographicSelect({
   onChange,
   disabled,
   placeholder = '연령대 선택...',
-  options = ALL_CATEGORIES.demographic as unknown as string[],
+  options = [],
   className,
 }: DemographicProps) {
   const hasValue = value !== '';

@@ -45,6 +45,24 @@ export type PaginationItem = {
   disabled?: boolean;
 };
 
+export type ApiListPaginationResponse<T> = {
+  items: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+};
+
+export type ApiPaginationResponse<T> = {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+};
+
 export type ConfirmTone = 'default' | 'success' | 'danger';
 
 export type ConfirmOptions = {

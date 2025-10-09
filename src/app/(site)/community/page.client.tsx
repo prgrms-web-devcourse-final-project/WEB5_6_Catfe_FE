@@ -1,16 +1,38 @@
 'use client';
 
-import CommunityFilters from '@/components/community/PostFilters';
+import PostFilters from '@/components/community/PostFilters';
 import CommunityTab from '@/components/community/CommunityTab';
 import PostCard from '@/components/community/PostCard';
 import Pagination from '@/components/Pagination';
-import { usePostsQuery } from '@/hook/useCommunityPost';
-import { usePostSearchUrl } from '@/hook/usePostSearchUrl';
+import { useCategoriesQuery, usePostsQuery } from '@/hook/useCommunityPost';
+import { PostSort, usePostSearchUrl } from '@/hook/usePostSearchUrl';
 import Image from 'next/image';
+import { useMemo } from 'react';
+import Spinner from '@/components/Spinner';
+
+const SORT_OPTIONS: { label: string; value: PostSort }[] = [
+  { label: '최신순', value: 'createdAt,desc' },
+  { label: '오래된순', value: 'createdAt,asc' },
+  { label: '좋아요순', value: 'likeCount,desc' },
+  { label: '댓글순', value: 'commentCount,desc' },
+];
 
 function CommunityListClient() {
-  const { query, push } = usePostSearchUrl();
-  const { data, isLoading, isPreviousData } = usePostsQuery(query);
+  const { query, push, replaceSort } = usePostSearchUrl();
+  const { data: categoryData, isLoading: isLoadingCategories } = useCategoriesQuery();
+
+  const categoryNameToIdMap = useMemo(() => {
+    if (!categoryData) return {};
+    return categoryData.reduce(
+      (acc, category) => {
+        acc[category.name] = category.id;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+  }, [categoryData]);
+
+  const { data, isLoading, isPreviousData } = usePostsQuery(query, categoryNameToIdMap);
 
   const pageItems = data?.posts ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -18,6 +40,8 @@ function CommunityListClient() {
   const isFetching = isLoading || isPreviousData;
 
   const pageSize = query.size;
+
+  if (isLoadingCategories) return <Spinner />;
 
   return (
     <div className="max-w-[1200px] flex flex-col justify-start items-start gap-6 sm:gap-10 px-10 py-8 sm:px-[100px] sm:pb-[60px]">
@@ -38,14 +62,33 @@ function CommunityListClient() {
           />
         </div>
       </header>
-      <CommunityFilters value={query} onChange={(next) => push({ ...next, page: 1 })} />
+      <PostFilters
+        value={query}
+        onChange={(next) => push({ ...next, page: 1 })}
+        categoryData={categoryData || []}
+      />
+      <div className="w-full flex justify-end items-center gap-3">
+        <span className="text-sm text-text-secondary">정렬 : </span>
+        <select
+          id="community-sort"
+          value={query.sort}
+          onChange={(e) => replaceSort(e.target.value as PostSort)}
+          className="border border-zinc-300 rounded-md p-1 text-sm outline-none"
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 w-full">
         {/* loading skeleton */}
         {isFetching
           ? Array.from({ length: pageSize }).map((_, i) => (
               <div key={i} className="h-40 rounded-xl bg-gray-400 animate-pulse" />
             ))
-          : pageItems.map((post) => <PostCard key={post.post_id} post={post} />)}
+          : pageItems.map((post) => <PostCard key={post.postId} post={post} />)}
         {/* data가 없을 경우 */}
         {!isFetching && pageItems.length === 0 && (
           <div className="col-span-full text-center py-10 text-text-secondary">

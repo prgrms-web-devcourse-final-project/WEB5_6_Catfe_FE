@@ -1,22 +1,35 @@
-import { CommentTree, Post } from '@/@types/community';
-import { mockPosts } from '@/lib/mockPosts';
+import {
+  CategoriesResponse,
+  CategoryItem,
+  CommentTree,
+  PostDetail,
+  PostListItem,
+  PostListResponse,
+  PostResponse,
+} from '@/@types/community';
 import { keepPreviousData, QueryKey, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { PostQueryParams } from './usePostSearchUrl';
+import { PostQueryParams, PostSort } from './usePostSearchUrl';
+import api from '@/utils/api';
 
 export const communityQueryKey = {
   all: () => ['community', 'posts'] as const,
   post: (id: string) => ['community', 'post', id] as const,
   comments: (id: string) => ['community', 'comments', id] as const,
+  categories: () => ['community', 'categories'] as const,
 };
 
 export interface PostsResponse {
-  posts: Post[];
+  posts: PostListItem[];
   totalCount: number;
   totalPages: number;
 }
 
-export function usePostsQuery(params: PostQueryParams) {
-  const { q, page, size, subjects, demographic, groupSize } = params;
+export function usePostsQuery(
+  params: PostQueryParams,
+  categoryNameToIdMap: Record<string, number>
+) {
+  const isMapReady = Object.keys(categoryNameToIdMap).length > 0;
+  const { q, page, size, subjects, demographic, groupSize, sort } = params;
   const queryKey: QueryKey = [
     ...communityQueryKey.all(),
     q,
@@ -25,31 +38,50 @@ export function usePostsQuery(params: PostQueryParams) {
     subjects,
     demographic,
     groupSize,
+    sort,
+    isMapReady,
   ];
 
   const result = useQuery<PostsResponse, Error>({
     queryKey,
-    // !! 임시 코드 : API_SERVICE.get(params) 로 나중에 변경 필요
     queryFn: async () => {
-      const all = await mockPosts.getAllPosts();
-      const normKeyword = (s: string) => s.normalize('NFC').toLowerCase().trim();
-      let filtered = all;
+      const apiParams: {
+        page: number;
+        size: number;
+        sort?: PostSort;
+        keyword?: string;
+        searchType?: string;
+        category?: string;
+      } = {
+        page: page - 1,
+        size,
+        sort,
+      };
 
-      if (q) filtered = filtered.filter((p) => normKeyword(p.title).includes(normKeyword(q)));
-      if (subjects.length > 0)
-        filtered = filtered.filter((p) => subjects.includes(p.categories[0]));
-      if (demographic) filtered = filtered.filter((p) => p.categories[1] === demographic);
-      if (groupSize) filtered = filtered.filter((p) => p.categories[2] === groupSize);
+      if (q) {
+        apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
+        apiParams.searchType = 'title';
+      }
 
-      const totalCount = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(totalCount / size));
-      const start = (page - 1) * size;
-      const pageItems = filtered.slice(start, start + size);
+      const filterNames: string[] = [];
+
+      if (subjects.length > 0) filterNames.push(...subjects);
+      if (demographic) filterNames.push(demographic);
+      if (groupSize) filterNames.push(groupSize);
+      const categoryIds = filterNames.map((name) => categoryNameToIdMap[name]).filter((id) => !!id);
+
+      // category 여러개 받는 경우 어떻게 처리하는지 확인 필요
+      if (categoryIds.length > 0) apiParams.category = categoryIds.join(',');
+
+      const response = await api.get<PostListResponse>('/api/posts', {
+        params: apiParams,
+      });
+      const apiData = response.data.data;
 
       return {
-        posts: pageItems,
-        totalCount,
-        totalPages,
+        posts: apiData.items,
+        totalCount: apiData.totalElements,
+        totalPages: apiData.totalPages,
       };
     },
     staleTime: 60_000,
@@ -60,13 +92,12 @@ export function usePostsQuery(params: PostQueryParams) {
 }
 
 export function usePost(id: string) {
-  return useQuery<Post | null>({
+  return useQuery<PostDetail | null>({
     queryKey: communityQueryKey.post(id || 'new'),
-    // api 붙이기 전 임시 더미데이터 불러오기 코드
-    queryFn: async (): Promise<Post | null> => {
+    queryFn: async (): Promise<PostDetail | null> => {
       if (!id) return null;
-      const result = await mockPosts.getPost(id);
-      return result || null;
+      const response = await api.get<PostResponse>(`/api/posts/${id}`);
+      return response.data.data || null;
     },
     staleTime: 60_000,
     enabled: !!id,
@@ -76,8 +107,23 @@ export function usePost(id: string) {
 export function useComments(postId: string) {
   return useQuery<CommentTree>({
     queryKey: communityQueryKey.comments(postId),
-    // api 붙이기 전 임시 더미데이터 불러오기 코드
-    queryFn: () => mockPosts.getComments(postId),
+    queryFn: async (): Promise<CommentTree> => {
+      const response = await api.get<CommentTree>(`/api/posts/${postId}/comments`);
+      return response.data;
+    },
     staleTime: 60_000,
+    enabled: !!postId,
+  });
+}
+
+export function useCategoriesQuery() {
+  return useQuery<CategoryItem[], Error>({
+    queryKey: communityQueryKey.categories(),
+    queryFn: async () => {
+      const response = await api.get<CategoriesResponse>('/api/posts/categories');
+      return response.data.data;
+    },
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 }

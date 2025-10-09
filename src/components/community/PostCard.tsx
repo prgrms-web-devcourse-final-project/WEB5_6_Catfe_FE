@@ -1,13 +1,13 @@
 'use client';
 
-import { Post } from '@/@types/community';
+import { PostDetail } from '@/@types/community';
 import { extractPlainText, findFirstImage } from '@/utils/tiptapExtract';
 import DefaultImage from '@/assets/community-thumbnail.png';
 import Image from 'next/image';
 import Button from '../Button';
 import Link from 'next/link';
 
-function PostCard({ post }: { post: Post }) {
+function PostCard({ post }: { post: PostDetail }) {
   if (!post || post.title.trim().length === 0 || !post.content) return null;
 
   const imgSrc = findFirstImage(post.content) ?? DefaultImage;
@@ -31,12 +31,12 @@ function PostCard({ post }: { post: Post }) {
         <h3 className="line-clamp-1 text-base font-semibold overflow-ellipsis">{post.title}</h3>
         <div className="flex overflow-auto gap-1">
           {post.categories &&
-            post.categories.map((c, idx) => (
+            post.categories.map((category, idx) => (
               <span
-                key={`${post.post_id}-category-${idx}`}
+                key={`${post.postId}-category-${idx}`}
                 className="px-2 py-1 border-0 bg-secondary-500 rounded-sm text-text-secondary text-[10px] flex justify-center items-center whitespace-nowrap"
               >
-                {c}
+                {category.name}
               </span>
             ))}
         </div>
@@ -44,7 +44,7 @@ function PostCard({ post }: { post: Post }) {
           {snippet || '내용 미리보기 없음'}
         </p>
         <Button size="sm" className="mx-auto">
-          <Link href={`/community/${post.post_id}`} scroll={true}>
+          <Link href={`/community/${post.postId}`} scroll={true}>
             상세 내용 보기
           </Link>
         </Button>

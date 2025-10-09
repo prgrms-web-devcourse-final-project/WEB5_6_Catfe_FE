@@ -1,6 +1,5 @@
 'use client';
 
-import { ALL_CATEGORIES } from '@/lib/postCategories';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 
@@ -20,7 +19,7 @@ function GroupSizeSelect({
   onChange,
   disabled,
   placeholder = '인원 수 선택...',
-  options = ALL_CATEGORIES.groupSize as unknown as string[],
+  options = [],
   className,
 }: GroupSizeProps) {
   const hasValue = value !== '';

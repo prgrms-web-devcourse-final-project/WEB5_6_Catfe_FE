@@ -11,11 +11,12 @@ interface CommentListProps {
 }
 
 function CommentList({ comments, isLoading }: CommentListProps) {
-  const { id: postId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const postId = Number(id);
 
   if (!comments) return null;
 
-  const handleSubmit = async ({ postId, content }: { postId: string; content: string }) => {
+  const handleSubmit = async ({ postId, content }: { postId: number; content: string }) => {
     // !! 임시 console: API 붙여서 mutateAsync 시킬 것
     console.log('댓글 작성 완료:', { postId, content });
   };
@@ -33,7 +34,7 @@ function CommentList({ comments, isLoading }: CommentListProps) {
       ) : (
         <div>
           {comments.map((comment) => (
-            <CommentRootItem key={comment.comment_id} comment={comment} />
+            <CommentRootItem key={comment.commentId} comment={comment} />
           ))}
         </div>
       )}

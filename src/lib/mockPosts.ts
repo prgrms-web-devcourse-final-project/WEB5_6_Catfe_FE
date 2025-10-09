@@ -44,7 +44,7 @@ const user = (n: number) => users[n - 1];
 // Posts (허용 노드/마크만 사용, 15개)
 export const posts: Post[] = [
   {
-    post_id: 'p1',
+    postId: 'p1',
     author: user(1),
     title: '스터디 운영 팁 모음',
     content: {
@@ -107,7 +107,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-01T09:12:00.000Z',
   },
   {
-    post_id: 'p2',
+    postId: 'p2',
     author: user(2),
     title: 'React 상태관리 뭐 쓰세요?',
     content: {
@@ -167,7 +167,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-02T14:35:00.000Z',
   },
   {
-    post_id: 'p3',
+    postId: 'p3',
     author: user(3),
     title: '알고리즘 버디 구합니다',
     content: {
@@ -232,7 +232,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-03T19:22:00.000Z',
   },
   {
-    post_id: 'p4',
+    postId: 'p4',
     author: user(4),
     title: 'CS 스터디 커리큘럼 공유',
     content: {
@@ -291,7 +291,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-04T08:05:00.000Z',
   },
   {
-    post_id: 'p5',
+    postId: 'p5',
     author: user(5),
     title: '영어 회화 스터디 템플릿',
     content: {
@@ -345,7 +345,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-05T17:44:00.000Z',
   },
   {
-    post_id: 'p6',
+    postId: 'p6',
     author: user(6),
     title: 'Next.js 15 Router 정리',
     content: {
@@ -406,7 +406,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-06T10:10:00.000Z',
   },
   {
-    post_id: 'p7',
+    postId: 'p7',
     author: user(7),
     title: '퇴근 루틴 공유합니다',
     content: {
@@ -442,7 +442,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-07T12:00:00.000Z',
   },
   {
-    post_id: 'p8',
+    postId: 'p8',
     author: user(8),
     title: 'Supabase Edge Functions 삽질기',
     content: {
@@ -501,7 +501,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-08T09:45:00.000Z',
   },
   {
-    post_id: 'p9',
+    postId: 'p9',
     author: user(9),
     title: '토익 800 → 900 목표',
     content: {
@@ -545,7 +545,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-09T07:30:00.000Z',
   },
   {
-    post_id: 'p10',
+    postId: 'p10',
     author: user(10),
     title: '데이터 사이언스 입문 로드맵',
     content: {
@@ -598,7 +598,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-10T15:55:00.000Z',
   },
   {
-    post_id: 'p11',
+    postId: 'p11',
     author: user(11),
     title: 'UX/UI 스터디 자료 공유',
     content: {
@@ -642,7 +642,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-11T21:05:00.000Z',
   },
   {
-    post_id: 'p12',
+    postId: 'p12',
     author: user(12),
     title: 'JLPT N2 한 달 벼락치기',
     content: {
@@ -692,7 +692,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-12T11:25:00.000Z',
   },
   {
-    post_id: 'p13',
+    postId: 'p13',
     author: user(13),
     title: '드로잉 입문 자료 모음',
     content: {
@@ -750,7 +750,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-13T16:40:00.000Z',
   },
   {
-    post_id: 'p14',
+    postId: 'p14',
     author: user(14),
     title: '주식 단타 후기',
     content: {
@@ -801,7 +801,7 @@ export const posts: Post[] = [
     updatedAt: '2025-09-14T13:15:00.000Z',
   },
   {
-    post_id: 'p15',
+    postId: 'p15',
     author: user(15),
     title: '서비스 기획 스터디 개설',
     content: {
@@ -866,8 +866,8 @@ export const posts: Post[] = [
 // Comments (그대로 사용 가능)
 export const comments: CommentTree = [
   {
-    comment_id: 'c1',
-    post_id: 'p1',
+    commentId: 'c1',
+    postId: 'p1',
     author: user(2),
     content: '꿀팁 감사합니다!',
     likeCount: 1,
@@ -877,8 +877,8 @@ export const comments: CommentTree = [
     replyCount: 1,
     children: [
       {
-        comment_id: 'c2',
-        post_id: 'p1',
+        commentId: 'c2',
+        postId: 'p1',
         author: user(1),
         content: '읽어주셔서 감사해요 🙏',
         likeCount: 0,
@@ -889,8 +889,8 @@ export const comments: CommentTree = [
     ],
   } as RootComment,
   {
-    comment_id: 'c3',
-    post_id: 'p3',
+    commentId: 'c3',
+    postId: 'p3',
     author: user(4),
     content: '저도 참여하고 싶어요!',
     likeCount: 2,
@@ -901,8 +901,8 @@ export const comments: CommentTree = [
     children: [],
   } as RootComment,
   {
-    comment_id: 'c4',
-    post_id: 'p6',
+    commentId: 'c4',
+    postId: 'p6',
     author: user(7),
     content: '정리 감사합니다. 코드 예시가 특히 좋네요.',
     likeCount: 3,
@@ -913,8 +913,8 @@ export const comments: CommentTree = [
     children: [],
   } as RootComment,
   {
-    comment_id: 'c5',
-    post_id: 'p10',
+    commentId: 'c5',
+    postId: 'p10',
     author: user(12),
     content: '데이터 분석 입문자에게 정말 유용합니다!',
     likeCount: 1,
@@ -924,8 +924,8 @@ export const comments: CommentTree = [
     replyCount: 1,
     children: [
       {
-        comment_id: 'c6',
-        post_id: 'p10',
+        commentId: 'c6',
+        postId: 'p10',
         author: user(10),
         content: '도움 되셨다니 다행이에요!',
         likeCount: 0,
@@ -937,20 +937,20 @@ export const comments: CommentTree = [
   } as RootComment,
 ];
 
-export const mockPosts = {
-  async getPost(id: string): Promise<Post | undefined> {
-    // 네트워크 지연 흉내
-    await new Promise((r) => setTimeout(r, 200));
-    return posts.find((p) => p.post_id === id);
-  },
-  async getComments(postId: string): Promise<CommentTree> {
-    // 네트워크 지연 흉내
-    await new Promise((r) => setTimeout(r, 200));
-    return comments.filter((c) => c.post_id === postId);
-  },
-  async getAllPosts(): Promise<Post[]> {
-    // 네트워크 지연 흉내
-    await new Promise((r) => setTimeout(r, 200));
-    return posts;
-  },
-};
+// export const mockPosts = {
+//   async getPost(id: string): Promise<Post | undefined> {
+//     // 네트워크 지연 흉내
+//     await new Promise((r) => setTimeout(r, 200));
+//     return posts.find((p) => p.postId === id);
+//   },
+//   async getComments(postId: string): Promise<CommentTree> {
+//     // 네트워크 지연 흉내
+//     await new Promise((r) => setTimeout(r, 200));
+//     return comments.filter((c) => c.postId === postId);
+//   },
+//   async getAllPosts(): Promise<Post[]> {
+//     // 네트워크 지연 흉내
+//     await new Promise((r) => setTimeout(r, 200));
+//     return posts;
+//   },
+// };

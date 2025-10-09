@@ -9,7 +9,9 @@ import SettingsModal from "@/components/study-room/settings-modal/SettingsModal"
 import InviteShareModal from "@/components/study-room/InviteShareModal";
 import UsersModal from "@/components/study-room/online-users/UsersModal";
 import useEscapeKey from "@/hook/useEscapeKey";
-import { useRoomInfoQuery, useRoomMembersQuery } from "@/api/queryKeysRoomDetail";
+
+import { useRoomInfoQuery } from "@/hook/useRoomInfo";
+import { useRoomMembersQuery } from "@/hook/useRoomMembers";
 
 type Props = {
   children: ReactNode;
@@ -24,8 +26,17 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const popRef = useRef<HTMLDivElement>(null);
   const usersRef = useRef<HTMLDivElement>(null);
 
-  const { data: infoDto, error: infoError } = useRoomInfoQuery(roomId);
-  const { data: membersDto, isLoading: membersLoading, error: membersError } = useRoomMembersQuery(roomId);
+  const {
+    data: infoDto,
+    error: infoError,
+    isLoading: infoLoading,
+  } = useRoomInfoQuery(roomId);
+
+  const {
+    data: membersDto,
+    isLoading: membersLoading,
+    error: membersError,
+  } = useRoomMembersQuery(roomId);
 
   const users = useMemo(
     () =>
@@ -81,7 +92,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const onToggleUsers = () => setUsersOpen((v) => !v);
   const onToggleInvite = () => setInviteOpen((v) => !v);
 
-  const usersCount = membersLoading ? "…" : (membersDto?.length ?? 0);
+  const usersCount = membersLoading ? "?" : (membersDto?.length ?? 0);
 
   return (
     <div className="min-h-screen w-full">
@@ -97,6 +108,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         <div className="relative">
           <header className="h-14 flex items-center justify-end px-6">
             <div className="flex items-center gap-2">
+              {/* Users */}
               <div className="relative inline-block" ref={usersRef}>
                 <Button
                   size="sm"
@@ -109,17 +121,27 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   disabled={!!membersError}
                   title={membersError ? "멤버 로드 실패" : undefined}
                 >
-                  <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
+                  <Image
+                    src="/icon/study-room/user.svg"
+                    alt="사용자 아이콘"
+                    width={16}
+                    height={16}
+                  />
                   {usersCount}
                 </Button>
 
                 {usersOpen && (
                   <div className="absolute right-0 top-full mt-2 z-50">
-                    <UsersModal users={users} canControl onClose={() => setUsersOpen(false)} />
+                    <UsersModal
+                      users={users}
+                      canControl
+                      onClose={() => setUsersOpen(false)}
+                    />
                   </div>
                 )}
               </div>
 
+              {/* 초대하기 */}
               <div className="relative inline-block" ref={popRef}>
                 <Button
                   size="sm"
@@ -128,7 +150,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   onClick={onToggleInvite}
                   aria-expanded={inviteOpen}
                   aria-haspopup="dialog"
-                  disabled={!infoDto || !!infoError}
+                  disabled={infoLoading || !infoDto || !!infoError}
                   title={infoError ? "방 정보 로드 실패" : undefined}
                 >
                   초대하기
@@ -152,7 +174,11 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         </div>
       </div>
 
-      <SettingsModal open={settingsOpen} onClose={onCloseSettings} defaultTab="general" />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={onCloseSettings}
+        defaultTab="general"
+      />
     </div>
   );
 }

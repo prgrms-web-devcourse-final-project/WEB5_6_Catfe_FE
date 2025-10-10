@@ -1,21 +1,41 @@
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import ContentsDetail from './ContentsDetail';
+import api from '@/utils/api';
+import { ApiResponse } from '@/@types/type';
+import { PostDetail } from '@/@types/community';
+import { communityQueryKey, getPostDetail } from '@/hook/useCommunityPost';
+
+async function getPostDetailForServer(id: number): Promise<{ title?: string } | null> {
+  try {
+    const response = await api.get<ApiResponse<PostDetail>>(`/api/posts/${id}`);
+    if (response.data.success && response.data.data) {
+      return { title: response.data.data.title };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Fetch Error - Post Title for Metadata: ${id}`, error);
+    return null;
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const postData = await getPostDetailForServer(Number(id));
+  const postTitle = postData?.title;
+
   return {
-    title: `Catfé | Community Post #${id}`,
+    title: postTitle ? `Catfé | ${postTitle}` : `Catfé | Community Post #${id}`,
   };
 }
 
-/* 
-  저장할 때 -> tiptap editor 에서 html을 json으로 저장
-  불러올 때 -> Tiptap JSON을 html로 뿌려야 함
- */
-
 async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id: postId } = await params;
+  const { id } = await params;
+  const postId = Number(id);
   const qc = new QueryClient();
+  await qc.prefetchQuery({
+    queryKey: communityQueryKey.post(postId),
+    queryFn: () => getPostDetail(postId),
+  });
 
   return (
     <HydrationBoundary state={dehydrate(qc)}>

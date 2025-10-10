@@ -7,7 +7,6 @@ import {
   PostDetail,
   PostListItem,
   PostListResponse,
-  PostResponse,
 } from '@/@types/community';
 import {
   keepPreviousData,
@@ -109,8 +108,9 @@ export function usePost(id: number) {
     queryKey: communityQueryKey.post(id || 0),
     queryFn: async (): Promise<PostDetail | null> => {
       if (!id) return null;
-      const response = await api.get<PostResponse>(`/api/posts/${id}`);
-      return response.data.data || null;
+      const { data: response } = await api.get<ApiResponse<PostDetail>>(`/api/posts/${id}`);
+      if (!response.success) throw new Error(response.message || '게시글 불러오기에 실패했습니다.');
+      return response.data || null;
     },
     staleTime: 60_000,
     enabled: !!id,
@@ -143,6 +143,18 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
       }
     },
   });
+}
+
+export async function getPostDetail(id: number): Promise<PostDetail | null> {
+  if (id === 0) return null;
+  try {
+    const { data: response } = await api.get<ApiResponse<PostDetail>>(`/api/posts/${id}`);
+    if (!response.success) throw new Error(response.message || '게시글 불러오기에 실패했습니다.');
+    return response.data || null;
+  } catch (error) {
+    console.error(`Fetch Error - Post Detail for Server: ${id}`, error);
+    return null;
+  }
 }
 
 /* ------ Comments ------ */

@@ -8,9 +8,11 @@ import LikeButton from '../LikeButton';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
+import { useUser } from '@/api/apiUsersMe';
 
 function PostContents({ post }: { post: PostDetail }) {
   const router = useRouter();
+  const { data: user } = useUser();
 
   const {
     postId,
@@ -26,7 +28,7 @@ function PostContents({ post }: { post: PostDetail }) {
 
   // user 정보 붙이기 전 임시 코드
   const isLikedByMe = false;
-  const isAuthor = true;
+  const isAuthor = author.id === user?.userId;
 
   const [liked, setLiked] = useState<boolean>(isLikedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);

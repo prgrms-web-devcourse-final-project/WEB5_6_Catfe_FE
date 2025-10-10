@@ -6,12 +6,12 @@ import Spinner from '@/components/Spinner';
 import { useComments, usePost } from '@/hook/useCommunityPost';
 import { useEffect } from 'react';
 
-function ContentsDetail({ postId }: { postId: string }) {
+function ContentsDetail({ postId }: { postId: number }) {
   const { data: post, isLoading: loadingPost } = usePost(postId);
   const { data: comments, isLoading: loadingComments } = useComments(postId);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (postId) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [postId]);
 
   // api 연결 전 UI 확인용 임시
@@ -25,7 +25,6 @@ function ContentsDetail({ postId }: { postId: string }) {
       </div>
     );
 
-  // 나중에 에러fallback으로 수정할 것
   if (!post)
     return (
       <div className="h-full w-full">

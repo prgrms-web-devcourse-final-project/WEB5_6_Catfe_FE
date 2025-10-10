@@ -70,20 +70,20 @@ function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
                 d="M12 26c0-9 7-16 18-16 7 0 10 2 13 4 5 4 9 8 9 12 0 7-7 10-20 10S12 33 12 26Z"
                 fill="var(--rock-fill)"
                 stroke="var(--rock-stroke)"
-                stroke-width="1.5"
+                strokeWidth="1.5"
               />
               <path
                 d="M22 22c2-3 6-5 12-5m-6 10c4 1 11 1 16-1"
                 fill="none"
                 stroke="#ffffff66"
-                stroke-linecap="round"
+                strokeLinecap="round"
               />
               <path
                 d="M18 27c3 2 8 3 14 3m12-6c1 1 2 2 2 3"
                 fill="none"
                 stroke="var(--rock-stroke)"
-                stroke-opacity=".4"
-                stroke-linecap="round"
+                strokeOpacity=".4"
+                strokeLinecap="round"
               />
             </svg>
           </div>

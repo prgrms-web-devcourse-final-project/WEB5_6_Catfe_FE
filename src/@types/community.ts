@@ -12,7 +12,7 @@ export type PostListItem = {
   author: UserSummary;
   title: string;
   categories: ApiCategory[];
-  content?: JSONContent | null;
+  content: JSONContent | null;
 
   likeCount: number;
   bookmarkCount: number;

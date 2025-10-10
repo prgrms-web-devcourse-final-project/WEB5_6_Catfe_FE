@@ -53,7 +53,6 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config as AxiosRequestConfig & { _retry?: boolean };
-    console.log(originalRequest);
     const isLogoutRequest = originalRequest.url?.endsWith('/api/auth/logout');
 
     // 401 → AccessToken 만료

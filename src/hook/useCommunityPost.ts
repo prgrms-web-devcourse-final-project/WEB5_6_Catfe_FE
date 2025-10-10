@@ -145,6 +145,11 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
   });
 }
 
+export async function apiDeletePost(postId: number): Promise<void> {
+  const { data: response } = await api.delete<ApiResponse<void>>(`/api/posts/${postId}`);
+  if (!response.success) throw new Error(`DELETE post ${postId} failed: ${response.message};`);
+}
+
 export async function getPostDetail(id: number): Promise<PostDetail | null> {
   if (id === 0) return null;
   try {

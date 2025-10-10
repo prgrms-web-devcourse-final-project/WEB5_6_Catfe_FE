@@ -39,7 +39,7 @@ async function Page({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <HydrationBoundary state={dehydrate(qc)}>
-      <div className="min-h-dvh px-auto max-w-[1200px] flex justify-center items-start py-8">
+      <div className="min-h-dvh mx-auto max-w-[1200px] flex justify-center items-start py-8">
         <div className="w-7/8 rounded-2xl border-2 border-secondary-900 p-8 mx-auto">
           <ContentsDetail postId={postId} />
         </div>

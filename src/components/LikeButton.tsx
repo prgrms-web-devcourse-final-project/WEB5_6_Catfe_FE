@@ -17,7 +17,6 @@ function LikeButton({
   const [animationKey, setAnimationKey] = useState(0);
 
   const handleClick = () => {
-    console.log('click', animationKey);
     const next = !liked;
     setAnimationKey((prev) => prev + 1);
     onToggle?.(next);

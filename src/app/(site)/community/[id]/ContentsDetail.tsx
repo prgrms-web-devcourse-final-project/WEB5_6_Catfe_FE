@@ -15,7 +15,6 @@ function ContentsDetail({ postId }: { postId: number }) {
   }, [postId]);
 
   // api 연결 전 UI 확인용 임시
-  // const loadingPost = true;
   // const loadingComments = true;
 
   if (loadingPost)

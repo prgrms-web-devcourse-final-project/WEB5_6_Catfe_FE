@@ -1,6 +1,6 @@
 'use client';
 
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
@@ -15,6 +15,7 @@ import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
 import { ApiResponse } from '@/@types/type';
 import { useCategoryRegisterMutation } from '@/hook/useCommunityPost';
 import { useRouter } from 'next/navigation';
+import { useConfirm } from '@/hook/useConfirm';
 
 type EditorProps = {
   initialData?: InitialPost;
@@ -26,6 +27,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
   const isEditMode = !!initialData;
   const postId = initialData?.postId;
   const router = useRouter();
+  const confirm = useConfirm();
 
   const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -86,12 +88,13 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
   useEffect(() => {
     if (!editor || editor.options.content) return;
 
-    let contentToLoad = initialData?.content;
+    let contentToLoad: JSONContent | string | null | undefined = initialData?.content;
 
     // draft 있으면 덮어쓰기
     if (draft && draft.json && !isDocEmpty(draft.json)) {
       contentToLoad = draft.json;
     }
+
     if (contentToLoad) {
       editor.commands.setContent(contentToLoad);
     }
@@ -143,7 +146,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
     // Request Body 생성
     const requestBody: CreatePostRequest = {
       title: title,
-      content: JSON.stringify(editor.getJSON()),
+      content: editor.getHTML(),
       categoryIds: categoryIds,
     };
 
@@ -169,17 +172,23 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
     }
   };
 
-  const handleCancel = () => {
-    const confirmOk = confirm('입력된 내용이 모두 사라집니다. 정말 취소하시겠습니까?');
-    if (confirmOk) {
-      runWithoutSaving(() => {
-        setTitle('');
-        setCategories([]);
-        editor?.chain().focus().clearContent().run();
-        clearDraft();
-      });
-      history.back();
-    }
+  const handleCancel = async () => {
+    const confirmOk = await confirm({
+      title: '작성을 취소하시겠습니까?',
+      description: <>작성 중인 내용이 모두 사라집니다.</>,
+      confirmText: '취소하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+
+    runWithoutSaving(() => {
+      setTitle('');
+      setCategories([]);
+      editor?.chain().focus().clearContent().run();
+      clearDraft();
+    });
+    history.back();
   };
 
   const setFilter = (idx: 0 | 1 | 2, val: string) =>

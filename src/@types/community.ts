@@ -1,7 +1,7 @@
 import { ApiListPaginationResponse, ApiPaginationResponse, ApiResponse, UserProfile } from './type';
-import { JSONContent } from '@tiptap/react';
 
 export type UserSummary = Pick<UserProfile, 'nickname' | 'profileImageUrl'> & { id: number };
+
 export type ApiCategory = {
   id: number;
   name: string;
@@ -12,7 +12,7 @@ export type PostListItem = {
   author: UserSummary;
   title: string;
   categories: ApiCategory[];
-  content: JSONContent | null;
+  content: string | null;
 
   likeCount: number;
   bookmarkCount: number;

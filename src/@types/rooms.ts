@@ -1,4 +1,4 @@
-export type Role = "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+export type Role = 'HOST' | 'SUB_HOST' | 'MEMBER' | 'VISITOR';
 
 export type RoomInfo = {
   id: number;
@@ -8,10 +8,10 @@ export type RoomInfo = {
   isPrivate: boolean;
   coverPreviewUrl: string | null;
   currentParticipants: number;
-  status: "WAITING" | "ACTIVE" | "PAUSED";
-  allowCamera: true;
-  allowAudio: true;
-  allowScreenShare: true;
+  status: 'WAITING' | 'ACTIVE' | 'PAUSED';
+  allowCamera: boolean;
+  allowAudio: boolean;
+  allowScreenShare: boolean;
   ownerName?: string;
   createdAt?: string;
 };
@@ -29,7 +29,7 @@ export type RoomSnapshot = {
 
 export type VoiceState = {
   muted: boolean;
-  by?: "self" | "owner" | "staff";
+  by?: 'self' | 'owner' | 'staff';
   speaking?: boolean;
 };
 
@@ -40,7 +40,7 @@ export type UsersListItem = RoomMember & {
   joinedAt?: string | null;
 };
 
-export type RoomSnapshotUI = Omit<RoomSnapshot, "members"> & {
+export type RoomSnapshotUI = Omit<RoomSnapshot, 'members'> & {
   members: UsersListItem[];
 };
 
@@ -62,7 +62,7 @@ export type CreateRoomRes = {
     description: string;
     currentParticipants: number;
     maxParticipants: number;
-    status: "WAITING" | "ACTIVE" | "CLOSED";
+    status: 'WAITING' | 'ACTIVE' | 'CLOSED';
     createdBy: string;
     createdAt: string;
     allowCamera: boolean;
@@ -80,6 +80,6 @@ export type MyRoomsList = {
   currentParticipants: number;
   maxParticipants: number;
   status: string;
-  myRole: "HOST" | "SUB_HOST" | "MEMBER";
+  myRole: 'HOST' | 'SUB_HOST' | 'MEMBER';
   createdAt: string;
 };

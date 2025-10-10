@@ -47,7 +47,7 @@ export function useNotifications() {
           pages: data.pages.map((p: NotificationPage) => ({
             ...p,
             items: p.items.map((it: NotificationPage['items'][number]) =>
-              it.id === id
+              it.id === Number(id)
                 ? {
                     ...it,
                     unread: false,

@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import { formatRelativeDate } from '@/utils/formatRelativeDate';
-import { Post } from '@/@types/community';
+import { PostDetail } from '@/@types/community';
 import tw from '@/utils/tw';
 
-type UserProfileProps = Pick<Post, 'author' | 'createdAt' | 'updatedAt'> & {
+type UserProfileProps = Pick<PostDetail, 'author' | 'createdAt' | 'updatedAt'> & {
   isComment?: boolean;
   className?: string;
 };

@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import CommunityListClient from './page.client';
+import { Suspense } from 'react';
+import Spinner from '@/components/Spinner';
 
 export const metadata: Metadata = {
   title: 'Catfé | Community',
@@ -10,7 +12,15 @@ function Page() {
   return (
     <div className="w-full max-w-[1200px] mx-auto ">
       <h2 className="sr-only">Community Page</h2>
-      <CommunityListClient />
+      <Suspense
+        fallback={
+          <div className="w-full h-dvh">
+            <Spinner />
+          </div>
+        }
+      >
+        <CommunityListClient />
+      </Suspense>
     </div>
   );
 }

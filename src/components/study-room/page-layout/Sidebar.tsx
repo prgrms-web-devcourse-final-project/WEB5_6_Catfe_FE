@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import clsx from "clsx";
-import useEscapeKey from "@/hook/useEscapeKey";
-import UserProfileModal from "@/components/study-room/UserProfileModal";
-import TimerPanel from "@/components/study-room/timer/TimerPanel";
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import clsx from 'clsx';
+import useEscapeKey from '@/hook/useEscapeKey';
+import UserProfileModal from '@/components/study-room/UserProfileModal';
+import TimerPanel from '@/components/study-room/timer/TimerPanel';
 
 type Props = {
   className?: string;
@@ -23,7 +23,7 @@ export default function Sidebar({
   className,
   onOpenSettings,
   onOpenTimer,
-  onOpenNotice,
+  // onOpenNotice,
   onOpenChat,
   onOpenPlanner,
   onOpenProfile,
@@ -47,8 +47,8 @@ export default function Sidebar({
         setProfileOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [profileOpen]);
 
   // 타이머 바깥 클릭 닫기
@@ -60,8 +60,8 @@ export default function Sidebar({
         setTimerOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [timerOpen]);
 
   const toggleProfile = () => {
@@ -78,7 +78,7 @@ export default function Sidebar({
     <aside
       ref={sidebarRef}
       className={clsx(
-        "relative h-screen w-[10vw] max-w-[70px] border-r border-black/10 flex flex-col items-center justify-between py-4 bg-background-white",
+        'relative h-screen w-[10vw] max-w-[70px] border-r border-black/10 flex flex-col items-center justify-between py-4 bg-background-white',
         className
       )}
       aria-label="Room sidebar"
@@ -94,7 +94,11 @@ export default function Sidebar({
 
       {/* 하단 아이콘들 */}
       <div className="flex flex-col items-center justify-center gap-4">
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="설정" onClick={onOpenSettings}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="설정"
+          onClick={onOpenSettings}
+        >
           <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
         </button>
         <div className="relative">
@@ -119,10 +123,18 @@ export default function Sidebar({
         {/* <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="게시판" onClick={onOpenNotice}>
           <Image src="/icon/study-room/notice.svg" alt="게시판 아이콘" width={20} height={20} />
         </button> */}
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="채팅" onClick={onOpenChat}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="채팅"
+          onClick={onOpenChat}
+        >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
         </button>
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="플래너" onClick={onOpenPlanner}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="플래너"
+          onClick={onOpenPlanner}
+        >
           <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
         </button>
 

@@ -1,6 +1,6 @@
-import api from "@/utils/api";
-import { User } from "@/store/useAuthStore";
-import { setAccessToken } from "@/utils/api";
+import { User } from '@/@types/type';
+import api from '@/utils/api';
+import { setAccessToken } from '@/utils/api';
 
 export interface LoginRequest {
   username: string;
@@ -30,18 +30,17 @@ export interface RegisterResponse {
 }
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const res = await api.post<{ data: LoginResponse }>("/api/auth/login", data);
+  const res = await api.post<{ data: LoginResponse }>('/api/auth/login', data);
   const { accessToken, user } = res.data.data;
   setAccessToken(accessToken);
   return { accessToken, user };
 }
 
-
 export async function logoutApi(accessToken: string | null): Promise<void> {
   if (!accessToken) return;
 
   await api.post(
-    "/api/auth/logout",
+    '/api/auth/logout',
     {},
     {
       headers: {
@@ -52,6 +51,6 @@ export async function logoutApi(accessToken: string | null): Promise<void> {
 }
 
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  const res = await api.post<{ data: RegisterResponse }>("/api/auth/register", data);
+  const res = await api.post<{ data: RegisterResponse }>('/api/auth/register', data);
   return res.data.data;
 }

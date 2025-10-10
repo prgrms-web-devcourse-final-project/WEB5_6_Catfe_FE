@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { debounce } from '@/utils/debounce';
-import type { User } from '@/store/useAuthStore';
 import Button from '@/components/Button';
 import CreateRoomModal from '@/components/study-room/CreateRoomModal';
 import cat12 from '@/assets/cats/cat-12.svg';
@@ -11,6 +10,7 @@ import cat13 from '@/assets/cats/cat-13.svg';
 import UserHomeBanner from './UserHomeBanner';
 import HostList from './HostList';
 import JoinList from './JoinList';
+import { User } from '@/@types/type';
 
 export default function UserHome({ user }: { user: User }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function UserHome({ user }: { user: User }) {
           <div className="flex items-center gap-2">
             <Image src={cat13} alt="cat" width={40} height={40} />
             <span className="text-sm text-text-primary">
-              <strong>{user.nickname}</strong> 님! 오늘은 어디로?
+              <strong>{user.profile.nickname}</strong> 님! 오늘은 어디로?
             </span>
           </div>
 

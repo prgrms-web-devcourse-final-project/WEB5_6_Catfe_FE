@@ -97,7 +97,7 @@ function NotificationRow({
               borderType="solid"
               size="sm"
               className="mt-2"
-              onClick={() => onRead(item.id)}
+              onClick={() => onRead(String(item.id))}
             >
               {item.ctaLabel ?? '보러가기'}
             </Button>

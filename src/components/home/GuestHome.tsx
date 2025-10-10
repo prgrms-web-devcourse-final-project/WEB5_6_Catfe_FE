@@ -1,19 +1,16 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import WalkingCat from "./WalkingCat";
-import { useRouter } from "next/navigation";
-import StudyRoomCard from "@/components/study-room/StudyRoomCard";
-import { DUMMY_ROOMS } from "@/mock/rooms";
-import Button from "../Button";
-import type { RoomSnapshotUI } from "@/@types/room";
+import Image from 'next/image';
+import WalkingCat from './WalkingCat';
+import { useRouter } from 'next/navigation';
+import StudyRoomCard from '@/components/study-room/StudyRoomCard';
+import Button from '../Button';
+import type { RoomSnapshotUI } from '@/@types/rooms';
+import { DUMMY_ROOMS } from '@/mock/rooms';
 
 export default function GuestHome() {
-
   const router = useRouter();
-  const rooms: RoomSnapshotUI[] = Object.values(
-    DUMMY_ROOMS as Record<string, RoomSnapshotUI>
-  );
+  const rooms: RoomSnapshotUI[] = Object.values(DUMMY_ROOMS as Record<string, RoomSnapshotUI>);
 
   const onClickRoom = (room: RoomSnapshotUI) => {
     router.push(`/study-rooms/${room.info.id}`);
@@ -33,9 +30,7 @@ export default function GuestHome() {
 
       {/* 2x2 썸네일 그리드 */}
       <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12.5 py-5 md:py-6 justify-items-center">
-        <div
-          className="aspect-[16/10] w-full border border-black/10 rounded-xl grid place-items-center bg-[url('/image/home-descript-1.png')] bg-[length:100%_100%] bg-no-repeat"
-        >
+        <div className="aspect-[16/10] w-full border border-black/10 rounded-xl grid place-items-center bg-[url('/image/home-descript-1.png')] bg-[length:100%_100%] bg-no-repeat">
           캣페 서비스 소개 1
         </div>
         <div className="aspect-[16/10] w-full bg-secondary-200 border border-black/10 rounded-xl grid place-items-center">
@@ -51,21 +46,11 @@ export default function GuestHome() {
 
       {/* 환영 타이틀 */}
       <section className="w-full max-w-6xl flex justify-center gap-5 py-5 md:py-6">
-        <Image
-            src="/image/cat-default.svg"
-            alt="캣페 마스코트"
-            width={32}
-            height={32}
-          />
+        <Image src="/image/cat-default.svg" alt="캣페 마스코트" width={32} height={32} />
         <h2 className="text-4xl font-extrabold text-center">
           catfé 에 방문하신 여러분 환영합니다!
         </h2>
-        <Image
-            src="/image/cat-default.svg"
-            alt="캣페 마스코트"
-            width={32}
-            height={32 }
-          />
+        <Image src="/image/cat-default.svg" alt="캣페 마스코트" width={32} height={32} />
       </section>
 
       {/* 통계 3칸 */}
@@ -105,11 +90,10 @@ export default function GuestHome() {
         borderType="solid"
         color="primary"
         className="self-center"
-        onClick={() => router.push("/study-rooms")}
-        >
-          👉🏻더 많은 스터디룸 구경하러 가기👈🏻
+        onClick={() => router.push('/study-rooms')}
+      >
+        👉🏻더 많은 스터디룸 구경하러 가기👈🏻
       </Button>
-
     </main>
   );
 }

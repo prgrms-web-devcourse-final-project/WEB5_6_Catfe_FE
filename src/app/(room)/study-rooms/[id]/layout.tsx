@@ -1,14 +1,30 @@
-import type { ReactNode } from "react";
-import ClientRoomShell from "./ClientRoomShell";
+import type { ReactNode } from 'react';
+import ClientRoomShell from './ClientRoomShell';
 
-export const dynamic = "force-dynamic";
+interface RoomLayoutProps {
+  children: ReactNode;
+  params: Promise<{ id: string }>;
+}
 
-type Props = { children: ReactNode; params: { id: string } };
-
-export default function RoomLayout({ params, children }: Props) {
-  const idNum = Number(params.id);
+export default async function RoomLayout({ params, children }: RoomLayoutProps) {
+  const { id } = await params;
+  const idNum = Number(id);
   if (!Number.isFinite(idNum) || idNum <= 0) {
-    throw new Error("잘못된 방 ID");
+    throw new Error('잘못된 방 ID');
   }
   return <ClientRoomShell roomId={idNum}>{children}</ClientRoomShell>;
 }
+// import type { ReactNode } from "react";
+// import ClientRoomShell from "./ClientRoomShell";
+
+// export const dynamic = "force-dynamic";
+
+// type Props = { children: ReactNode; params: { id: string } };
+
+// export default function RoomLayout({ params, children }: Props) {
+//   const idNum = Number(params.id);
+//   if (!Number.isFinite(idNum) || idNum <= 0) {
+//     throw new Error("잘못된 방 ID");
+//   }
+//   return <ClientRoomShell roomId={idNum}>{children}</ClientRoomShell>;
+// }

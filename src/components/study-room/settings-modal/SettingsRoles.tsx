@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import clsx from "clsx";
-import Image from "next/image";
-import CustomSelect from "@/components/CustomSelect";
-import Button from "@/components/Button";
-import type { Role } from "@/@types/rooms";
+import { useEffect, useMemo, useState } from 'react';
+import clsx from 'clsx';
+import Image from 'next/image';
+import CustomSelect from '@/components/CustomSelect';
+import Button from '@/components/Button';
+import type { Role } from '@/@types/rooms';
 
-type RoleEditable = Extract<Role, "SUB_HOST" | "MEMBER">;
-type RoleSelectValue = RoleEditable | "DELETE";
-type Filter = "all" | RoleEditable;
+type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER'>;
+type RoleSelectValue = RoleEditable | 'DELETE';
+type Filter = 'all' | RoleEditable;
 
 type User = {
   id: string;
@@ -32,20 +32,20 @@ type Props = {
 };
 
 const filterOptions = [
-  { label: "전체", value: "all" as const },
-  { label: "스텝", value: "SUB_HOST" as const },
-  { label: "멤버", value: "MEMBER" as const },
+  { label: '전체', value: 'all' as const },
+  { label: '스텝', value: 'SUB_HOST' as const },
+  { label: '멤버', value: 'MEMBER' as const },
 ] satisfies ReadonlyArray<{ label: string; value: Filter }>;
 
 const roleOptions = [
-  { label: "스텝", value: "SUB_HOST" as const },
-  { label: "멤버", value: "MEMBER" as const },
-  { label: "삭제", value: "DELETE" as const, intent: "danger" as const },
+  { label: '스텝', value: 'SUB_HOST' as const },
+  { label: '멤버', value: 'MEMBER' as const },
+  { label: '삭제', value: 'DELETE' as const, intent: 'danger' as const },
 ] satisfies ReadonlyArray<{
   label: string;
   value: RoleSelectValue;
   disabled?: boolean;
-  intent?: "default" | "danger";
+  intent?: 'default' | 'danger';
 }>;
 
 function computePatch(base: User[], current: User[]): RolesPatch {
@@ -61,7 +61,7 @@ function computePatch(base: User[], current: User[]): RolesPatch {
     if (!prev) {
       added.push(u);
     } else if (prev.role !== u.role) {
-      if (u.role === "SUB_HOST" || u.role === "MEMBER") {
+      if (u.role === 'SUB_HOST' || u.role === 'MEMBER') {
         updated.push({ id: u.id, role: u.role });
       }
     }
@@ -73,8 +73,8 @@ function computePatch(base: User[], current: User[]): RolesPatch {
 }
 
 export default function SettingsRoles({ defaultUsers, className, onSave }: Props) {
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
   const [base, setBase] = useState<User[]>(defaultUsers ?? []);
   const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
   const [saving, setSaving] = useState(false);
@@ -86,20 +86,16 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
   }, [defaultUsers]);
 
   const visibleUsers = useMemo(() => {
-    if (filter === "all") return users;
-    return users.filter((u) => u.role === filter || u.role === "HOST");
+    if (filter === 'all') return users;
+    return users.filter((u) => u.role === filter || u.role === 'HOST');
   }, [users, filter]);
 
   const updateRole = (userId: string, next: RoleSelectValue) => {
-    if (next === "DELETE") {
+    if (next === 'DELETE') {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       return;
     }
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, role: next } : u
-      )
-    );
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: next } : u)));
   };
 
   const onInvite = (e: React.FormEvent) => {
@@ -110,12 +106,12 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
       ...prev,
       {
         id: String(Date.now()),
-        name: "[userName]",
+        name: '[userName]',
         email,
-        role: "MEMBER",
+        role: 'MEMBER',
       },
     ]);
-    setInviteEmail("");
+    setInviteEmail('');
   };
 
   const patch = useMemo(() => computePatch(base, users), [base, users]);
@@ -133,7 +129,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
   };
 
   return (
-    <section className={clsx("w-full flex flex-col h-full", className)}>
+    <section className={clsx('w-full flex flex-col h-full', className)}>
       <div className="flex-1">
         <p className="mb-2 text-xs font-semibold text-text-primary">사용자 초대</p>
         <p className="mb-2 text-xs text-text-secondary">
@@ -148,8 +144,8 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="초대할 사용자의 메일 주소를 입력해 주세요"
             className={clsx(
-              "w-full h-9 rounded-lg border px-3 text-[10px] outline-none",
-              "border-text-secondary/60 placeholder:text-text-secondary"
+              'w-full h-9 rounded-lg border px-3 text-[10px] outline-none',
+              'border-text-secondary/60 placeholder:text-text-secondary'
             )}
           />
         </form>
@@ -181,9 +177,9 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
                   <div className="truncate text-[10px] text-text-secondary">{u.email}</div>
                 </div>
 
-                {u.role === "HOST" ? (
+                {u.role === 'HOST' ? (
                   <OwnerBadge />
-                ) : u.role === "VISITOR" ? (
+                ) : u.role === 'VISITOR' ? (
                   <span className="text-[11px] text-text-secondary">게스트</span>
                 ) : (
                   <CustomSelect<RoleSelectValue>
@@ -210,7 +206,7 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
           disabled={!isDirty || saving}
           onClick={handleSave}
         >
-          {saving ? "저장 중..." : isDirty ? "저장하기" : "변경 사항 없음"}
+          {saving ? '저장 중...' : isDirty ? '저장하기' : '변경 사항 없음'}
         </Button>
       </div>
     </section>

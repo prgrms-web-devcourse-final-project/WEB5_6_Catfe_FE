@@ -3,6 +3,8 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
+export type PostSort = 'createdAt,desc' | 'createdAt,asc' | 'likeCount,desc' | 'commentCount,desc';
+
 export interface PostQueryParams {
   q: string;
   subjects: string[];
@@ -10,9 +12,11 @@ export interface PostQueryParams {
   groupSize: string;
   page: number;
   size: number;
+  sort: PostSort;
 }
 
 const DEFAULT_PAGE_SIZE = 6;
+const DEFAULT_SORT: PostSort = 'createdAt,desc';
 
 export function usePostSearchUrl() {
   const pathname = usePathname();
@@ -28,8 +32,9 @@ export function usePostSearchUrl() {
     const subjects = params.getAll('subject') ?? [];
     const demographic = params.get('demographic') ?? '';
     const groupSize = params.get('group') ?? '';
+    const sort = (params.get('sort') as PostSort) ?? DEFAULT_SORT;
 
-    return { q, page, size, subjects, demographic, groupSize };
+    return { q, page, size, subjects, demographic, groupSize, sort };
   }, [params]);
 
   // 새로운 쿼리 상태로 URL 업데이트
@@ -43,6 +48,7 @@ export function usePostSearchUrl() {
     if (merged.demographic) searchParam.set('demographic', merged.demographic);
     if (merged.groupSize) searchParam.set('group', merged.groupSize);
     searchParam.set('page', String(merged.page));
+    if (merged.sort !== DEFAULT_SORT) searchParam.set('sort', merged.sort);
 
     const qs = searchParam.toString();
 
@@ -51,5 +57,8 @@ export function usePostSearchUrl() {
 
   const replaceFilters = (partial: Partial<Omit<PostQueryParams, 'page' | 'size'>>) =>
     push({ ...partial, page: 1 });
-  return { query, push, replaceFilters };
+
+  const replaceSort = (sort: PostSort) => push({ sort, page: 1 });
+
+  return { query, push, replaceFilters, replaceSort };
 }

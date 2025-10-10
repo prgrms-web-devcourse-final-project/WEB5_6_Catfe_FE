@@ -14,9 +14,11 @@ interface CommentProps {
 }
 
 function CommentRootItem({ comment }: CommentProps) {
-  const { id: postId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const postId = Number(id);
+
   const {
-    comment_id,
+    commentId,
     author,
     content,
     likeCount: likeCountProp = 0,
@@ -46,8 +48,8 @@ function CommentRootItem({ comment }: CommentProps) {
     parentCommentId,
     content,
   }: {
-    postId: string;
-    parentCommentId?: string;
+    postId: number;
+    parentCommentId?: number;
     content: string;
   }) => {
     // !! 임시 콘솔 -> API 기능 붙여야함
@@ -120,13 +122,13 @@ function CommentRootItem({ comment }: CommentProps) {
       {openReplies && (
         <div className="bg-secondary-100 w-11/12 ml-auto">
           <CommentEditor
-            target={{ postId, parentCommentId: comment_id }}
+            target={{ postId, parentCommentId: commentId }}
             onSubmit={handleSubmitReply}
             className="mx-2 mt-2"
           />
           {children &&
             children.length > 0 &&
-            children.map((reply) => <CommentChildItem key={reply.comment_id} reply={reply} />)}
+            children.map((reply) => <CommentChildItem key={reply.commentId} reply={reply} />)}
         </div>
       )}
     </article>

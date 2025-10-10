@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
+import { create } from 'zustand';
 import type {
   RoomSnapshot,
   RoomSnapshotUI,
   RoomInfo,
   RoomMember,
   UsersListItem,
-} from "@/@types/room";
+} from '@/@types/rooms';
 
 type State = {
   info: RoomInfo | null;

@@ -1,14 +1,14 @@
 'use client';
 
-import { InitialPost } from '@/@types/community';
-import { DocumentType, Editor, JSONContent, NodeType, TextType } from '@tiptap/react';
+import { ApiCategory, InitialPost } from '@/@types/community';
+import { Editor, JSONContent } from '@tiptap/react';
 import { Transaction } from '@tiptap/pm/state';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type DraftPayload = {
   title: string;
   categories: string[];
-  json: DocumentType | NodeType | TextType;
+  json: JSONContent;
   updatedAt: number;
 };
 
@@ -35,7 +35,12 @@ export function useEditorDraft(
   opts: { debounceMs?: number; restoreIfEmpty?: boolean } = {}
 ) {
   const initialTitle = initialData?.title ?? '';
-  const initialCategories = useMemo(() => initialData?.categories ?? [], [initialData?.categories]);
+  const initialCategories = useMemo(() => {
+    if (initialData?.categories && Array.isArray(initialData.categories)) {
+      return initialData.categories.map((c: ApiCategory) => c.name);
+    }
+    return [];
+  }, [initialData?.categories]);
 
   const { debounceMs = 10000, restoreIfEmpty = true } = opts; // 10초에 한 번씩 저장
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);

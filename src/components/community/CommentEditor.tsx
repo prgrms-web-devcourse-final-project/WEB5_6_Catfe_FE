@@ -3,7 +3,7 @@ import Button from '../Button';
 
 interface CommentEditorProps {
   target: CommentTarget;
-  onSubmit: (data: { postId: string; parentCommentId?: string; content: string }) => Promise<void>;
+  onSubmit: (data: { postId: number; parentCommentId?: number; content: string }) => Promise<void>;
   className?: string;
 }
 

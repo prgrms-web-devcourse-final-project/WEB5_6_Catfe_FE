@@ -1,16 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import StudyRoomCard from "@/components/study-room/StudyRoomCard";
-import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
-import { useRoomStore } from "@/store/room.store";
-import type { RoomSnapshot } from "@/@types/room";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import StudyRoomCard from '@/components/study-room/StudyRoomCard';
+import EnterPasswordModal from '@/components/study-room/EnterPasswordModal';
+import { useRoomStore } from '@/store/room.store';
+import type { RoomSnapshot } from '@/@types/rooms';
 
 export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
   const router = useRouter();
   const load = useRoomStore((s) => s.load);
 
+  const [roomId, setRoomId] = useState<number | null>(null);
   const [pwOpen, setPwOpen] = useState(false);
   const [pending, setPending] = useState<RoomSnapshot | null>(null);
 
@@ -18,6 +19,7 @@ export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
     if (snap.info.isPrivate) {
       setPending(snap);
       setPwOpen(true);
+      setRoomId(snap.info.id);
       return;
     }
     load(snap);
@@ -27,6 +29,7 @@ export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
   const closePw = () => {
     setPwOpen(false);
     setPending(null);
+    setRoomId(null);
   };
 
   const handleSuccess = () => {
@@ -34,6 +37,7 @@ export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
     load(pending);
     const id = pending.info.id;
     closePw();
+    setRoomId(null);
     router.push(`/study-rooms/${id}`);
   };
 
@@ -52,13 +56,15 @@ export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
           />
         ))}
       </div>
-
-      <EnterPasswordModal
-        open={pwOpen}
-        onClose={closePw}
-        expectedPassword={pending?.info.password ?? null} // ← 여기서 기대 비번 제공
-        onSuccess={handleSuccess}
-      />
+      {roomId && (
+        <EnterPasswordModal
+          roomId={roomId}
+          open={pwOpen}
+          onClose={closePw}
+          // expectedPassword={pending?.info.password ?? null} // ← 여기서 기대 비번 제공
+          onSuccess={handleSuccess}
+        />
+      )}
     </>
   );
 }

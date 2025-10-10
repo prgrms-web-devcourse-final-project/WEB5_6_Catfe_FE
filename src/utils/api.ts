@@ -17,6 +17,10 @@ export const setAccessToken = (token: string | null) => {
   }
 };
 
+export const hasAccessToken = (): boolean => {
+  return accessToken !== null;
+};
+
 // 앱 시작 시 localStorage → 메모리 복구
 if (typeof window !== 'undefined') {
   accessToken = localStorage.getItem('accessToken');
@@ -49,9 +53,15 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config as AxiosRequestConfig & { _retry?: boolean };
+    const isLogoutRequest = originalRequest.url?.endsWith('/api/auth/logout');
 
     // 401 → AccessToken 만료
     if (err.response?.status === 401 && !originalRequest._retry) {
+      // Logout 요청일 경우 Refresh 하지 않음
+      if (isLogoutRequest) {
+        return Promise.reject(err);
+      }
+
       originalRequest._retry = true;
       console.warn('[401 감지] AccessToken 만료 → refresh 시도');
 

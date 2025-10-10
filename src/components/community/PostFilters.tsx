@@ -5,6 +5,7 @@ import Image from 'next/image';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
 import { useEffect, useRef, useState } from 'react';
+import { CategoryItem, CategoryType } from '@/@types/community';
 
 interface PostFilterProps {
   value: {
@@ -14,14 +15,21 @@ interface PostFilterProps {
     groupSize?: string;
   };
   onChange: (next: Partial<PostFilterProps['value']>) => void;
+  categoryData: CategoryItem[];
 }
 
-function PostFilters({ value, onChange }: PostFilterProps) {
+function PostFilters({ value, onChange, categoryData }: PostFilterProps) {
   const { q = '', subjects = [], demographic = '', groupSize = '' } = value;
 
   const [draft, setDraft] = useState<string>(q);
   const composingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filterCategories = (type: CategoryType) =>
+    categoryData.filter((category) => category.type === type).map((category) => category.name);
+  const subjectOptions = filterCategories('SUBJECT');
+  const demographicOptions = filterCategories('DEMOGRAPHIC');
+  const groupSizeOptions = filterCategories('GROUP_SIZE');
 
   // 사용자가 입력 중이지 않을 때만 동기화
   useEffect(() => {
@@ -103,6 +111,7 @@ function PostFilters({ value, onChange }: PostFilterProps) {
           const normalized = Array.isArray(v) ? v : [v];
           onChange({ subjects: normalized });
         }}
+        options={subjectOptions}
         allowMultiSelect={true}
         allowCustom={false}
       />
@@ -110,11 +119,13 @@ function PostFilters({ value, onChange }: PostFilterProps) {
         <DemographicSelect
           value={demographic}
           onChange={(v) => onChange({ demographic: v })}
+          options={demographicOptions}
           className="w-1/2"
         />
         <GroupSizeSelect
           value={groupSize}
           onChange={(v) => onChange({ groupSize: v })}
+          options={groupSizeOptions}
           className="w-1/2"
         />
       </div>

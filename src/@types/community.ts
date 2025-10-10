@@ -1,51 +1,78 @@
-import { UserProfile } from './type';
-import { JSONContent } from '@tiptap/react';
+import { ApiListPaginationResponse, ApiPaginationResponse, ApiResponse, UserProfile } from './type';
 
-export type UserSummary = Pick<UserProfile, 'nickname' | 'profileImageUrl'> & { userId: number };
+export type UserSummary = Pick<UserProfile, 'nickname' | 'profileImageUrl'> & { id: number };
 
-export type Post = {
-  post_id: string;
+export type ApiCategory = {
+  id: number;
+  name: string;
+};
+
+export type PostListItem = {
+  postId: number;
   author: UserSummary;
   title: string;
-  content: JSONContent | null;
-  categories: string[];
+  categories: ApiCategory[];
+  content: string | null;
+
   likeCount: number;
+  bookmarkCount: number;
   commentCount: number;
 
   isLikedByMe?: boolean;
   isBookmarkedByMe?: boolean;
 
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
+export type PostDetail = PostListItem;
+
 export type InitialPost =
-  | Pick<Post, 'post_id' | 'title' | 'categories' | 'content'>
+  | Pick<PostDetail, 'postId' | 'title' | 'categories' | 'content'>
   | null
   | undefined;
 
+export type PostListResponse = ApiResponse<ApiListPaginationResponse<PostListItem>>;
+export type PostResponse = ApiResponse<PostDetail>;
+
+export type CreatePostRequest = {
+  title: string;
+  content: string;
+  categoryIds: number[];
+};
+
 type CommentBase = {
-  comment_id: string;
-  post_id: string;
+  commentId: number;
+  postId: number;
   author: UserSummary;
   content: string | null;
   likeCount: number;
   isLikedByMe?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RootComment = CommentBase & {
-  parentCommentId?: null;
+  parentId: null;
   children?: ReplyComment[];
   replyCount?: number;
 };
 
 export type ReplyComment = CommentBase & {
-  parentCommentId?: string;
+  parentId: number;
   children?: never;
   replyCount?: never;
 };
 
 export type Comment = RootComment | ReplyComment;
 export type CommentTree = RootComment[];
+export type CommentsResponse = ApiResponse<ApiPaginationResponse<RootComment>>;
+
+export type CategoryType = 'SUBJECT' | 'DEMOGRAPHIC' | 'GROUP_SIZE';
+export type CategoryItem = {
+  id: number;
+  name: string;
+  type: CategoryType;
+};
+
+export type CategoriesResponse = ApiResponse<CategoryItem[]>;

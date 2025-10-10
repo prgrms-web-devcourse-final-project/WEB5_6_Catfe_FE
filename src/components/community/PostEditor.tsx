@@ -1,7 +1,7 @@
 'use client';
 
-import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Editor, EditorContent, JSONContent, useEditor } from '@tiptap/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
@@ -16,6 +16,9 @@ import { ApiResponse } from '@/@types/type';
 import { useCategoryRegisterMutation } from '@/hook/useCommunityPost';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/hook/useConfirm';
+import { useMutation } from '@tanstack/react-query';
+import { apiUploadFile } from '@/api/apiFile';
+import fileToDataUrl from '@/utils/fileToDataUrl';
 
 type EditorProps = {
   initialData?: InitialPost;
@@ -32,8 +35,29 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
   const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const editorRef = useRef<Editor | null>(null);
 
   const { mutateAsync: registerCategory } = useCategoryRegisterMutation();
+
+  const uploadMutation = useMutation({
+    mutationFn: apiUploadFile,
+    onError: (err: Error) => {
+      console.error('이미지 업로드 실패:', err.message);
+      showToast('error', '이미지 업로드에 실패했습니다.');
+    },
+  });
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    try {
+      const base64Url = await fileToDataUrl(file);
+      editor.chain().focus().setImage({ src: base64Url, alt: file.name }).run();
+    } catch (err) {
+      showToast('error', '이미지 처리 중 오류가 발생했습니다.');
+      console.error('Image Conversion Failed:', err);
+    }
+  }, []);
 
   const editorProps = useMemo(
     () => ({
@@ -43,9 +67,32 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
       transformPastedHTML: (html: string) => {
         return safeSanitizeHtml(html, true);
       },
+      handleDrop: (view: unknown, event: DragEvent) => {
+        const hasFiles = event.dataTransfer?.files && event.dataTransfer.files.length > 0;
+        if (hasFiles) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            handleImageUpload(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view: unknown, event: ClipboardEvent) => {
+        const hasFiles = event.clipboardData?.files && event.clipboardData.files.length > 0;
+        if (hasFiles) {
+          const file = event.clipboardData.files[0];
+          if (file.type.startsWith('image/')) {
+            handleImageUpload(file);
+            return true;
+          }
+        }
+        return false;
+      },
     }),
-    []
+    [handleImageUpload]
   );
+
   const editor = useEditor({
     extensions: TIPTAP_EXTENSIONS,
     content: '',
@@ -53,6 +100,10 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
     editorProps,
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   const categoryOptions = useMemo(() => {
     const subject = categoryData.filter((c) => c.type === 'SUBJECT').map((c) => c.name);
@@ -138,15 +189,47 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
     }
 
     if (categoryIds.length === 0) {
-      showToast('error', '최소한 하나의 주제를 선택해주세요.');
+      showToast('error', '과목/연령대/인원수를 선택해주세요.');
       setSubmitting(false);
       return;
+    }
+
+    let finalHtml = editor.getHTML();
+    const base64Regex = /data:image\/[^;]+;base64,([a-zA-Z0-9+/=]+)/g;
+    const base64Images = Array.from(finalHtml.matchAll(base64Regex));
+
+    if (base64Images.length > 0) {
+      const uploadPromises = base64Images.map(async (match) => {
+        const base64Src = match[0];
+
+        // Base64 Data URL을 Blob으로 변환 후 File 객체 생성
+        const blob = await fetch(base64Src).then((res) => res.blob());
+        const fileType = blob.type.split('/')[1] || 'png';
+        const file = new File([blob], `uploaded_image.${fileType}`, { type: blob.type });
+
+        // 파일 업로드 API 호출
+        const newUrl = await uploadMutation.mutateAsync(file);
+        return { oldSrc: base64Src, newSrc: newUrl };
+      });
+
+      try {
+        const results = await Promise.all(uploadPromises);
+
+        // 업로드된 새 URL로 HTML 내용 교체
+        results.forEach(({ oldSrc, newSrc }) => {
+          finalHtml = finalHtml.replace(new RegExp(oldSrc, 'g'), newSrc);
+        });
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        setSubmitting(false);
+        return;
+      }
     }
 
     // Request Body 생성
     const requestBody: CreatePostRequest = {
       title: title,
-      content: editor.getHTML(),
+      content: finalHtml,
       categoryIds: categoryIds,
     };
 

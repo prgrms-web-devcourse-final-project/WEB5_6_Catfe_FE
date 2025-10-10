@@ -12,7 +12,7 @@ export type PostListItem = {
   author: UserSummary;
   title: string;
   categories: ApiCategory[];
-  content: JSONContent | null;
+  content?: JSONContent | null;
 
   likeCount: number;
   bookmarkCount: number;
@@ -34,6 +34,12 @@ export type InitialPost =
 
 export type PostListResponse = ApiResponse<ApiListPaginationResponse<PostListItem>>;
 export type PostResponse = ApiResponse<PostDetail>;
+
+export type CreatePostRequest = {
+  title: string;
+  content: string;
+  categoryIds: number[];
+};
 
 type CommentBase = {
   commentId: number;

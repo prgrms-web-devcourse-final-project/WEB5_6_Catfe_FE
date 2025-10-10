@@ -1,25 +1,30 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { usePost } from '@/hook/useCommunityPost';
+import { useCategoriesQuery, usePost, usePostMutations } from '@/hook/useCommunityPost';
 import Spinner from '@/components/Spinner';
 import PostEditor from '@/components/community/PostEditor';
 
 function EditorPageClient() {
   const searchParams = useSearchParams();
-  const postId = searchParams.get('id');
+  const postId = Number(searchParams.get('id'));
+  const isEditMode = !!postId;
+  const existingPostId = postId || undefined;
+  const { mutateAsync: onSubmitAction } = usePostMutations(isEditMode, existingPostId);
 
-  const { data: initialData, isLoading, isError } = usePost(postId || '');
+  const { data: initialData, isLoading: isLoadingPost } = usePost(postId || 0);
+  const { data: categoryData, isLoading: isLoadingCategories } = useCategoriesQuery();
 
-  // 임시 error fallback
-  if (isError) {
-    return <div>오류가 발생했습니다. 데이터를 불러올 수 없습니다.</div>;
-  }
-
-  if (isLoading) {
+  if (isLoadingPost || isLoadingCategories) {
     return <Spinner />;
   }
 
-  return <PostEditor initialData={initialData} />;
+  return (
+    <PostEditor
+      initialData={initialData}
+      categoryData={categoryData || []}
+      onSubmitAction={onSubmitAction}
+    />
+  );
 }
 export default EditorPageClient;

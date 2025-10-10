@@ -1,24 +1,24 @@
 'use client';
 
-import { PostDetail } from '@/@types/community';
+import { PostListItem } from '@/@types/community';
 import { extractPlainText, findFirstImage } from '@/utils/tiptapExtract';
 import DefaultImage from '@/assets/community-thumbnail.png';
 import Image from 'next/image';
 import Button from '../Button';
 import Link from 'next/link';
 
-function PostCard({ post }: { post: PostDetail }) {
-  if (!post || post.title.trim().length === 0 || !post.content) return null;
+function PostCard({ post }: { post: PostListItem }) {
+  if (!post || post.title.trim().length === 0) return null;
 
-  const imgSrc = findFirstImage(post.content) ?? DefaultImage;
-  const snippet = extractPlainText(post.content, 90);
+  const imgSrc = post.content ? findFirstImage(post.content) : DefaultImage;
+  const snippet = post.content ? extractPlainText(post.content, 90) : '내용 미리보기 없음';
 
   return (
     <div className="flex flex-col rounded-lg border border-gray-400 max-w-[400px] max-h-[500px] overflow-hidden">
       {/* thumbnail */}
       <div className="w-full relative aspect-[2/1]">
         <Image
-          src={imgSrc}
+          src={imgSrc!}
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 400px"
@@ -40,9 +40,7 @@ function PostCard({ post }: { post: PostDetail }) {
               </span>
             ))}
         </div>
-        <p className="line-clamp-3 text-xs text-text-secondary flex-1">
-          {snippet || '내용 미리보기 없음'}
-        </p>
+        <p className="line-clamp-3 text-xs text-text-secondary flex-1">{snippet}</p>
         <Button size="sm" className="mx-auto">
           <Link href={`/community/${post.postId}`} scroll={true}>
             상세 내용 보기

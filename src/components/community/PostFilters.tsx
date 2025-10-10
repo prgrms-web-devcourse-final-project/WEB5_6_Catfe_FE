@@ -27,7 +27,6 @@ function PostFilters({ value, onChange, categoryData }: PostFilterProps) {
 
   const filterCategories = (type: CategoryType) =>
     categoryData.filter((category) => category.type === type).map((category) => category.name);
-
   const subjectOptions = filterCategories('SUBJECT');
   const demographicOptions = filterCategories('DEMOGRAPHIC');
   const groupSizeOptions = filterCategories('GROUP_SIZE');

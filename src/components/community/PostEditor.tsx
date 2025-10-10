@@ -9,23 +9,29 @@ import { isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
 import SubjectCombobox from './SubjectCombobox';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
-import { InitialPost } from '@/@types/community';
+import { CategoryItem, CreatePostRequest, InitialPost, PostDetail } from '@/@types/community';
 import { TIPTAP_EXTENSIONS } from '@/lib/tiptapExtensions';
 import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
+import { ApiResponse } from '@/@types/type';
+import { useCategoryRegisterMutation } from '@/hook/useCommunityPost';
+import { useRouter } from 'next/navigation';
 
 type EditorProps = {
   initialData?: InitialPost;
-  onSubmitAction?: (data: FormData) => Promise<{ ok: boolean; id?: number; error?: string }>;
+  categoryData: CategoryItem[];
+  onSubmitAction?: (data: CreatePostRequest) => Promise<ApiResponse<PostDetail>>;
 };
-// Promise Props 는 API 명세에 따라 수정 필요
 
-function PostEditor({ initialData, onSubmitAction }: EditorProps) {
+function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) {
   const isEditMode = !!initialData;
   const postId = initialData?.postId;
+  const router = useRouter();
 
   const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const { mutateAsync: registerCategory } = useCategoryRegisterMutation();
 
   const editorProps = useMemo(
     () => ({
@@ -46,7 +52,23 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
     immediatelyRender: false,
   });
 
-  // 임시 테스트용 디바운스 짧게 -> 나중에 디바운스 시간 고칠 것
+  const categoryOptions = useMemo(() => {
+    const subject = categoryData.filter((c) => c.type === 'SUBJECT').map((c) => c.name);
+    const demographic = categoryData.filter((c) => c.type === 'DEMOGRAPHIC').map((c) => c.name);
+    const groupSize = categoryData.filter((c) => c.type === 'GROUP_SIZE').map((c) => c.name);
+
+    // Name -> ID 맵 (게시 시 사용)
+    const nameToId = categoryData.reduce(
+      (acc, cat) => {
+        acc[cat.name] = cat.id;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return { subject, demographic, groupSize, nameToId };
+  }, [categoryData]);
+
   const {
     lastSavedAt,
     draft,
@@ -57,7 +79,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
     setTitle,
     setCategories,
   } = useEditorDraft(editor, DRAFT_KEY, initialData, {
-    debounceMs: 1000,
+    debounceMs: 10000,
   });
 
   // 초기 데이터 로드
@@ -75,32 +97,75 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
     }
   }, [editor, initialData?.content, draft]);
 
-  const handleSubmit = async (formData: FormData) => {
-    if (!editor) return;
+  const handleCategoryRegistration = async (name: string) => {
+    try {
+      const newId = await registerCategory({ name, type: 'SUBJECT' });
+      return newId;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!editor || submitting) return;
     setSubmitting(true);
 
-    formData.set('content_html', editor.getHTML());
-    formData.set('content_json', JSON.stringify(editor.getJSON()));
+    // 카테고리 ID 변환 및 신규 카테고리 등록 처리
+    const selectedCategoryNames = [categories[0], categories[1], categories[2]].filter(
+      Boolean
+    ) as string[];
+    const categoryIds: number[] = [];
+
+    for (const name of selectedCategoryNames) {
+      let id = categoryOptions.nameToId[name];
+      if (!id && name === categories[0]) {
+        const newId = await handleCategoryRegistration(name);
+        if (newId) {
+          id = newId;
+        } else {
+          setSubmitting(false);
+          return;
+        }
+      }
+      if (id) {
+        categoryIds.push(id);
+      }
+    }
+
+    if (categoryIds.length === 0) {
+      showToast('error', '최소한 하나의 주제를 선택해주세요.');
+      setSubmitting(false);
+      return;
+    }
+
+    // Request Body 생성
+    const requestBody: CreatePostRequest = {
+      title: title,
+      content: JSON.stringify(editor.getJSON()),
+      categoryIds: categoryIds,
+    };
 
     try {
       if (onSubmitAction) {
-        const res = await onSubmitAction(formData);
-        if (!res?.ok) {
-          showToast('error', '저장에 실패했습니다.');
-          console.error(res.error);
+        const res = await onSubmitAction(requestBody);
+        if (res?.success) {
+          showToast(
+            'success',
+            isEditMode ? '게시글이 수정되었습니다.' : '게시글이 게시되었습니다.'
+          );
+          clearDraft();
+          const targetId = res.data.postId || postId;
+          if (targetId) router.push(`/community/${targetId}`);
+          else router.push('/community');
+        } else {
+          showToast('error', '저장에 실패했습니다. 다시 시도해 주세요.');
+          console.error(res?.message);
         }
-      } else {
-        console.log('Submit', Object.fromEntries(formData));
-        showToast('success', '테스트용 저장 완료(콘솔 확인)');
       }
     } finally {
       setSubmitting(false);
-      runWithoutSaving(() => {
-        setTitle('');
-        setCategories([]);
-        editor?.chain().focus().clearContent().run();
-        clearDraft();
-      });
     }
   };
 
@@ -132,7 +197,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
       <form
         className="flex flex-col gap-4 w-full editor"
         ref={formRef}
-        action={handleSubmit}
+        onSubmit={handleSubmit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.preventDefault();
         }}
@@ -164,6 +229,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(0, normalized);
               }}
               placeholder="공부 과목을 입력하세요"
+              options={categoryOptions.subject}
               allowMultiSelect={false}
               // 원하는 과목이 없으면 직접 입력
               allowCustom={true}
@@ -181,6 +247,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(1, normalized);
               }}
               placeholder="연령대 선택..."
+              options={categoryOptions.demographic}
               label="Age"
             />
           </div>
@@ -193,6 +260,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(2, normalized);
               }}
               placeholder="모집할 최대 인원 선택..."
+              options={categoryOptions.groupSize}
               label="Headcount"
             />
           </div>

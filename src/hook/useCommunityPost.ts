@@ -1,23 +1,35 @@
 import {
   CategoriesResponse,
   CategoryItem,
+  CategoryType,
   CommentTree,
+  CreatePostRequest,
   PostDetail,
   PostListItem,
   PostListResponse,
   PostResponse,
 } from '@/@types/community';
-import { keepPreviousData, QueryKey, useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  QueryKey,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import { PostQueryParams, PostSort } from './usePostSearchUrl';
 import api from '@/utils/api';
+import { ApiResponse } from '@/@types/type';
 
+/* ------ QueryKey ------ */
 export const communityQueryKey = {
   all: () => ['community', 'posts'] as const,
-  post: (id: string) => ['community', 'post', id] as const,
-  comments: (id: string) => ['community', 'comments', id] as const,
+  post: (id: number) => ['community', 'post', id] as const,
+  comments: (id: number) => ['community', 'comments', id] as const,
   categories: () => ['community', 'categories'] as const,
 };
 
+/* ------ Post ------ */
 export interface PostsResponse {
   posts: PostListItem[];
   totalCount: number;
@@ -84,6 +96,7 @@ export function usePostsQuery(
         totalPages: apiData.totalPages,
       };
     },
+    enabled: isMapReady,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
@@ -91,9 +104,9 @@ export function usePostsQuery(
   return result as UseQueryResult<PostsResponse, Error> & { isPreviousData: boolean };
 }
 
-export function usePost(id: string) {
+export function usePost(id: number) {
   return useQuery<PostDetail | null>({
-    queryKey: communityQueryKey.post(id || 'new'),
+    queryKey: communityQueryKey.post(id || 0),
     queryFn: async (): Promise<PostDetail | null> => {
       if (!id) return null;
       const response = await api.get<PostResponse>(`/api/posts/${id}`);
@@ -104,7 +117,36 @@ export function usePost(id: string) {
   });
 }
 
-export function useComments(postId: string) {
+export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<PostDetail>, Error, CreatePostRequest>({
+    mutationFn: async (data: CreatePostRequest) => {
+      try {
+        const method = isEditMode ? 'PUT' : 'POST';
+        const url = isEditMode ? `/api/posts/${existingPostId}` : `/api/posts`;
+        const { data: response } = await api.request<ApiResponse<PostDetail>>({
+          url,
+          method,
+          data,
+        });
+        if (!response.success) throw new Error(response.message || '게시글 저장에 실패했습니다.');
+
+        return response;
+      } catch (error) {
+        throw new Error((error as Error).message || '알 수 없는 오류가 발생했습니다.');
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
+      if (data.data.postId) {
+        queryClient.invalidateQueries({ queryKey: communityQueryKey.post(data.data.postId) });
+      }
+    },
+  });
+}
+
+/* ------ Comments ------ */
+export function useComments(postId: number) {
   return useQuery<CommentTree>({
     queryKey: communityQueryKey.comments(postId),
     queryFn: async (): Promise<CommentTree> => {
@@ -116,6 +158,12 @@ export function useComments(postId: string) {
   });
 }
 
+/* ------ Categories ------ */
+export interface RegisterCategoryRequest {
+  name: string;
+  type: CategoryType;
+}
+
 export function useCategoriesQuery() {
   return useQuery<CategoryItem[], Error>({
     queryKey: communityQueryKey.categories(),
@@ -125,5 +173,26 @@ export function useCategoriesQuery() {
     },
     staleTime: Infinity,
     gcTime: Infinity,
+  });
+}
+
+export function useCategoryRegisterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<number, Error, RegisterCategoryRequest>({
+    mutationFn: async (data: RegisterCategoryRequest) => {
+      const { data: response } = await api.post<ApiResponse<CategoryItem>>(
+        '/api/posts/categories',
+        data
+      );
+
+      if (!response.success) throw new Error(response.message || '카테고리 등록에 실패했습니다.');
+      return response.data.id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.categories() });
+    },
+    onError: (error) => {
+      console.error('카테고리 등록 오류:', error);
+    },
   });
 }

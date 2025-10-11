@@ -1,4 +1,3 @@
-// src/components/webrtc/VideoPlayer.tsx
 "use client";
 
 import { useEffect, useRef } from "react";

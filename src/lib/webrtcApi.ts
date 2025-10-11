@@ -1,4 +1,3 @@
-// src/lib/webrtcApi.ts
 import api from '@/utils/api';
 
 type ApiResp<T> = {
@@ -8,7 +7,6 @@ type ApiResp<T> = {
   success: boolean;
 };
 
-/** 명세 ICE 서버 엔트리 */
 export type IceServer = {
   urls: string | string[];
   username?: string | null;

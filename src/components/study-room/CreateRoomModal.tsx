@@ -21,7 +21,7 @@ type Props = {
 const INITIAL_INFO: RoomInfoValue = {
   title: "",
   description: "",
-  maxMember: 2,
+  maxParticipants: 2,
   isPrivate: false,
   coverPreviewUrl: null,
   coverUploadFile: null,
@@ -72,7 +72,7 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     title: info.title.trim(),
     description: info.description.trim(),
     isPrivate: privacy.enabled,
-    maxParticipants: info.maxMember,
+    maxParticipants: info.maxParticipants,
     useWebRTC: mediaEnabled,
     password:"",
   };

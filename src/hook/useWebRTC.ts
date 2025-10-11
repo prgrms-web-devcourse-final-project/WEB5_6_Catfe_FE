@@ -1,13 +1,60 @@
 // src/hook/useWebRTC.ts
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { WebRTCSignal, PeerConnections, RemoteStreams } from '@/lib/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { WebRTCSignal } from '@/lib/types';
 import SignalingClient from '@/lib/signalingClient';
+
+const DEBUG = true;
+const dlog = (...a: unknown[]) => { if (DEBUG) console.log(...a); };
+
+
+function sigKey(id: string | number): string {
+  const s = String(id);
+  const p = s.split('-')[1] ?? s;
+  const n = Number(p);
+  return Number.isFinite(n) ? String(n) : s;
+}
+/** 표시용 키: 항상 "u-<숫자>" */
+function displayKey(k: string): string {
+  return k.startsWith('u-') ? k : `u-${k}`;
+}
+/** 비교용 숫자 id */
+function idNum(id: string | number): number {
+  const s = String(id);
+  const p = s.split('-')[1] ?? s;
+  const n = Number(p);
+  return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
+}
+
+/* ---------------- Track sync helpers ---------------- */
+function upsertSender(pc: RTCPeerConnection, track: MediaStreamTrack, stream: MediaStream): void {
+  const kind = track.kind;
+  const sender = pc.getSenders().find(s => s.track?.kind === kind);
+  if (sender?.track?.id === track.id) return;       
+  if (sender) {
+    dlog('[rtc] replaceTrack', kind);
+    void sender.replaceTrack(track);
+  } else {
+    dlog('[rtc] addTrack', kind);
+    pc.addTrack(track, stream);
+  }
+}
+function syncLocalTracksToPc(pc: RTCPeerConnection, localStream: MediaStream | null): void {
+  if (!localStream) return;
+  const a = localStream.getAudioTracks?.()[0] ?? null;
+  const v = localStream.getVideoTracks?.()[0] ?? null;
+  if (a) upsertSender(pc, a, localStream);
+  if (v) upsertSender(pc, v, localStream);
+}
+/* ----------------------------------------------------- */
+
+type PeerConnections = Record<string, RTCPeerConnection>;
+type RemoteStreams = Record<string, MediaStream>;
 
 export function useWebRTC(params: {
   roomId: string;
-  meId: string;
+  meId: string;                 
   localStream: MediaStream | null;
   rtcConfig: RTCConfiguration;
 }) {
@@ -15,158 +62,197 @@ export function useWebRTC(params: {
 
   const [peers, setPeers] = useState<PeerConnections>({});
   const [remoteStreams, setRemoteStreams] = useState<RemoteStreams>({});
-  const signalingRef = useRef<SignalingClient | null>(null);
-  const initedRef = useRef(false);
-
-  // 항상 최신 peers를 가리키게
   const peersRef = useRef<PeerConnections>({});
-  useEffect(() => {
-    peersRef.current = peers;
-  }, [peers]);
+  useEffect(() => { peersRef.current = peers; }, [peers]);
 
-  // 🔒 ICE 후보가 remoteDescription 세팅 전 먼저 도착할 수 있으므로 큐잉
+  // remoteDescription 이전 수신 ICE 후보 큐
   const pendingIceMap = useRef<Record<string, RTCIceCandidateInit[]>>({});
 
-  useEffect(() => {
-    if (initedRef.current) return;
-    initedRef.current = true;
+  // 시그널링
+  const signalingRef = useRef<SignalingClient | null>(null);
 
-    const onSignal = async (signal: WebRTCSignal) => {
-      const { type, fromUserId, sdp, candidate } = signal;
-      let pc = peersRef.current[fromUserId];
-      if (!pc) pc = createPeerConnection(fromUserId);
+  // 트랙 id 메모(의존성 단순화)
+  const audioTrackId = useMemo(
+    () => localStream?.getAudioTracks?.()[0]?.id ?? '',
+    [localStream]
+  );
+  const videoTrackId = useMemo(
+    () => localStream?.getVideoTracks?.()[0]?.id ?? '',
+    [localStream]
+  );
 
-      if (type === 'offer' && sdp) {
-        // 최신 방식: sdp 그대로 전달
-        await pc.setRemoteDescription(sdp);
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        signalingRef.current?.sendSignal({
-          type: 'answer',
-          fromUserId: meId,
-          toUserId: fromUserId,
-          sdp: answer,
-        });
-
-        // 🔄 대기 중이던 ICE 후보 소진
-        const queued = pendingIceMap.current[fromUserId] || [];
-        for (const c of queued) await pc.addIceCandidate(new RTCIceCandidate(c));
-        pendingIceMap.current[fromUserId] = [];
-
-      } else if (type === 'answer' && sdp) {
-        await pc.setRemoteDescription(sdp);
-
-        // 🔄 대기 중이던 ICE 후보 소진
-        const queued = pendingIceMap.current[fromUserId] || [];
-        for (const c of queued) await pc.addIceCandidate(new RTCIceCandidate(c));
-        pendingIceMap.current[fromUserId] = [];
-
-      } else if (type === 'ice' && candidate) {
-        // remoteDescription 세팅 여부에 따라 즉시/큐잉
-        if (pc.remoteDescription && pc.remoteDescription.type) {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        } else {
-          (pendingIceMap.current[fromUserId] ||= []).push(candidate);
-        }
-      }
-    };
-
-    signalingRef.current = new SignalingClient(roomId, meId, onSignal);
-
-    return () => {
-      signalingRef.current?.disconnect();
-      signalingRef.current = null;
-
-      setPeers((prev) => {
-        Object.values(prev).forEach((pc) => pc.close());
-        return {};
-      });
-      setRemoteStreams({});
-      pendingIceMap.current = {};
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, meId]);
-
-  function createPeerConnection(targetUserId: string) {
-    const existing = peersRef.current[targetUserId];
-    if (existing) return existing;
+  const createPeerConnection = useCallback((key: string): RTCPeerConnection => {
+    const exist = peersRef.current[key];
+    if (exist) return exist;
 
     const pc = new RTCPeerConnection(rtcConfig);
+    dlog('[rtc] new RTCPeerConnection for', key, rtcConfig.iceServers);
 
-    // 로컬 트랙 추가
-    if (localStream) {
-      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
-    }
+    // 초기 트랙 부착(중복 방지)
+    syncLocalTracksToPc(pc, localStream);
 
-    // 원격 스트림 수신
-    pc.ontrack = (e) => {
-      setRemoteStreams((prev) => ({ ...prev, [targetUserId]: e.streams[0] }));
-    };
-
-    // 내 ICE 후보 송신
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
+    pc.onnegotiationneeded = async () => {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        dlog('[rtc] onnegotiationneeded -> OFFER to', key);
         signalingRef.current?.sendSignal({
-          type: 'ice',
+          type: 'offer',
           fromUserId: meId,
-          toUserId: targetUserId,
-          candidate: e.candidate.toJSON(),
+          toUserId: key, // 서버에서 숫자로 사용
+          sdp: offer,
         });
+      } catch (e) {
+        console.warn('[rtc] onnegotiationneeded error', e);
       }
     };
 
-    // 연결 상태 관리
+    pc.ontrack = (e: RTCTrackEvent) => {
+      const dk = displayKey(key);
+      dlog('[rtc] ontrack from', key, '->', dk);
+      const stream = e.streams[0];
+      if (stream) {
+        setRemoteStreams(prev => ({ ...prev, [dk]: stream }));
+      }
+    };
+
+    pc.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
+      if (!e.candidate) return;
+      const typ = e.candidate.candidate.match(/typ (\w+)/)?.[1];
+      dlog('[rtc] ICE ->', key, 'typ=', typ);
+      signalingRef.current?.sendSignal({
+        type: 'ice',
+        fromUserId: meId,
+        toUserId: key,
+        candidate: e.candidate.toJSON(),
+      });
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      dlog('[rtc] iceState[%s]=%s', key, pc.iceConnectionState);
+    };
+
     pc.onconnectionstatechange = () => {
-      const st = pc.connectionState;
-      if (st === 'failed' || st === 'closed' || st === 'disconnected') {
-        setPeers((prev) => {
-          const { [targetUserId]: _, ...rest } = prev;
-          return rest;
+      dlog('[rtc] connState[%s]=%s', key, pc.connectionState);
+      if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) {
+        setPeers(prev => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
         });
-        setRemoteStreams((prev) => {
-          const { [targetUserId]: __, ...rest } = prev;
-          return rest;
+        setRemoteStreams(prev => {
+          const next = { ...prev };
+          delete next[displayKey(key)];
+          return next;
         });
         pc.close();
       }
     };
 
-    setPeers((prev) => ({ ...prev, [targetUserId]: pc }));
+    setPeers(prev => ({ ...prev, [key]: pc }));
     return pc;
-  }
+  }, [rtcConfig, localStream, meId]);
 
-  // 로컬 스트림이 바뀌면 sender 교체/추가
   useEffect(() => {
-    Object.values(peersRef.current).forEach((pc) => {
-      pc.getSenders().forEach((sender) => {
-        if (sender.track && localStream && !localStream.getTracks().includes(sender.track)) {
-          const sameKind = localStream.getTracks().find((t) => t.kind === sender.track?.kind);
-          if (sameKind) sender.replaceTrack(sameKind);
+    dlog('[rtc] mount room=%s me=%s', roomId, meId);
+
+    const onSignal = async (signal: WebRTCSignal) => {
+      const { type, fromUserId, sdp, candidate } = signal;
+      const k = sigKey(fromUserId);
+      dlog('[sig] <=', type, 'from', fromUserId, 'key', k);
+
+      let pc = peersRef.current[k];
+      if (!pc) pc = createPeerConnection(k);
+
+      if (type === 'offer' && sdp) {
+        // glare 방지: id 큰 쪽이 polite
+        const polite = idNum(meId) > idNum(k);
+        const offerCollision = pc.signalingState !== 'stable';
+        if (!polite && offerCollision) {
+          dlog('[rtc] glare: ignore foreign offer (impolite)');
+          return;
         }
-      });
 
-      if (localStream) {
-        localStream.getTracks().forEach((t) => {
-          const has = pc.getSenders().some((s) => s.track?.id === t.id);
-          if (!has) pc.addTrack(t, localStream);
+        await pc.setRemoteDescription(sdp);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        dlog('[rtc] -> send ANSWER to', k);
+        signalingRef.current?.sendSignal({
+          type: 'answer',
+          fromUserId: meId,
+          toUserId: String(fromUserId),
+          sdp: answer,
         });
-      }
-    });
-  }, [localStream]);
 
-  // 상대에게 오퍼 발신
-  async function callUser(targetUserId: string) {
-    const pc = createPeerConnection(targetUserId);
+        // 큐 적용
+        const queued = pendingIceMap.current[k] || [];
+        for (const c of queued) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(c)); }
+          catch (e) { console.warn('[rtc] addIceCandidate(queued) error:', e, c); }
+        }
+        pendingIceMap.current[k] = [];
+      } else if (type === 'answer' && sdp) {
+        await pc.setRemoteDescription(sdp);
+        const queued = pendingIceMap.current[k] || [];
+        for (const c of queued) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(c)); }
+          catch (e) { console.warn('[rtc] addIceCandidate(queued) error:', e, c); }
+        }
+        pendingIceMap.current[k] = [];
+      } else if (type === 'ice' && candidate) {
+        const typ = candidate.candidate?.match?.(/typ (\w+)/)?.[1];
+        dlog('[rtc] ICE <=', k, 'typ=', typ);
+        if (pc.remoteDescription) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); }
+          catch (e) { console.warn('[rtc] addIceCandidate error:', e, candidate); }
+        } else {
+          (pendingIceMap.current[k] ||= []).push(candidate);
+        }
+      }
+    };
+
+    const client = new SignalingClient(roomId, meId, onSignal, () => {
+      dlog('[rtc] signaling ready');
+    });
+    signalingRef.current = client;
+
+    return () => {
+      client.disconnect();
+      signalingRef.current = null;
+      setPeers(prev => {
+        Object.values(prev).forEach(pc => pc.close());
+        return {};
+      });
+      setRemoteStreams({});
+      pendingIceMap.current = {};
+      dlog('[rtc] unmount');
+    };
+  }, [roomId, meId, createPeerConnection]);
+
+  // 로컬 트랙 변경 동기화
+  useEffect(() => {
+    if (!localStream) return;
+    Object.values(peersRef.current).forEach(pc => {
+      try { syncLocalTracksToPc(pc, localStream); }
+      catch (e) { console.warn('[rtc] syncLocalTracksToPc failed:', e); }
+    });
+  }, [localStream, audioTrackId, videoTrackId]);
+
+  // 수동 발신(초기 트리거)
+  const callUser = useCallback(async (targetUserId: string) => {
+    const k = sigKey(targetUserId);
+    const pc = createPeerConnection(k);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+    dlog('[rtc] manual -> OFFER to', k);
     signalingRef.current?.sendSignal({
       type: 'offer',
       fromUserId: meId,
       toUserId: targetUserId,
       sdp: offer,
     });
-  }
+  }, [createPeerConnection, meId]);
 
   return { peers, remoteStreams, callUser };
 }

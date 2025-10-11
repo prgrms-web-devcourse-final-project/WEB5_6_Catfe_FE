@@ -1,5 +1,6 @@
 import api from "@/utils/api";
 import type { CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
+import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/room";
 
 export type PageResponse<T> = {
   content: T[];
@@ -96,4 +97,62 @@ export async function createRoom(dto: CreateRoomDto): Promise<CreateRoomRes> {
   } catch (err: unknown) {
     throw new Error(safeErrorMessage(err, "스터디룸 생성에 실패했어요."));
   }
+}
+
+export type RoomMemberDTO = {
+  userId: number;
+  nickname: string;
+  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+  joinedAt: string | null;
+  promotedAt: string | null;
+  profileImageUrl?: string | null;
+};
+
+export type RoomDetailDTO = {
+  roomId: number;
+  title: string;
+  description: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  status: "WAITING" | "ACTIVE" | "PAUSED";
+  allowCamera: boolean;
+  allowAudio: boolean;
+  allowScreenShare: boolean;
+  createdBy: string;
+  createdAt: string;
+  private: boolean;
+  members: RoomMemberDTO[];
+};
+
+function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
+  const mediaEnabled = !!(d.allowCamera || d.allowAudio || d.allowScreenShare);
+
+  const info: RoomInfo = {
+    id: String(d.roomId),
+    title: d.title,
+    description: d.description ?? null,
+    maxMember: d.maxParticipants,
+    isPrivate: !!d.private,
+    password: null,
+    coverPreviewUrl: null,
+    mediaEnabled,
+  };
+
+  const members: UsersListItem[] = (d.members ?? []).map((m) => ({
+    id: `u-${m.userId}`,
+    name: m.nickname ?? `u-${m.userId}`,
+    role: m.role === "HOST" ? "owner" : "member",
+    email: "",
+    avatarUrl: m.profileImageUrl ?? null,
+    isMe: false, 
+    media: { camOn: false, screenOn: false },
+  }));
+
+  return { info, members };
+}
+
+export async function getRoomSnapshot(roomId: string): Promise<RoomSnapshotUI> {
+  const { data } = await api.get<ApiEnvelope<RoomDetailDTO>>(`/api/rooms/${roomId}`);
+  if (!data.success) throw new Error(data.message || "room detail 실패");
+  return toUIFromDetail(data.data);
 }

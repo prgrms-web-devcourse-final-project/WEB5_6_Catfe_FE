@@ -1,4 +1,3 @@
-// src/components/webrtc/PeerVideoGrid.tsx
 "use client";
 
 import VideoPlayer from "./VideoPlayer";
@@ -11,7 +10,7 @@ export default function PeerVideoGrid({
   emptyText = "참가자 입장을 기다리고 있어요…",
   className = "",
 }: {
-  streams: StreamsMap;          // null 허용
+  streams: StreamsMap;         
   maxCols?: 1 | 2 | 3 | 4;
   emptyText?: string;
   className?: string;
@@ -29,8 +28,8 @@ export default function PeerVideoGrid({
 
   if (entries.length === 0) {
     return (
-      <div className={`rounded-xl border bg-zinc-50 p-6 grid place-items-center ${className}`}>
-        <p className="text-sm text-zinc-500">{emptyText}</p>
+      <div className={`rounded-xl border bg-white p-6 grid place-items-center ${className}`}>
+        <p className="text-sm text-[var(--color-text-secondary)]">{emptyText}</p>
       </div>
     );
   }
@@ -40,7 +39,7 @@ export default function PeerVideoGrid({
       {entries.map(([userId, stream]) => (
         <div key={userId} className="rounded-xl overflow-hidden border">
           <VideoPlayer stream={stream} muted={false} className="rounded-none border-0" />
-          <p className="text-center text-[11px] text-zinc-600 py-1">{userId}</p>
+          <p className="text-center text-[11px] text-[var(--color-text-secondary)] py-1">{userId}</p>
         </div>
       ))}
     </div>

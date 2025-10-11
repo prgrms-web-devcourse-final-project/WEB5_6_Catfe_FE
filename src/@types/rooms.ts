@@ -9,9 +9,9 @@ export type RoomInfo = {
   coverPreviewUrl: string | null;
   currentParticipants: number;
   status: "WAITING" | "ACTIVE" | "PAUSED";
-  allowCamera: true;
-  allowAudio: true;
-  allowScreenShare: true;
+  allowCamera: boolean;
+  allowAudio: boolean;
+  allowScreenShare: boolean;
   ownerName?: string;
   createdAt?: string;
 };

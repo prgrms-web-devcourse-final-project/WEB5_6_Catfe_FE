@@ -2,11 +2,22 @@ import { ApiListPaginationResponse, ApiPaginationResponse, ApiResponse, UserProf
 
 export type UserSummary = Pick<UserProfile, 'nickname' | 'profileImageUrl'> & { id: number };
 
+/* ------ Category ------ */
 export type ApiCategory = {
   id: number;
   name: string;
 };
 
+export type CategoryType = 'SUBJECT' | 'DEMOGRAPHIC' | 'GROUP_SIZE';
+export type CategoryItem = {
+  id: number;
+  name: string;
+  type: CategoryType;
+};
+
+export type CategoriesResponse = ApiResponse<CategoryItem[]>;
+
+/* ------ Post ------ */
 export type PostListItem = {
   postId: number;
   author: UserSummary;
@@ -41,11 +52,9 @@ export type CreatePostRequest = {
   categoryIds: number[];
 };
 
-export type CreateCommentRequest = {
-  content: string;
-};
+/* ------ Comment ------ */
 
-/** GET 통신 시 떨어지는 data */
+// GET 통신 시 떨어지는 data
 type CommentBase = {
   commentId: number;
   postId: number;
@@ -69,7 +78,11 @@ export type ReplyComment = CommentBase & {
   replyCount?: never;
 };
 
-/** PUT / POST 통신 시 떨어지는 data */
+export type CreateCommentRequest = {
+  content: string;
+};
+
+// PUT / POST 통신 시 떨어지는 data
 export type CommentResponseData = {
   commentId: number;
   postId: number;
@@ -86,11 +99,10 @@ export type CommentsResponse = ApiResponse<ApiPaginationResponse<RootComment>>;
 export type CommentMutationResponse = ApiResponse<CommentResponseData>;
 export type CommentDeleteResponse = ApiResponse<null>;
 
-export type CategoryType = 'SUBJECT' | 'DEMOGRAPHIC' | 'GROUP_SIZE';
-export type CategoryItem = {
-  id: number;
-  name: string;
-  type: CategoryType;
+/* ------ Like ------ */
+export type LikeToggleResponseData = {
+  postId?: number;
+  commentId?: number;
+  likeCount: number;
 };
-
-export type CategoriesResponse = ApiResponse<CategoryItem[]>;
+export type LikeToggleResponse = ApiResponse<LikeToggleResponseData>;

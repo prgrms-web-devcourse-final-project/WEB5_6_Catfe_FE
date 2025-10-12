@@ -11,6 +11,7 @@ import CommentEditor from './CommentEditor';
 import {
   useCreateCommentMutation,
   useDeleteCommentMutation,
+  useToggleCommentLikeMutation,
   useUpdateCommentMutation,
 } from '@/hook/community/useCommunityPost';
 import showToast from '@/utils/showToast';
@@ -49,12 +50,31 @@ function CommentRootItem({ comment }: CommentProps) {
   const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
   const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
   const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
+  const { mutate: toggleCommentLikeMutate } = useToggleCommentLikeMutation();
 
   const isAuthor = !!currentUserId && currentUserId === author.id;
 
   const toggleLike = () => {
-    setLiked((prev) => !prev);
-    setLikeCount((c) => c + (liked ? -1 : 1));
+    const nextLiked = !liked;
+    const nextLikeCount = likeCount + (nextLiked ? 1 : -1);
+
+    // Optimistic Update
+    setLiked(nextLiked);
+    setLikeCount(nextLikeCount);
+
+    toggleCommentLikeMutate(
+      { postId, commentId, isLiked: nextLiked },
+      {
+        onError: (error) => {
+          console.error('댓글 좋아요 토글 실패:', error);
+          showToast('error', '좋아요 처리에 실패했습니다. 다시 시도해주세요.');
+
+          // 실패 시 롤백 (Optimistic Update 취소)
+          setLiked(!nextLiked);
+          setLikeCount(nextLikeCount + (nextLiked ? -1 : 1));
+        },
+      }
+    );
   };
 
   const replyCount = replyCountProp ?? children?.length ?? 0;

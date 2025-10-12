@@ -10,7 +10,11 @@ import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
 import { useUser } from '@/api/apiUsersMe';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiDeletePost, communityQueryKey } from '@/hook/community/useCommunityPost';
+import {
+  apiDeletePost,
+  communityQueryKey,
+  useTogglePostLikeMutation,
+} from '@/hook/community/useCommunityPost';
 import { useConfirm } from '@/hook/useConfirm';
 
 function PostContents({ post }: { post: PostDetail }) {
@@ -30,18 +34,36 @@ function PostContents({ post }: { post: PostDetail }) {
     commentCount = 0,
     createdAt = '',
     updatedAt = '',
+    likedByMe = false,
   } = post;
 
-  // !! api 업데이트 전 임시 코드
-  const isLikedByMe = false;
   const isAuthor = author.id === user?.userId;
 
-  const [liked, setLiked] = useState<boolean>(isLikedByMe);
+  const [liked, setLiked] = useState<boolean>(likedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
 
+  const { mutate: togglePostLikeMutate } = useTogglePostLikeMutation();
+
   const toggleLike = () => {
-    setLiked((prev) => !prev);
-    setLikeCount((c) => c + (liked ? -1 : 1));
+    const nextLiked = !liked;
+    const nextLikeCount = likeCount + (nextLiked ? 1 : -1);
+    // Optimistic Update
+    setLiked(nextLiked);
+    setLikeCount(nextLikeCount);
+
+    togglePostLikeMutate(
+      { postId, isLiked: nextLiked },
+      {
+        onError: (error, variables) => {
+          console.error('게시글 좋아요 토글 실패:', error);
+          showToast('error', '좋아요 처리에 실패했습니다. 다시 시도해주세요.');
+
+          // 실패 시 롤백 (Optimistic Update 취소)
+          setLiked(!variables.isLiked);
+          setLikeCount(nextLikeCount + (nextLiked ? -1 : 1));
+        },
+      }
+    );
   };
 
   const handleEdit = () => {

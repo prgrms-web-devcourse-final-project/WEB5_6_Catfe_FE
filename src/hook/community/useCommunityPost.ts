@@ -7,6 +7,8 @@ import {
   CommentsResponse,
   CreateCommentRequest,
   CreatePostRequest,
+  LikeToggleResponse,
+  LikeToggleResponseData,
   PostDetail,
   PostListItem,
   PostListResponse,
@@ -19,9 +21,10 @@ import {
   useQueryClient,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { PostQueryParams, PostSort } from '../usePostSearchUrl';
+import { PostQueryParams } from '../usePostSearchUrl';
 import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
+import { PostSort } from '@/components/community/SortSelector';
 
 /* ------ QueryKey ------ */
 export const communityQueryKey = {
@@ -309,6 +312,73 @@ export function useCategoryRegisterMutation() {
     },
     onError: (error) => {
       console.error('카테고리 등록 오류:', error);
+    },
+  });
+}
+
+/* ------ Like ------ */
+/**
+ * 좋아요 요청 파라미터
+ * - commentId가 없으면 post 좋아요
+ * - commentId가 있으면 comment 좋아요
+ */
+interface PostLikeParams {
+  postId: number;
+}
+
+interface CommentLikeParams {
+  postId: number;
+  commentId: number;
+}
+
+export async function apiTogglePostLike(
+  postId: number,
+  isLiked: boolean
+): Promise<LikeToggleResponseData> {
+  const url = `/api/posts/${postId}/like`;
+  const { data: res } = isLiked
+    ? await api.post<LikeToggleResponse>(url) // 좋아요 등록 (POST)
+    : await api.delete<LikeToggleResponse>(url); // 좋아요 취소 (DELETE)
+
+  if (!res.success) throw new Error(`Post like toggle failed: ${res.message}`);
+  return res.data;
+}
+
+export async function apiToggleCommentLike(
+  postId: number,
+  commentId: number,
+  isLiked: boolean
+): Promise<LikeToggleResponseData> {
+  const url = `/api/posts/${postId}/comments/${commentId}/like`;
+  const { data: res } = isLiked
+    ? await api.post<LikeToggleResponse>(url) // 좋아요 등록 (POST)
+    : await api.delete<LikeToggleResponse>(url); // 좋아요 취소 (DELETE)
+
+  if (!res.success) throw new Error(`Comment like toggle failed: ${res.message}`);
+  return res.data;
+}
+
+export function useTogglePostLikeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<LikeToggleResponseData, Error, PostLikeParams & { isLiked: boolean }>({
+    mutationFn: ({ postId, isLiked }) => apiTogglePostLike(postId, isLiked),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
+    },
+  });
+}
+
+export function useToggleCommentLikeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<LikeToggleResponseData, Error, CommentLikeParams & { isLiked: boolean }>({
+    mutationFn: ({ postId, commentId, isLiked }) =>
+      apiToggleCommentLike(postId, commentId, isLiked),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKey.comments(variables.postId),
+        refetchType: 'inactive',
+      });
     },
   });
 }

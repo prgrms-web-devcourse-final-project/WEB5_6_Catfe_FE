@@ -178,14 +178,9 @@ function CommentRootItem({ comment }: CommentProps) {
             aria-label="댓글"
             className="cursor-pointer inline-flex gap-1 items-center"
           >
-            <Image
-              src="/icon/community/comment.svg"
-              alt=""
-              width={12}
-              height={12}
-              unoptimized
-              priority={false}
-            />
+            <div className="relative size-3">
+              <Image src="/icon/community/comment.svg" alt="" fill unoptimized priority={false} />
+            </div>
             <span className="text-sm">{replyCount}</span>
             <>
               <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />

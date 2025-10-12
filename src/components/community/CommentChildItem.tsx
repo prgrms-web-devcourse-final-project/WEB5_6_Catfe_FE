@@ -5,18 +5,25 @@ import { useState, memo } from 'react';
 import UserProfile from './UserProfile';
 import Image from 'next/image';
 import LikeButton from '../LikeButton';
-import { useDeleteCommentMutation, useUpdateCommentMutation } from '@/hook/useCommunityPost';
+import {
+  useDeleteCommentMutation,
+  useUpdateCommentMutation,
+} from '@/hook/community/useCommunityPost';
 import { useParams } from 'next/navigation';
 import showToast from '@/utils/showToast';
 import { useConfirm } from '@/hook/useConfirm';
 import CommentEditor from './CommentEditor';
+import { useUser } from '@/api/apiUsersMe';
 
 function CommentChildItem({ reply }: { reply: ReplyComment }) {
   const { id } = useParams<{ id: string }>();
   const postId = Number(id);
   const confirm = useConfirm();
 
-  // ⭐️ Mutation 훅 호출
+  const { data: currentUser } = useUser();
+  const currentUserId = currentUser?.userId;
+
+  // Mutation 훅 호출
   const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
   const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
 
@@ -34,8 +41,7 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  // user 정보 붙이기 전 임시 코드
-  const isAuthor = true;
+  const isAuthor = !!currentUserId && currentUserId === author.id;
 
   const toggleLike = () => {
     setLiked((prev) => !prev);
@@ -73,7 +79,8 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
   };
 
   return (
-    <div className="rounded-lg w-full p-4 flex flex-col gap-3">
+    <div className="w-full p-4 pb-0 flex flex-col gap-3">
+      <hr className="border-secondary-600" />
       <header className="flex justify-between">
         <UserProfile author={author} createdAt={createdAt} updatedAt={updatedAt} isComment={true} />
         {isAuthor && (
@@ -114,7 +121,7 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
           isEditMode={true}
         />
       ) : (
-        <main className="text-sm font-light mb-2">{content}</main>
+        <main className="text-sm font-light mb-1">{content}</main>
       )}
       {!isEditing && (
         <footer className="flex items-center gap-3">

@@ -12,15 +12,19 @@ import {
   useCreateCommentMutation,
   useDeleteCommentMutation,
   useUpdateCommentMutation,
-} from '@/hook/useCommunityPost';
+} from '@/hook/community/useCommunityPost';
 import showToast from '@/utils/showToast';
 import { useConfirm } from '@/hook/useConfirm';
+import { useUser } from '@/api/apiUsersMe';
 
 interface CommentProps {
   comment: RootComment;
 }
 
 function CommentRootItem({ comment }: CommentProps) {
+  const { data: currentUser } = useUser();
+  const currentUserId = currentUser?.userId;
+
   const { id } = useParams<{ id: string }>();
   const postId = Number(id);
 
@@ -46,8 +50,7 @@ function CommentRootItem({ comment }: CommentProps) {
   const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
   const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
 
-  // user 정보 붙이기 전 임시 코드
-  const isAuthor = true;
+  const isAuthor = !!currentUserId && currentUserId === author.id;
 
   const toggleLike = () => {
     setLiked((prev) => !prev);
@@ -104,7 +107,7 @@ function CommentRootItem({ comment }: CommentProps) {
   };
 
   return (
-    <article className="bg-secondary-50 rounded-lg w-full p-4 flex flex-col gap-3">
+    <article className="bg-secondary-50 border border-secondary-600 rounded-lg w-full p-4 flex flex-col gap-3">
       <header className="flex justify-between">
         <UserProfile author={author} createdAt={createdAt} updatedAt={updatedAt} isComment={true} />
         {isAuthor && (
@@ -145,7 +148,7 @@ function CommentRootItem({ comment }: CommentProps) {
           isEditMode
         />
       ) : (
-        <main className="text-sm font-light mb-2">{content}</main>
+        <main className="text-sm font-light mb-1">{content}</main>
       )}
       {!isEditing && (
         <footer className="flex items-center gap-3">
@@ -175,11 +178,11 @@ function CommentRootItem({ comment }: CommentProps) {
       )}
 
       {openReplies && (
-        <div className="bg-secondary-100 w-19/20 ml-auto pb-2 rounded-xl">
+        <div className="bg-secondary-100 w-19/20 ml-auto pb-2 rounded-xl flex flex-col gap-1">
           <CommentEditor
             target={{ postId, parentCommentId: commentId }}
             onSubmit={handleSubmitReply}
-            className="mx-2 mt-2"
+            className="m-2 mb-0"
           />
           {children &&
             children.length > 0 &&

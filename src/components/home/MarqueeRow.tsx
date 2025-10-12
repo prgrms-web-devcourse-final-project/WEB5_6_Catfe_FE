@@ -1,9 +1,9 @@
 "use client";
-// 고양이 걸어다니는 애니메이션 추석 연휴 중 수정 예정
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
-import Image, { type StaticImageData } from "next/image";
+import Image from "next/image";
+import type { StaticImageData } from "next/image";
 
 import cat1 from "@/assets/cats/cat-1.svg";
 import cat2 from "@/assets/cats/cat-2.svg";
@@ -25,30 +25,27 @@ import cat16 from "@/assets/cats/cat-16.svg";
 type Direction = "rtl" | "ltr";
 type ImgSrc = StaticImageData | string;
 
-type MarqueeRowProps = {
-  items: ImgSrc[];
-  direction?: Direction;
-  speed?: number;
-  gap?: number;
-  repeat?: number;
-};
+const SOURCES: ImgSrc[] = [
+  cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8,
+  cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16,
+];
 
-function MarqueeRow({
-  items,
-  direction = "rtl",
-  speed = 120,
-  gap = 16,
-  repeat = 3,
-}: MarqueeRowProps) {
+// 내부 고정값 (요청대로 direction만 프롭으로 받습니다)
+const SPEED = 120; // px/s
+const GAP = 40;    // px
+const REPEAT = 3;  // 배열 반복 횟수
+const ITEM_SIZE = 40; // px
+
+export default function MarqueeRow({ direction = "rtl" }: { direction?: Direction }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const aRef = useRef<HTMLDivElement | null>(null);
   const bRef = useRef<HTMLDivElement | null>(null);
 
   const longItems = useMemo(() => {
     const arr: ImgSrc[] = [];
-    for (let i = 0; i < Math.max(1, repeat); i++) arr.push(...items);
+    for (let i = 0; i < Math.max(1, REPEAT); i++) arr.push(...SOURCES);
     return arr;
-  }, [items, repeat]);
+  }, []);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -61,6 +58,8 @@ function MarqueeRow({
       scaleX: direction === "rtl" ? 1 : -1,
       transformOrigin: "50% 50%",
       force3D: true,
+      willChange: "transform",
+      display: "block",
     });
 
     const wraps = track.querySelectorAll<HTMLDivElement>(".cat-wrap");
@@ -76,14 +75,14 @@ function MarqueeRow({
     let w = a.getBoundingClientRect().width;
 
     const place = () => {
-      w = a.getBoundingClientRect().width;
-      gsap.set(a, { x: 0, force3D: true });
-      gsap.set(b, { x: direction === "rtl" ? w : -w, force3D: true });
+      w = Math.max(1, Math.round(a.getBoundingClientRect().width));
+      gsap.set(a, { x: 0, force3D: true, willChange: "transform" });
+      gsap.set(b, { x: direction === "rtl" ? w : -w, force3D: true, willChange: "transform" });
     };
 
     const play = () => {
       place();
-      const dur = w / speed;
+      const dur = w / Math.max(1, SPEED);
       gsap.killTweensOf(state);
       gsap.to(state, {
         x: `+=${w}`,
@@ -104,57 +103,69 @@ function MarqueeRow({
     };
 
     play();
+
     const ro = new ResizeObserver(() => play());
     ro.observe(a);
+    ro.observe(track);
 
     return () => {
       gsap.killTweensOf(state);
       gsap.killTweensOf(wraps);
       ro.disconnect();
     };
-  }, [direction, speed]);
+  }, [direction]);
+
+  const pad = Math.round(GAP / 2);
 
   return (
-    <div ref={trackRef} className="relative w-full h-16 overflow-hidden select-none">
-      {/* 블록 A: 긴 세트 */}
+    <div ref={trackRef} className="relative w-full h-15 overflow-hidden select-none">
       <div
         ref={aRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end"
-        style={{ gap }}
+        style={{ gap: GAP, paddingLeft: pad, paddingRight: pad }}
       >
         {longItems.map((src, i) => (
-          <div key={`a-${i}`} className="cat-wrap">
-            <Image src={src} alt={`cat-${i + 1}`} width={40} height={40} className="cat-face"
-            style={{ width: 40, height: 40, maxWidth: "none" }} draggable={false} />
+          <div
+            key={`a-${i}`}
+            className="cat-wrap"
+            style={{ width: ITEM_SIZE, height: ITEM_SIZE, display: "grid", placeItems: "center" }}
+          >
+            <Image
+              src={src}
+              alt={`cat-${i + 1}`}
+              width={ITEM_SIZE}
+              height={ITEM_SIZE}
+              className="cat-face"
+              style={{ width: ITEM_SIZE, height: ITEM_SIZE, maxWidth: "none", display: "block" }}
+              draggable={false}
+            />
           </div>
         ))}
       </div>
 
-      {/* 블록 B: 동일한 긴 세트 */}
       <div
         ref={bRef}
         className="absolute left-0 top-1/2 -translate-y-1/2 flex items-end"
-        style={{ gap }}
+        style={{ gap: GAP, paddingLeft: pad, paddingRight: pad }}
       >
         {longItems.map((src, i) => (
-          <div key={`b-${i}`} className="cat-wrap">
-            <Image src={src} alt={`cat-${i + 1}`} width={40} height={40} className="cat-face" 
-            style={{ width: 40, height: 40, maxWidth: "none" }} draggable={false} />
+          <div
+            key={`b-${i}`}
+            className="cat-wrap"
+            style={{ width: ITEM_SIZE, height: ITEM_SIZE, display: "grid", placeItems: "center" }}
+          >
+            <Image
+              src={src}
+              alt={`cat-${i + 1}`}
+              width={ITEM_SIZE}
+              height={ITEM_SIZE}
+              className="cat-face"
+              style={{ width: ITEM_SIZE, height: ITEM_SIZE, maxWidth: "none", display: "block" }}
+              draggable={false}
+            />
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-export default function WalkingCat() {
-  const sources = [cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8,cat9,cat10,cat11,cat12,cat13,cat14,cat15,cat16];
-
-  return (
-    <div className="w-full flex flex-col gap-6">
-      <MarqueeRow items={sources} direction="ltr"  speed={120} repeat={3} />
-      <h1 className="text-6xl font-bold tracking-wide text-center py-5">catfé</h1>
-      <MarqueeRow items={sources} direction="rtl"  speed={120} repeat={3} />
     </div>
   );
 }

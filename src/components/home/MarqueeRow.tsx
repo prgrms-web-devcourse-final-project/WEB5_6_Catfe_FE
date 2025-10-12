@@ -30,11 +30,10 @@ const SOURCES: ImgSrc[] = [
   cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16,
 ];
 
-// 내부 고정값 (요청대로 direction만 프롭으로 받습니다)
-const SPEED = 120; // px/s
-const GAP = 40;    // px
-const REPEAT = 3;  // 배열 반복 횟수
-const ITEM_SIZE = 40; // px
+const SPEED = 120;
+const GAP = 40;
+const REPEAT = 3;
+const ITEM_SIZE = 40;
 
 export default function MarqueeRow({ direction = "rtl" }: { direction?: Direction }) {
   const trackRef = useRef<HTMLDivElement | null>(null);

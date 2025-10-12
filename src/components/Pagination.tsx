@@ -201,8 +201,11 @@ function Pagination({
                 selected
                   ? 'bg-primary-500 text-secondary-50 border-transparent shadow'
                   : 'bg-secondary-50 text-text-primary border-slate-400',
-                (disabled || item.disabled) && !selected
-                  ? 'opacity-50 cursor-not-allowed'
+                disabled || item.disabled || selected
+                  ? // selected가 아닌 비활성화 상태에만 opacity 적용
+                    (disabled || item.disabled) && !selected
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
                   : 'hover:bg-secondary-100'
               )}
             >

@@ -1,4 +1,3 @@
-// src/lib/signalingClient.ts
 import { Client, IMessage, StompHeaders } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { getAccessToken } from '@/utils/authToken';
@@ -43,7 +42,7 @@ type ServerError = {
 
 type ServerSignal = ServerOfferAnswer | ServerIce | ServerMediaState | ServerError;
 
-/* -------------------------------- 유틸 타입/함수 ------------------------------ */
+/* -------------------------------- 유틸/가드 ---------------------------------- */
 export type MediaState = { micOn: boolean; camOn: boolean; shareOn: boolean };
 
 function toNumericId(input: string): number {
@@ -51,17 +50,14 @@ function toNumericId(input: string): number {
   const n = Number(part);
   return Number.isFinite(n) ? n : 0;
 }
-
 function safeJsonParse<T>(raw: string): T | undefined {
   try { return JSON.parse(raw) as T; } catch { return undefined; }
 }
-
-/* -------------------------------- 타입 가드 ---------------------------------- */
 function isOfferAnswer(p: ServerSignal): p is ServerOfferAnswer {
-  return (p.type === 'OFFER' || p.type === 'ANSWER') && typeof (p as ServerOfferAnswer).sdp !== 'undefined';
+  return (p.type === 'OFFER' || p.type === 'ANSWER') && (p as ServerOfferAnswer).sdp !== undefined;
 }
 function isIce(p: ServerSignal): p is ServerIce {
-  return p.type === 'ICE_CANDIDATE' && typeof (p as ServerIce).candidate !== 'undefined';
+  return p.type === 'ICE_CANDIDATE' && (p as ServerIce).candidate !== undefined;
 }
 function isMediaState(p: ServerSignal): p is ServerMediaState {
   return p.type === 'MEDIA_STATE';
@@ -79,8 +75,8 @@ export default class SignalingClient {
   get isReady() { return this._ready; }
 
   constructor(
-    private roomId: string,
-    private userId: string,
+    private roomId: string,   // 'room-3' 형태 가능
+    private userId: string,   // 'u-3' 형태 가능
     private onSignal: (s: WebRTCSignal) => void,
     private onReady?: () => void,
     private onMediaState?: (userId: string, state: MediaState) => void,
@@ -89,26 +85,30 @@ export default class SignalingClient {
     const token = (getAccessToken() || '').replace(/^Bearer\s+/i, '');
     const urlWithToken = token ? `${RAW_URL}?access_token=${encodeURIComponent(token)}` : RAW_URL;
 
-    // 디버그
-    console.log('[WS] endpoint =', urlWithToken);
-    console.log('[WS] token.length =', token?.length ?? 0);
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
+      console.log('[WS] endpoint =', urlWithToken);
+      console.log('[WS] token.length =', token?.length ?? 0);
+    }
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(urlWithToken),
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-      debug: (m) => console.log('[STOMP]', m),
+      debug: isDev ? (m: string) => console.log('[STOMP]', m) : () => {},
       reconnectDelay: 3000,
 
       onConnect: () => {
         this._ready = true;
-        console.log('[STOMP] connected');
+        if (isDev) console.log('[STOMP] connected');
 
+        // 개인 큐
         const userQ = `/user/queue/webrtc`;
-        console.log('[STOMP] SUB', userQ);
+        if (isDev) console.log('[STOMP] SUB', userQ);
         this.client.subscribe(userQ, (frame: IMessage) => this.handleFrame(frame, 'userQ'));
 
-        const roomTopic = `/topic/room/${this.roomId}/webrtc`;
-        console.log('[STOMP] SUB', roomTopic);
+        // 방 토픽(숫자 아이디로 통일)
+        const roomTopic = `/topic/room/${toNumericId(this.roomId)}/webrtc`;
+        if (isDev) console.log('[STOMP] SUB', roomTopic);
         this.client.subscribe(roomTopic, (frame: IMessage) => this.handleFrame(frame, 'room'));
 
         this.onReady?.();
@@ -118,14 +118,20 @@ export default class SignalingClient {
         console.error('[STOMP] broker error:', f.headers['message'], f.body);
         const msg = (f.headers['message'] || '').toLowerCase();
         if (msg.includes('not authorized') || /인증|token|unauth/i.test(msg)) {
-          console.warn('[STOMP] 인증 문제로 보입니다. 토큰/전달 위치(쿼리 or CONNECT)/만료 여부를 확인하세요.');
+          console.warn('[STOMP] 인증 오류 가능성 → 토큰 전달위치(쿼리/CONNECT)/만료 확인');
         }
       },
 
       onWebSocketError: (e: Event) => {
-        console.error('[STOMP] WS error:', e instanceof Event ? e.type : e);
+        if (isDev) console.warn('[STOMP] WS error:', e instanceof Event ? e.type : e);
+        else console.error('[STOMP] WS error');
       },
-    });
+    } as any);
+
+    // 종료 사유 로깅(디버그에 유용)
+    (this.client as any).onWebSocketClose = (e: CloseEvent) => {
+      if (isDev) console.warn('[STOMP] WS closed:', e?.code, e?.reason || '(no reason)');
+    };
 
     this.client.activate();
   }
@@ -138,7 +144,14 @@ export default class SignalingClient {
       return;
     }
 
-    console.log(`[STOMP][${src}] <-`, payload);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[STOMP][${src}] <-`, payload);
+    }
+
+    if (isServerError(payload)) {
+      console.warn('[STOMP] ERROR payload:', payload);
+      return;
+    }
 
     const from = 'fromUserId' in payload ? String(payload.fromUserId ?? '') : '';
     const to =
@@ -173,24 +186,21 @@ export default class SignalingClient {
       return;
     }
 
-    if (isServerError(payload)) {
-      console.warn('[STOMP] error payload', payload);
-      return;
-    }
-
     console.warn('[STOMP] unknown payload', payload);
   }
 
   /* -------------------------------- 발신 유틸 -------------------------------- */
   private pub<T extends object>(dest: string, body: T) {
-    console.log('[STOMP] ->', dest, body);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[STOMP] ->', dest, body);
+    }
     this.client.publish({ destination: dest, body: JSON.stringify(body) });
   }
 
-  /** WebRTC 시그널 전송 (offer/answer/ice) */
+  /** WebRTC 시그널 전송 (offer/answer/ice) — 모든 ID는 숫자로 정규화 */
   sendSignal(signal: WebRTCSignal) {
     const roomIdNum = toNumericId(this.roomId);
-    const targetIdNum = signal.toUserId ? toNumericId(signal.toUserId) : undefined;
+    const targetIdNum = signal.toUserId ? toNumericId(signal.toUserId) : null;
     const fromIdNum = toNumericId(this.userId);
 
     if (signal.type === 'offer' || signal.type === 'answer') {
@@ -219,7 +229,7 @@ export default class SignalingClient {
     }
   }
 
-  /** 내 미디어 상태 브로드캐스트 */
+  /** 내 미디어 상태 브로드캐스트(옵션) */
   sendMediaState(state: MediaState, toUserId?: string) {
     const dest = '/app/webrtc/media-state';
     this.pub(dest, {

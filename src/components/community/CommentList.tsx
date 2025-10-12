@@ -3,27 +3,29 @@
 import CommentRootItem from './CommentRootItem';
 import CommentEditor from './CommentEditor';
 import { useSearchParams } from 'next/navigation';
-import { useComments, useCreateCommentMutation } from '@/hook/useCommunityPost';
+import { useComments, useCreateCommentMutation } from '@/hook/community/useCommunityPost';
 import Pagination from '../Pagination';
 import showToast from '@/utils/showToast';
+import { useCommentSortUrl } from '@/hook/community/useCommentSortUrl';
+import SortSelector, { COMMENT_SORT_OPTIONS, CommentSort } from './SortSelector';
 
 interface CommentListProps {
   postId: number;
 }
 
 const PAGE_SIZE = 10;
-const COMMENT_SORT = 'createdAt,desc';
 
 function CommentList({ postId }: CommentListProps) {
   const searchParams = useSearchParams();
   const urlPageParam = Number(searchParams.get('page')) || 1;
   const currentPage = urlPageParam - 1; // 1-based URL page -> 0-based API page
+  const { currentSort, replaceSort } = useCommentSortUrl();
 
   const { data: commentsResponse, isLoading } = useComments(
     postId,
     currentPage,
     PAGE_SIZE,
-    COMMENT_SORT
+    currentSort
   );
   const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
 
@@ -53,19 +55,23 @@ function CommentList({ postId }: CommentListProps) {
       ) : (comments?.length ?? 0) === 0 ? (
         <p className="text-sm text-text-secondary">아직 댓글이 없습니다.</p>
       ) : (
-        <div>
+        <div className="flex flex-col gap-2">
+          <SortSelector<CommentSort>
+            id="comment-sort"
+            currentSort={currentSort}
+            options={COMMENT_SORT_OPTIONS}
+            onChange={replaceSort}
+          />
           {comments.map((comment) => (
             <CommentRootItem key={comment.commentId} comment={comment} />
           ))}
+          <Pagination
+            totalPages={totalPages}
+            defaultPage={urlPageParam} // URL page는 1-based
+            scrollContainer="#comment-list-container"
+          />
         </div>
       )}
-
-      {/* 페이지네이션 컴포넌트 */}
-      <Pagination
-        totalPages={totalPages}
-        defaultPage={urlPageParam} // URL page는 1-based
-        scrollContainer="#comment-list-container" // 필요하다면 스크롤 컨테이너 지정
-      />
     </div>
   );
 }

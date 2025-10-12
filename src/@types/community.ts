@@ -30,7 +30,7 @@ export type PostListItem = {
   commentCount: number;
 
   likedByMe?: boolean;
-  isBookmarkedByMe?: boolean;
+  bookmarkedByMe?: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -106,3 +106,10 @@ export type LikeToggleResponseData = {
   likeCount: number;
 };
 export type LikeToggleResponse = ApiResponse<LikeToggleResponseData>;
+
+/* ------ Bookmark ------ */
+export type BookmarkToggleResponseData = {
+  postId: number;
+  bookmarkCount: number;
+};
+export type BookmarkToggleResponse = ApiResponse<BookmarkToggleResponseData>;

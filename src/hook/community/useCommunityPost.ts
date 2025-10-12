@@ -1,4 +1,6 @@
 import {
+  BookmarkToggleResponse,
+  BookmarkToggleResponseData,
   CategoriesResponse,
   CategoryItem,
   CategoryType,
@@ -379,6 +381,31 @@ export function useToggleCommentLikeMutation() {
         queryKey: communityQueryKey.comments(variables.postId),
         refetchType: 'inactive',
       });
+    },
+  });
+}
+
+/* ------ Bookmark ------ */
+export async function apiTogglePostBookmark(
+  postId: number,
+  isBookmarked: boolean
+): Promise<BookmarkToggleResponseData> {
+  const url = `/api/posts/${postId}/bookmark`;
+  const { data: res } = isBookmarked
+    ? await api.post<BookmarkToggleResponse>(url) // 북마크 등록 (POST)
+    : await api.delete<BookmarkToggleResponse>(url); // 북마크 취소 (DELETE)
+
+  if (!res.success) throw new Error(`Post bookmark toggle failed: ${res.message}`);
+  return res.data;
+}
+
+export function useTogglePostBookmarkMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BookmarkToggleResponseData, Error, { postId: number; isBookmarked: boolean }>({
+    mutationFn: ({ postId, isBookmarked }) => apiTogglePostBookmark(postId, isBookmarked),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
     },
   });
 }

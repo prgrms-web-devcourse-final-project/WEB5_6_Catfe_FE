@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   apiDeletePost,
   communityQueryKey,
+  useTogglePostBookmarkMutation,
   useTogglePostLikeMutation,
 } from '@/hook/community/useCommunityPost';
 import { useConfirm } from '@/hook/useConfirm';
@@ -32,17 +33,22 @@ function PostContents({ post }: { post: PostDetail }) {
     categories = [],
     likeCount: likeCountProp = 0,
     commentCount = 0,
+    bookmarkCount: bookmarkCountProp = 0,
     createdAt = '',
     updatedAt = '',
     likedByMe = false,
+    bookmarkedByMe = false,
   } = post;
 
   const isAuthor = author.id === user?.userId;
 
   const [liked, setLiked] = useState<boolean>(likedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(bookmarkedByMe);
+  const [bookmarkCount, setBookmarkCount] = useState<number>(bookmarkCountProp);
 
   const { mutate: togglePostLikeMutate } = useTogglePostLikeMutation();
+  const { mutate: togglePostBookmarkMutate } = useTogglePostBookmarkMutation();
 
   const toggleLike = () => {
     const nextLiked = !liked;
@@ -61,6 +67,28 @@ function PostContents({ post }: { post: PostDetail }) {
           // 실패 시 롤백 (Optimistic Update 취소)
           setLiked(!variables.isLiked);
           setLikeCount(nextLikeCount + (nextLiked ? -1 : 1));
+        },
+      }
+    );
+  };
+
+  const handleToggleBookmark = () => {
+    const nextBookmarked = !isBookmarked;
+    // 1. Optimistic Update
+    setIsBookmarked(nextBookmarked);
+    setBookmarkCount((c) => c + (nextBookmarked ? 1 : -1));
+
+    // 2. API 호출
+    togglePostBookmarkMutate(
+      { postId, isBookmarked: nextBookmarked },
+      {
+        onError: (error, variables) => {
+          console.error('게시글 북마크 토글 실패:', error);
+          showToast('error', '즐겨찾기 처리에 실패했습니다. 다시 시도해주세요.');
+
+          // 3. 롤백 (API 실패 시)
+          setIsBookmarked(!variables.isBookmarked);
+          setBookmarkCount((c) => c + (nextBookmarked ? -1 : 1));
         },
       }
     );
@@ -144,18 +172,22 @@ function PostContents({ post }: { post: PostDetail }) {
           </>
         ) : (
           <button
-            onClick={() => console.log('즐겨찾기')}
-            aria-label="즐겨찾기에 저장"
-            className="cursor-pointer"
+            onClick={handleToggleBookmark}
+            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기에 저장'}
+            className="cursor-pointer inline-flex gap-2 items-center"
           >
-            <Image
-              src="/icon/community/heart.svg"
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
-              priority={false}
-            />
+            <div className="size-5 relative">
+              <Image
+                src={
+                  bookmarkedByMe ? '/icon/community/heart-fill.svg' : '/icon/community/heart.svg'
+                }
+                alt=""
+                fill
+                unoptimized
+                priority={false}
+              />
+            </div>
+            <span>{bookmarkCount}</span>
           </button>
         )}
       </div>
@@ -173,16 +205,12 @@ function PostContents({ post }: { post: PostDetail }) {
       {/* likes & comments */}
       <footer className="flex items-center gap-3">
         <LikeButton liked={liked} count={likeCount} onToggle={toggleLike} iconSize={16} />
-        <button
-          onClick={() => console.log('댓글')}
-          aria-label="댓글"
-          className="inline-flex gap-1 items-center"
-        >
+        <div className="inline-flex gap-1 items-center">
           <div className="relative size-4">
             <Image src="/icon/community/comment.svg" alt="" fill unoptimized priority={false} />
           </div>
           <span className="text-sm">{commentCount}</span>
-        </button>
+        </div>
       </footer>
     </article>
   );

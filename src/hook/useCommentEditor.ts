@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface CommentTarget {
-  postId: string;
-  parentCommentId?: string;
+  postId: number;
+  parentCommentId?: number;
 }
 
 const TEXT_LIMIT = 3000; // 이건 be와 얘기해보고 조정
@@ -13,7 +13,7 @@ export function useCommentEditor({
   onSubmit,
 }: {
   target: CommentTarget;
-  onSubmit: (data: { postId: string; parentCommentId?: string; content: string }) => Promise<void>;
+  onSubmit: (data: { postId: number; parentCommentId?: number; content: string }) => Promise<void>;
 }) {
   const { parentCommentId } = target;
   const isReply = !!parentCommentId;

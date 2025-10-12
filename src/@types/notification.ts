@@ -6,16 +6,16 @@ export type NotificationType =
   | 'like_received_comment'; // 내가 작성한 댓글에 좋아요
 
 export type NotificationItem = {
-  id: string;
+  id: number;
   type: NotificationType;
   actor: {
     nickname: string;
     avatarUrl?: string;
   };
   entity?: {
-    roomId?: string;
-    postId?: string;
-    commentId?: string;
+    roomId?: number;
+    postId?: number;
+    commentId?: number;
   };
   title: string; // 스터디룸 이름 또는 글 제목
   message?: string;

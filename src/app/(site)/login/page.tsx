@@ -1,25 +1,26 @@
 'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Button from "@/components/Button";
-import Link from "next/link";
-import FindModal from "@/components/find/FindModal";
-import { login } from "@/api/auth";
-import { useRouter } from "next/navigation";
-import { setAccessToken } from "@/utils/api";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useState } from 'react';
+import Image from 'next/image';
+import Button from '@/components/Button';
+import Link from 'next/link';
+import FindModal from '@/components/find/FindModal';
+import { login } from '@/api/auth';
+import { useRouter } from 'next/navigation';
+import { setAccessToken } from '@/utils/api';
+import showToast from '@/utils/showToast';
+import { useQueryClient } from '@tanstack/react-query';
+import { userQueryKey } from '@/api/apiUsersMe';
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isFindOpen, setIsFindOpen] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const setUser = useAuthStore((state) => state.setUser);
-
-  const handleSocialLogin = (provider: "google" | "naver" | "kakao" |"github") => {
+  const handleSocialLogin = (provider: 'google' | 'naver' | 'kakao' | 'github') => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
     window.location.href = url;
   };
@@ -28,13 +29,13 @@ function LoginPage() {
     e.preventDefault();
 
     try {
-      const { accessToken, user } = await login({ username, password });
+      const { accessToken } = await login({ username, password });
       setAccessToken(accessToken);
-      setUser(user);
-      router.push("/");
+      await queryClient.invalidateQueries({ queryKey: userQueryKey.me() });
+      router.push('/');
     } catch (err) {
-      console.error("로그인 실패:", err);
-      alert("아이디/비밀번호를 확인하세요");
+      console.error('로그인 실패:', err);
+      showToast('error', '아이디/비밀번호를 확인하세요');
     }
   };
 
@@ -75,7 +76,7 @@ function LoginPage() {
               </label>
               <input
                 id="login-password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -85,11 +86,11 @@ function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                aria-label={showPassword ? "비밀번호 가리기" : "비밀번호 보기"}
+                aria-label={showPassword ? '비밀번호 가리기' : '비밀번호 보기'}
               >
                 <Image
-                  src={showPassword ? "/icon/closed.svg" : "/icon/blind.svg"}
-                  alt={showPassword ? "비밀번호 가리기" : "비밀번호 보기"}
+                  src={showPassword ? '/icon/closed.svg' : '/icon/blind.svg'}
+                  alt={showPassword ? '비밀번호 가리기' : '비밀번호 보기'}
                   width={20}
                   height={20}
                 />
@@ -119,16 +120,36 @@ function LoginPage() {
             </Link>
           </form>
           <div className="flex justify-center gap-4 lg:gap-6 mt-2">
-            <button type="button" aria-label="Google 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("google")}>
+            <button
+              type="button"
+              aria-label="Google 로그인"
+              className="cursor-pointer"
+              onClick={() => handleSocialLogin('google')}
+            >
               <Image src="/socialIcon/google.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="naver 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("naver")}>
+            <button
+              type="button"
+              aria-label="naver 로그인"
+              className="cursor-pointer"
+              onClick={() => handleSocialLogin('naver')}
+            >
               <Image src="/socialIcon/naver.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="github 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("github")}>
+            <button
+              type="button"
+              aria-label="github 로그인"
+              className="cursor-pointer"
+              onClick={() => handleSocialLogin('github')}
+            >
               <Image src="/socialIcon/git.svg" alt="" width={36} height={36} />
             </button>
-            <button type="button" aria-label="kakao 로그인" className="cursor-pointer" onClick={() => handleSocialLogin("kakao")}>
+            <button
+              type="button"
+              aria-label="kakao 로그인"
+              className="cursor-pointer"
+              onClick={() => handleSocialLogin('kakao')}
+            >
               <Image src="/socialIcon/kakao.svg" alt="" width={36} height={36} />
             </button>
           </div>

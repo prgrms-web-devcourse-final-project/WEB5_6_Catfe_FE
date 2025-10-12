@@ -1,11 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import StudyRoomCard from "@/components/study-room/StudyRoomCard";
-import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
-import { MOCK_PASSWORDS } from "@/lib/mockRoomPasswords";
-import type { RoomDetail } from "@/@types/rooms";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import StudyRoomCard from '@/components/study-room/StudyRoomCard';
+import EnterPasswordModal from '@/components/study-room/EnterPasswordModal';
+import type { RoomDetail } from '@/@types/roomss';
 
 type Props = {
   rooms: RoomDetail[];
@@ -14,6 +13,7 @@ type Props = {
 export default function RoomsList({ rooms }: Props) {
   const router = useRouter();
 
+  const [roomId, setRoomId] = useState<number | null>(null);
   const [pwOpen, setPwOpen] = useState(false);
   const [pending, setPending] = useState<RoomDetail | null>(null);
 
@@ -21,6 +21,7 @@ export default function RoomsList({ rooms }: Props) {
     if (room.private) {
       setPending(room);
       setPwOpen(true);
+      setRoomId(room.roomId);
       return;
     }
     router.push(`/study-rooms/${room.roomId}`);
@@ -42,9 +43,7 @@ export default function RoomsList({ rooms }: Props) {
 
   if (!rooms.length) {
     return (
-      <div className="w-full py-20 text-center text-text-secondary">
-        아직 스터디룸이 없어요 😿
-      </div>
+      <div className="w-full py-20 text-center text-text-secondary">아직 스터디룸이 없어요 😿</div>
     );
   }
 
@@ -63,15 +62,17 @@ export default function RoomsList({ rooms }: Props) {
           />
         ))}
       </div>
-
-      <EnterPasswordModal
-        open={pwOpen}
-        onClose={closePw}
-        expectedPassword={
-          pending ? MOCK_PASSWORDS[pending.roomId] ?? null : null
-        }
-        onSuccess={handleSuccess}
-      />
+      {roomId && (
+        <EnterPasswordModal
+          roomId={roomId}
+          open={pwOpen}
+          onClose={closePw}
+          // expectedPassword={
+          //   pending ? MOCK_PASSWORDS[pending.roomId] ?? null : null
+          // }
+          onSuccess={handleSuccess}
+        />
+      )}
     </>
   );
 }

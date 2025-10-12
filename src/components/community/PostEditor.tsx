@@ -1,7 +1,7 @@
 'use client';
 
-import { EditorContent, useEditor } from '@tiptap/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Editor, EditorContent, JSONContent, useEditor } from '@tiptap/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
@@ -9,23 +9,55 @@ import { isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
 import SubjectCombobox from './SubjectCombobox';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
-import { InitialPost } from '@/@types/community';
+import { CategoryItem, CreatePostRequest, InitialPost, PostDetail } from '@/@types/community';
 import { TIPTAP_EXTENSIONS } from '@/lib/tiptapExtensions';
 import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
+import { ApiResponse } from '@/@types/type';
+import { useCategoryRegisterMutation } from '@/hook/useCommunityPost';
+import { useRouter } from 'next/navigation';
+import { useConfirm } from '@/hook/useConfirm';
+import { useMutation } from '@tanstack/react-query';
+import { apiUploadFile } from '@/api/apiFile';
+import fileToDataUrl from '@/utils/fileToDataUrl';
 
 type EditorProps = {
   initialData?: InitialPost;
-  onSubmitAction?: (data: FormData) => Promise<{ ok: boolean; id?: string; error?: string }>;
+  categoryData: CategoryItem[];
+  onSubmitAction?: (data: CreatePostRequest) => Promise<ApiResponse<PostDetail>>;
 };
-// Promise Props 는 API 명세에 따라 수정 필요
 
-function PostEditor({ initialData, onSubmitAction }: EditorProps) {
+function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) {
   const isEditMode = !!initialData;
-  const postId = initialData?.post_id;
+  const postId = initialData?.postId;
+  const router = useRouter();
+  const confirm = useConfirm();
 
   const DRAFT_KEY = isEditMode ? `draft:community:post:${postId}` : `draft:community:new`;
   const [submitting, setSubmitting] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const editorRef = useRef<Editor | null>(null);
+
+  const { mutateAsync: registerCategory } = useCategoryRegisterMutation();
+
+  const uploadMutation = useMutation({
+    mutationFn: apiUploadFile,
+    onError: (err: Error) => {
+      console.error('이미지 업로드 실패:', err.message);
+      showToast('error', '이미지 업로드에 실패했습니다.');
+    },
+  });
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    try {
+      const base64Url = await fileToDataUrl(file);
+      editor.chain().focus().setImage({ src: base64Url, alt: file.name }).run();
+    } catch (err) {
+      showToast('error', '이미지 처리 중 오류가 발생했습니다.');
+      console.error('Image Conversion Failed:', err);
+    }
+  }, []);
 
   const editorProps = useMemo(
     () => ({
@@ -35,9 +67,32 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
       transformPastedHTML: (html: string) => {
         return safeSanitizeHtml(html, true);
       },
+      handleDrop: (view: unknown, event: DragEvent) => {
+        const hasFiles = event.dataTransfer?.files && event.dataTransfer.files.length > 0;
+        if (hasFiles) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            handleImageUpload(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view: unknown, event: ClipboardEvent) => {
+        const hasFiles = event.clipboardData?.files && event.clipboardData.files.length > 0;
+        if (hasFiles) {
+          const file = event.clipboardData.files[0];
+          if (file.type.startsWith('image/')) {
+            handleImageUpload(file);
+            return true;
+          }
+        }
+        return false;
+      },
     }),
-    []
+    [handleImageUpload]
   );
+
   const editor = useEditor({
     extensions: TIPTAP_EXTENSIONS,
     content: '',
@@ -46,7 +101,27 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
     immediatelyRender: false,
   });
 
-  // 임시 테스트용 디바운스 짧게 -> 나중에 디바운스 시간 고칠 것
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  const categoryOptions = useMemo(() => {
+    const subject = categoryData.filter((c) => c.type === 'SUBJECT').map((c) => c.name);
+    const demographic = categoryData.filter((c) => c.type === 'DEMOGRAPHIC').map((c) => c.name);
+    const groupSize = categoryData.filter((c) => c.type === 'GROUP_SIZE').map((c) => c.name);
+
+    // Name -> ID 맵 (게시 시 사용)
+    const nameToId = categoryData.reduce(
+      (acc, cat) => {
+        acc[cat.name] = cat.id;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return { subject, demographic, groupSize, nameToId };
+  }, [categoryData]);
+
   const {
     lastSavedAt,
     draft,
@@ -57,64 +132,146 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
     setTitle,
     setCategories,
   } = useEditorDraft(editor, DRAFT_KEY, initialData, {
-    debounceMs: 1000,
+    debounceMs: 10000,
   });
 
   // 초기 데이터 로드
   useEffect(() => {
     if (!editor || editor.options.content) return;
 
-    let contentToLoad = initialData?.content;
+    let contentToLoad: JSONContent | string | null | undefined = initialData?.content;
 
     // draft 있으면 덮어쓰기
     if (draft && draft.json && !isDocEmpty(draft.json)) {
       contentToLoad = draft.json;
     }
+
     if (contentToLoad) {
       editor.commands.setContent(contentToLoad);
     }
   }, [editor, initialData?.content, draft]);
 
-  const handleSubmit = async (formData: FormData) => {
-    if (!editor) return;
-    setSubmitting(true);
-
-    formData.set('content_html', editor.getHTML());
-    formData.set('content_json', JSON.stringify(editor.getJSON()));
-
+  const handleCategoryRegistration = async (name: string) => {
     try {
-      if (onSubmitAction) {
-        const res = await onSubmitAction(formData);
-        if (!res?.ok) {
-          showToast('error', '저장에 실패했습니다.');
-          console.error(res.error);
-        }
-      } else {
-        console.log('Submit', Object.fromEntries(formData));
-        showToast('success', '테스트용 저장 완료(콘솔 확인)');
-      }
-    } finally {
-      setSubmitting(false);
-      runWithoutSaving(() => {
-        setTitle('');
-        setCategories([]);
-        editor?.chain().focus().clearContent().run();
-        clearDraft();
-      });
+      const newId = await registerCategory({ name, type: 'SUBJECT' });
+      return newId;
+    } catch {
+      return null;
     }
   };
 
-  const handleCancel = () => {
-    const confirmOk = confirm('입력된 내용이 모두 사라집니다. 정말 취소하시겠습니까?');
-    if (confirmOk) {
-      runWithoutSaving(() => {
-        setTitle('');
-        setCategories([]);
-        editor?.chain().focus().clearContent().run();
-        clearDraft();
-      });
-      history.back();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!editor || submitting) return;
+    setSubmitting(true);
+
+    // 카테고리 ID 변환 및 신규 카테고리 등록 처리
+    const selectedCategoryNames = [categories[0], categories[1], categories[2]].filter(
+      Boolean
+    ) as string[];
+    const categoryIds: number[] = [];
+
+    for (const name of selectedCategoryNames) {
+      let id = categoryOptions.nameToId[name];
+      if (!id && name === categories[0]) {
+        const newId = await handleCategoryRegistration(name);
+        if (newId) {
+          id = newId;
+        } else {
+          setSubmitting(false);
+          return;
+        }
+      }
+      if (id) {
+        categoryIds.push(id);
+      }
     }
+
+    if (categoryIds.length === 0) {
+      showToast('error', '과목/연령대/인원수를 선택해주세요.');
+      setSubmitting(false);
+      return;
+    }
+
+    let finalHtml = editor.getHTML();
+    const base64Regex = /data:image\/[^;]+;base64,([a-zA-Z0-9+/=]+)/g;
+    const base64Images = Array.from(finalHtml.matchAll(base64Regex));
+
+    if (base64Images.length > 0) {
+      const uploadPromises = base64Images.map(async (match) => {
+        const base64Src = match[0];
+
+        // Base64 Data URL을 Blob으로 변환 후 File 객체 생성
+        const blob = await fetch(base64Src).then((res) => res.blob());
+        const fileType = blob.type.split('/')[1] || 'png';
+        const file = new File([blob], `uploaded_image.${fileType}`, { type: blob.type });
+
+        // 파일 업로드 API 호출
+        const newUrl = await uploadMutation.mutateAsync(file);
+        return { oldSrc: base64Src, newSrc: newUrl };
+      });
+
+      try {
+        const results = await Promise.all(uploadPromises);
+
+        // 업로드된 새 URL로 HTML 내용 교체
+        results.forEach(({ oldSrc, newSrc }) => {
+          finalHtml = finalHtml.replace(new RegExp(oldSrc, 'g'), newSrc);
+        });
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Request Body 생성
+    const requestBody: CreatePostRequest = {
+      title: title,
+      content: finalHtml,
+      categoryIds: categoryIds,
+    };
+
+    try {
+      if (onSubmitAction) {
+        const res = await onSubmitAction(requestBody);
+        if (res?.success) {
+          showToast(
+            'success',
+            isEditMode ? '게시글이 수정되었습니다.' : '게시글이 게시되었습니다.'
+          );
+          clearDraft();
+          const targetId = res.data.postId || postId;
+          if (targetId) router.push(`/community/${targetId}`);
+          else router.push('/community');
+        } else {
+          showToast('error', '저장에 실패했습니다. 다시 시도해 주세요.');
+          console.error(res?.message);
+        }
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    const confirmOk = await confirm({
+      title: '작성을 취소하시겠습니까?',
+      description: <>작성 중인 내용이 모두 사라집니다.</>,
+      confirmText: '취소하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+
+    runWithoutSaving(() => {
+      setTitle('');
+      setCategories([]);
+      editor?.chain().focus().clearContent().run();
+      clearDraft();
+    });
+    history.back();
   };
 
   const setFilter = (idx: 0 | 1 | 2, val: string) =>
@@ -132,7 +289,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
       <form
         className="flex flex-col gap-4 w-full editor"
         ref={formRef}
-        action={handleSubmit}
+        onSubmit={handleSubmit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.preventDefault();
         }}
@@ -164,6 +321,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(0, normalized);
               }}
               placeholder="공부 과목을 입력하세요"
+              options={categoryOptions.subject}
               allowMultiSelect={false}
               // 원하는 과목이 없으면 직접 입력
               allowCustom={true}
@@ -181,6 +339,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(1, normalized);
               }}
               placeholder="연령대 선택..."
+              options={categoryOptions.demographic}
               label="Age"
             />
           </div>
@@ -193,6 +352,7 @@ function PostEditor({ initialData, onSubmitAction }: EditorProps) {
                 setFilter(2, normalized);
               }}
               placeholder="모집할 최대 인원 선택..."
+              options={categoryOptions.groupSize}
               label="Headcount"
             />
           </div>

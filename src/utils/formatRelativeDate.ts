@@ -8,7 +8,7 @@ import dayjs from '@/lib/dayjs';
  * @returns 그 이상 : yyyy년 mm월 dd일 형태
  */
 export function formatRelativeDate(isoDate: string): string {
-  const d = dayjs.tz(isoDate);
+  const d = dayjs.utc(isoDate).local();
   if (!d.isValid()) return '';
 
   const now = dayjs();

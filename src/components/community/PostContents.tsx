@@ -1,6 +1,6 @@
 'use client';
 
-import { Post } from '@/@types/community';
+import { PostDetail } from '@/@types/community';
 import Image from 'next/image';
 import TiptapRenderer from './TiptapRenderer';
 import UserProfile from './UserProfile';
@@ -8,12 +8,20 @@ import LikeButton from '../LikeButton';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
+import { useUser } from '@/api/apiUsersMe';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiDeletePost, communityQueryKey } from '@/hook/useCommunityPost';
+import { useConfirm } from '@/hook/useConfirm';
 
-function PostContents({ post }: { post: Post }) {
+function PostContents({ post }: { post: PostDetail }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
+
+  const { data: user } = useUser();
 
   const {
-    post_id: postId,
+    postId,
     title,
     author,
     content,
@@ -24,9 +32,9 @@ function PostContents({ post }: { post: Post }) {
     updatedAt = '',
   } = post;
 
-  // user 정보 붙이기 전 임시 코드
+  // !! api 업데이트 전 임시 코드
   const isLikedByMe = false;
-  const isAuthor = true;
+  const isAuthor = author.id === user?.userId;
 
   const [liked, setLiked] = useState<boolean>(isLikedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
@@ -40,20 +48,33 @@ function PostContents({ post }: { post: Post }) {
     router.push(`/community/editor?id=${postId}`);
   };
 
-  const handleDelete = () => {
-    // 나중에 confirm modal로 수정
-    const confirmOk = confirm('정말 삭제하시겠습니까?');
-    if (!confirmOk) return;
-
-    try {
-      // api delete 호출
-      setTimeout(() => {
-        console.log(`게시글 ${postId} 삭제 요청`);
-      }, 1000);
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiDeletePost(id),
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: communityQueryKey.post(postId),
+      });
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
       showToast('success', '게시글이 삭제되었습니다.');
-    } catch (err) {
-      console.error('게시글 삭제 요청 실패:', err);
-    }
+      router.replace('/community');
+    },
+    onError: (error: Error) => {
+      console.error('게시글 삭제 요청 실패:', error);
+      showToast('error', '게시글 삭제에 실패했습니다.');
+    },
+  });
+
+  const handleDelete = async () => {
+    const confirmOk = await confirm({
+      title: '게시글을 삭제하시겠습니까?',
+      description: <>삭제된 글은 복원할 수 없습니다.</>,
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+
+    if (!confirmOk) return;
+    deleteMutation.mutate(postId);
   };
 
   return (
@@ -63,12 +84,12 @@ function PostContents({ post }: { post: Post }) {
         <h2 className="mr-3 text-2xl font-bold">{title}</h2>
         <div className="flex gap-2">
           {categories &&
-            categories.map((c, idx) => (
+            categories.map((category, idx) => (
               <div
                 key={`${postId}-category-${idx}`}
                 className="px-2 py-1 border-0 bg-primary-500 rounded-sm text-background-white text-xs flex justify-center items-center"
               >
-                {c}
+                {category.name}
               </div>
             ))}
         </div>

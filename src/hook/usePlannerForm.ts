@@ -7,11 +7,11 @@ import {
 } from '@/@types/planner';
 import { useSelectedDate } from './useSelectedDate';
 import dayjs from '@/lib/dayjs';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { COLOR_ORDER } from '@/lib/plannerSwatch';
 import { combineYmdHM, formatWeekday } from '@/lib/datetime';
 
-interface PlannerFormInitial extends Partial<CreatePlanRequestBody> {
+export interface PlannerFormInitial extends Partial<CreatePlanRequestBody> {
   planId?: number;
   repeatRule?: RepeatRuleRequest | null;
 }
@@ -40,6 +40,15 @@ export const usePlannerForm = (initial: PlannerFormInitial = {}) => {
       ? dayjs(initial.endDate).format('HH:mm')
       : dayjs(defaultStart).add(1, 'hour').format('HH:mm')
   );
+
+  useEffect(() => {
+    if (initial?.startDate) {
+      setStartHM(dayjs(initial.startDate).format('HH:mm'));
+    }
+    if (initial?.endDate) {
+      setEndHM(dayjs(initial.endDate).format('HH:mm'));
+    }
+  }, [initial?.startDate, initial?.endDate]);
 
   // 계획 반복 설정
   const initFreq: 'NONE' | FrequencyEnum = initial?.repeatRule?.frequency ?? 'NONE';

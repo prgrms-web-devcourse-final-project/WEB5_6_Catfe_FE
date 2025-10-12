@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import clsx from "clsx";
-import useEscapeKey from "@/hook/useEscapeKey";
-import UserProfileModal from "@/components/study-room/UserProfileModal";
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import clsx from 'clsx';
+import useEscapeKey from '@/hook/useEscapeKey';
+import UserProfileModal from '@/components/study-room/UserProfileModal';
+import TimerPanel from '@/components/study-room/timer/TimerPanel';
 
 type Props = {
   className?: string;
@@ -22,39 +23,62 @@ export default function Sidebar({
   className,
   onOpenSettings,
   onOpenTimer,
-  onOpenNotice,
+  // onOpenNotice,
   onOpenChat,
   onOpenPlanner,
   onOpenProfile,
 }: Props) {
   const [profileOpen, setProfileOpen] = useState(false);
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const [timerOpen, setTimerOpen] = useState(false);
+
+  const profileAnchorRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   // ESC로 닫기
   useEscapeKey(profileOpen, () => setProfileOpen(false));
+  useEscapeKey(timerOpen, () => setTimerOpen(false));
 
-  // 바깥 클릭 닫기
+  // 프로필 바깥 클릭 닫기
   useEffect(() => {
     if (!profileOpen) return;
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (anchorRef.current && !anchorRef.current.contains(t)) {
+      if (profileAnchorRef.current && !profileAnchorRef.current.contains(t)) {
         setProfileOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [profileOpen]);
+
+  // 타이머 바깥 클릭 닫기
+  useEffect(() => {
+    if (!timerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (sidebarRef.current && !sidebarRef.current.contains(t)) {
+        setTimerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [timerOpen]);
 
   const toggleProfile = () => {
     setProfileOpen((v) => !v);
     onOpenProfile?.();
   };
 
+  const toggleTimer = () => {
+    setTimerOpen((v) => !v);
+    onOpenTimer?.();
+  };
+
   return (
     <aside
+      ref={sidebarRef}
       className={clsx(
-        "h-screen w-[10vw] max-w-[70px] border-r border-black/10 flex flex-col items-center justify-between py-4 bg-background-white",
+        'relative h-screen w-[10vw] max-w-[70px] border-r border-black/10 flex flex-col items-center justify-between py-4 bg-background-white',
         className
       )}
       aria-label="Room sidebar"
@@ -70,24 +94,52 @@ export default function Sidebar({
 
       {/* 하단 아이콘들 */}
       <div className="flex flex-col items-center justify-center gap-4">
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="설정" onClick={onOpenSettings}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="설정"
+          onClick={onOpenSettings}
+        >
           <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
         </button>
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="타이머" onClick={onOpenTimer}>
-          <Image src="/icon/study-room/clock.svg" alt="타이머 아이콘" width={20} height={20} />
-        </button>
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="게시판" onClick={onOpenNotice}>
+        <div className="relative">
+          <button
+            className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+            aria-label="타이머"
+            aria-haspopup="dialog"
+            aria-expanded={timerOpen}
+            onClick={toggleTimer}
+          >
+            <Image src="/icon/study-room/clock.svg" alt="타이머 아이콘" width={20} height={20} />
+          </button>
+
+          {timerOpen && (
+            <div className="absolute -top-20 left-full ml-6 z-50">
+              <TimerPanel />
+            </div>
+          )}
+        </div>
+
+        {/* MVP 아닌 기능 : 게시판 */}
+        {/* <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="게시판" onClick={onOpenNotice}>
           <Image src="/icon/study-room/notice.svg" alt="게시판 아이콘" width={20} height={20} />
-        </button>
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="채팅" onClick={onOpenChat}>
+        </button> */}
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="채팅"
+          onClick={onOpenChat}
+        >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
         </button>
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="플래너" onClick={onOpenPlanner}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="플래너"
+          onClick={onOpenPlanner}
+        >
           <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
         </button>
 
         {/* 프로필 + 팝오버 */}
-        <div className="relative" ref={anchorRef}>
+        <div className="relative" ref={profileAnchorRef}>
           <button
             className="rounded-full cursor-pointer overflow-hidden w-7 h-7 ring-1 ring-text-secondary"
             aria-label="프로필"

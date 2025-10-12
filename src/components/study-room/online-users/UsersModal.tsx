@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useId, useMemo, useState } from "react";
-import type { UsersListItem } from "@/@types/room";
-import UsersHeader from "./UserHeader";
-import UsersSearchBar from "./UserSearchBar";
-import UsersSection from "./UserSection";
-import UserRow from "./UserRow";
-import clsx from "clsx";
+import { useId, useMemo, useState } from 'react';
+import type { UsersListItem } from '@/@types/rooms';
+import UsersHeader from './UserHeader';
+import UsersSearchBar from './UserSearchBar';
+import UsersSection from './UserSection';
+import UserRow from './UserRow';
+import clsx from 'clsx';
 
 type Props = {
   users: UsersListItem[];
@@ -23,20 +23,20 @@ export default function UsersModal({
   onToggleMute,
   onClose,
   className,
-  maxBodyHeight = "60vh",
+  maxBodyHeight = '60vh',
 }: Props) {
   const titleId = useId();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [adminCollapsed, setAdminCollapsed] = useState(false);
   const [memberCollapsed, setMemberCollapsed] = useState(false);
 
   const { admins, members } = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const filtered = term ? users.filter(u => u.name.toLowerCase().includes(term)) : users;
+    const filtered = term ? users.filter((u) => u.name.toLowerCase().includes(term)) : users;
     return {
-      admins: filtered.filter(u => u.role === "owner" || u.role === "staff"),
-      members: filtered.filter(u => u.role === "member"),
+      admins: filtered.filter((u) => u.role === 'HOST' || u.role === 'SUB_HOST'),
+      members: filtered.filter((u) => u.role === 'MEMBER'),
     };
   }, [users, search]);
 
@@ -46,38 +46,29 @@ export default function UsersModal({
       aria-labelledby={titleId}
       tabIndex={-1}
       className={clsx(
-        "border rounded-2xl p-5 bg-background-white shadow-lg",
-        "w-[15vw] min-w-[270px] max-w-[300px]",
+        'border rounded-2xl p-5 bg-background-white shadow-lg',
+        'w-[15vw] min-w-[270px] max-w-[300px]',
         className
       )}
     >
       <UsersHeader
         titleId={titleId}
-        onToggleSearch={() => setSearchOpen(v => !v)}
+        onToggleSearch={() => setSearchOpen((v) => !v)}
         onClose={onClose}
       />
 
       {searchOpen && (
-        <UsersSearchBar
-          value={search}
-          onChange={setSearch}
-          onClear={() => setSearch("")}
-        />
+        <UsersSearchBar value={search} onChange={setSearch} onClear={() => setSearch('')} />
       )}
 
       <div className="overflow-y-auto" style={{ maxHeight: maxBodyHeight }}>
         <UsersSection
           title="관리자"
           collapsed={adminCollapsed}
-          onToggle={() => setAdminCollapsed(v => !v)}
+          onToggle={() => setAdminCollapsed((v) => !v)}
         >
-          {admins.map(u => (
-            <UserRow
-              key={u.id}
-              user={u}
-              canControl={canControl}
-              onToggleMute={onToggleMute}
-            />
+          {admins.map((u) => (
+            <UserRow key={u.id} user={u} canControl={canControl} onToggleMute={onToggleMute} />
           ))}
           {admins.length === 0 && (
             <li className="py-6 text-sm text-text-secondary">관리자가 없어요.</li>
@@ -87,15 +78,10 @@ export default function UsersModal({
         <UsersSection
           title="멤버 및 게스트"
           collapsed={memberCollapsed}
-          onToggle={() => setMemberCollapsed(v => !v)}
+          onToggle={() => setMemberCollapsed((v) => !v)}
         >
-          {members.map(u => (
-            <UserRow
-              key={u.id}
-              user={u}
-              canControl={canControl}
-              onToggleMute={onToggleMute}
-            />
+          {members.map((u) => (
+            <UserRow key={u.id} user={u} canControl={canControl} onToggleMute={onToggleMute} />
           ))}
           {members.length === 0 && (
             <li className="py-6 text-sm text-text-secondary">표시할 사용자가 없어요.</li>

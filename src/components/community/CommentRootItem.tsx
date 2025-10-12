@@ -22,14 +22,14 @@ function CommentRootItem({ comment }: CommentProps) {
     author,
     content,
     likeCount: likeCountProp = 0,
-    isLikedByMe = false,
+    likedByMe = false,
     createdAt,
     updatedAt,
     replyCount: replyCountProp,
     children,
   } = comment;
 
-  const [liked, setLiked] = useState<boolean>(isLikedByMe);
+  const [liked, setLiked] = useState<boolean>(likedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
   const [openReplies, setOpenReplies] = useState<boolean>(false);
 

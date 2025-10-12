@@ -21,9 +21,11 @@ interface PaginationProps {
   ) => React.ReactNode;
   scrollOnChange?: ScrollBehavior;
   scrollContainer?: string | React.RefObject<HTMLElement>;
+  queryParamName?: string;
 }
 
 const MIN_LARGE_PAGES = 10;
+const DEFAULT_QUERY_PARAM_NAME = 'page';
 
 function Pagination({
   totalPages,
@@ -34,13 +36,14 @@ function Pagination({
   itemRenderer,
   scrollOnChange = 'smooth',
   scrollContainer,
+  queryParamName = DEFAULT_QUERY_PARAM_NAME,
 }: PaginationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   // url에 page 정보가 있으면 사용, 없으면 default
-  const urlPage = Number(params.get('page') ?? defaultPage);
+  const urlPage = Number(params.get(queryParamName) ?? defaultPage);
   // 페이지 값 min - max 설정
   const currentPage = (urlPage > totalPages ? totalPages : urlPage) || 1;
   const page = Math.max(1, currentPage);
@@ -52,12 +55,12 @@ function Pagination({
       const clamp = Math.max(1, Math.min(totalPages, n));
 
       const searchParam = new URLSearchParams(params.toString());
-      searchParam.set('page', String(clamp));
+      searchParam.set(queryParamName, String(clamp));
 
       router.replace(`${pathname}?${searchParam.toString()}`, { scroll: false });
       onPageChange?.(clamp);
     },
-    [params, pathname, router, totalPages, onPageChange]
+    [params, pathname, router, totalPages, onPageChange, queryParamName]
   );
 
   // page 이동 시 스크롤 최상단으로 이동 (함수 분리)

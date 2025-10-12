@@ -18,7 +18,7 @@ export type PostListItem = {
   bookmarkCount: number;
   commentCount: number;
 
-  isLikedByMe?: boolean;
+  likedByMe?: boolean;
   isBookmarkedByMe?: boolean;
 
   createdAt: string;
@@ -47,14 +47,14 @@ type CommentBase = {
   author: UserSummary;
   content: string | null;
   likeCount: number;
-  isLikedByMe?: boolean;
+  likedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
 export type RootComment = CommentBase & {
   parentId: null;
-  children?: ReplyComment[];
+  children: ReplyComment[];
   replyCount?: number;
 };
 

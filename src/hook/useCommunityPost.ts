@@ -2,7 +2,7 @@ import {
   CategoriesResponse,
   CategoryItem,
   CategoryType,
-  CommentTree,
+  CommentsResponse,
   CreatePostRequest,
   PostDetail,
   PostListItem,
@@ -24,7 +24,8 @@ import { ApiResponse } from '@/@types/type';
 export const communityQueryKey = {
   all: () => ['community', 'posts'] as const,
   post: (id: number) => ['community', 'post', id] as const,
-  comments: (id: number) => ['community', 'comments', id] as const,
+  comments: (id: number, page: number = 0, size: number = 10, sort: string = 'createdAt,desc') =>
+    ['community', 'comments', id, { page, size, sort }] as const,
   categories: () => ['community', 'categories'] as const,
 };
 
@@ -163,11 +164,17 @@ export async function getPostDetail(id: number): Promise<PostDetail | null> {
 }
 
 /* ------ Comments ------ */
-export function useComments(postId: number) {
-  return useQuery<CommentTree>({
-    queryKey: communityQueryKey.comments(postId),
-    queryFn: async (): Promise<CommentTree> => {
-      const response = await api.get<CommentTree>(`/api/posts/${postId}/comments`);
+export function useComments(
+  postId: number,
+  page: number = 0,
+  size: number = 10,
+  sort: string = 'createdAt,desc'
+) {
+  return useQuery<CommentsResponse>({
+    queryKey: communityQueryKey.comments(postId, page, size, sort),
+    queryFn: async (): Promise<CommentsResponse> => {
+      const url = `/api/posts/${postId}/comments?page=${page}&size=${size}&sort=${sort}`;
+      const response = await api.get<CommentsResponse>(url);
       return response.data;
     },
     staleTime: 60_000,

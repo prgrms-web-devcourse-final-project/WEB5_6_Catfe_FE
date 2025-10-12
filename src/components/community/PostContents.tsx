@@ -156,14 +156,9 @@ function PostContents({ post }: { post: PostDetail }) {
           aria-label="댓글"
           className="inline-flex gap-1 items-center"
         >
-          <Image
-            src="/icon/community/comment.svg"
-            alt=""
-            width={16}
-            height={16}
-            unoptimized
-            priority={false}
-          />
+          <div className="relative size-4">
+            <Image src="/icon/community/comment.svg" alt="" fill unoptimized priority={false} />
+          </div>
           <span className="text-sm">{commentCount}</span>
         </button>
       </footer>

@@ -2,7 +2,10 @@ import {
   CategoriesResponse,
   CategoryItem,
   CategoryType,
+  CommentDeleteResponse,
+  CommentMutationResponse,
   CommentsResponse,
+  CreateCommentRequest,
   CreatePostRequest,
   PostDetail,
   PostListItem,
@@ -179,6 +182,95 @@ export function useComments(
     },
     staleTime: 60_000,
     enabled: !!postId,
+  });
+}
+
+/**
+ * 댓글/대댓글 생성 요청 파라미터
+ * - parentCommentId가 있으면 대댓글 생성 (POST)
+ * - parentCommentId가 없으면 루트 댓글 생성 (POST)
+ */
+interface CreateCommentParams extends CreateCommentRequest {
+  postId: number;
+  parentCommentId?: number; // 루트 댓글일 경우 undefined
+}
+interface UpdateCommentParams extends CreateCommentRequest {
+  postId: number;
+  commentId: number;
+}
+interface DeleteCommentParams {
+  postId: number;
+  commentId: number;
+}
+
+export function useCreateCommentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<CommentMutationResponse, Error, CreateCommentParams>({
+    mutationFn: async ({ postId, parentCommentId, content }) => {
+      let url: string = `/api/posts/${postId}/comments`;
+      // parentCommentId가 있으면 대댓글
+      if (parentCommentId) {
+        url += `/${parentCommentId}/replies`;
+      }
+
+      const { data: response } = await api.post<CommentMutationResponse>(url, { content });
+
+      if (!response.success) {
+        throw new Error(response.message || '댓글/대댓글 생성에 실패했습니다.');
+      }
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      // postId에 해당하는 모든 comments 쿼리 무효화 (페이지네이션 포함)
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'comments', variables.postId],
+        refetchType: 'all',
+      });
+    },
+  });
+}
+
+export function useUpdateCommentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<CommentMutationResponse, Error, UpdateCommentParams>({
+    mutationFn: async ({ postId, commentId, content }) => {
+      const url = `/api/posts/${postId}/comments/${commentId}`;
+      const { data: response } = await api.put<CommentMutationResponse>(url, { content });
+
+      if (!response.success) {
+        throw new Error(response.message || '댓글 수정에 실패했습니다.');
+      }
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'comments', variables.postId],
+        refetchType: 'all',
+      });
+    },
+  });
+}
+
+export function useDeleteCommentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<CommentDeleteResponse, Error, DeleteCommentParams>({
+    mutationFn: async ({ postId, commentId }) => {
+      const url = `/api/posts/${postId}/comments/${commentId}`;
+      const { data: response } = await api.delete<CommentDeleteResponse>(url);
+
+      if (!response.success) {
+        throw new Error(response.message || '댓글 삭제에 실패했습니다.');
+      }
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'comments', variables.postId],
+        refetchType: 'all',
+      });
+    },
   });
 }
 

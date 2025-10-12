@@ -3,8 +3,9 @@
 import CommentRootItem from './CommentRootItem';
 import CommentEditor from './CommentEditor';
 import { useSearchParams } from 'next/navigation';
-import { useComments } from '@/hook/useCommunityPost';
+import { useComments, useCreateCommentMutation } from '@/hook/useCommunityPost';
 import Pagination from '../Pagination';
+import showToast from '@/utils/showToast';
 
 interface CommentListProps {
   postId: number;
@@ -24,13 +25,19 @@ function CommentList({ postId }: CommentListProps) {
     PAGE_SIZE,
     COMMENT_SORT
   );
+  const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
 
-  const comments = commentsResponse?.data?.content || [];
+  const comments = commentsResponse?.data?.items || [];
   const totalPages = commentsResponse?.data?.totalPages || 0;
 
   const handleSubmit = async ({ content }: { content: string }) => {
-    // !! 임시 console: API 붙여서 mutateAsync 시킬 것
-    console.log('댓글 작성 완료:', { postId, content });
+    try {
+      await createCommentMutate({ postId, content });
+      showToast('success', '댓글이 등록되었습니다.');
+    } catch (error) {
+      console.error('루트 댓글 작성 실패:', error);
+      showToast('error', '댓글 작성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   if (!commentsResponse && !isLoading) return null;

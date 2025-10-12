@@ -55,7 +55,7 @@ export type ApiListPaginationResponse<T> = {
 };
 
 export type ApiPaginationResponse<T> = {
-  content: T[];
+  items: T[];
   pageNumber: number;
   pageSize: number;
   totalElements: number;

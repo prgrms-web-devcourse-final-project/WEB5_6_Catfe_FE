@@ -8,6 +8,13 @@ import CommentChildItem from './CommentChildItem';
 import LikeButton from '../LikeButton';
 import { useParams } from 'next/navigation';
 import CommentEditor from './CommentEditor';
+import {
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
+  useUpdateCommentMutation,
+} from '@/hook/useCommunityPost';
+import showToast from '@/utils/showToast';
+import { useConfirm } from '@/hook/useConfirm';
 
 interface CommentProps {
   comment: RootComment;
@@ -32,6 +39,12 @@ function CommentRootItem({ comment }: CommentProps) {
   const [liked, setLiked] = useState<boolean>(likedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
   const [openReplies, setOpenReplies] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const confirm = useConfirm();
+  const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
+  const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
+  const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
 
   // user 정보 붙이기 전 임시 코드
   const isAuthor = true;
@@ -44,16 +57,50 @@ function CommentRootItem({ comment }: CommentProps) {
   const replyCount = replyCountProp ?? children?.length ?? 0;
 
   const handleSubmitReply = async ({
-    postId,
     parentCommentId,
     content,
   }: {
-    postId: number;
     parentCommentId?: number;
     content: string;
   }) => {
-    // !! 임시 콘솔 -> API 기능 붙여야함
-    console.log('reply submit', { postId, parentCommentId, content });
+    if (!parentCommentId) return;
+    try {
+      await createCommentMutate({ postId, parentCommentId, content });
+      showToast('success', '댓글이 작성되었습니다.');
+    } catch (error) {
+      console.error('대댓글 작성 실패:', error);
+      showToast('error', '댓글 작성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const handleUpdate = async ({ content }: { content: string }) => {
+    try {
+      await updateCommentMutate({ postId, commentId, content });
+      showToast('success', '댓글이 수정되었습니다.');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('댓글 수정 실패:', error);
+      showToast('error', '댓글 수정에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmOk = await confirm({
+      title: '댓글을 삭제하시겠습니까?',
+      description: <>삭제된 댓글은 복원할 수 없습니다.</>,
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+
+    try {
+      await deleteCommentMutate({ postId, commentId });
+      showToast('success', '댓글이 삭제되었습니다.');
+    } catch (error) {
+      console.error('댓글 삭제 실패:', error);
+      showToast('error', '댓글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -63,7 +110,7 @@ function CommentRootItem({ comment }: CommentProps) {
         {isAuthor && (
           <div className="flex gap-3">
             <button
-              onClick={() => console.log('수정')}
+              onClick={() => setIsEditing((prev) => !prev)}
               aria-label="댓글 수정"
               className="cursor-pointer"
             >
@@ -76,11 +123,7 @@ function CommentRootItem({ comment }: CommentProps) {
                 priority={false}
               />
             </button>
-            <button
-              onClick={() => console.log('삭제')}
-              aria-label="댓글 삭제"
-              className="cursor-pointer"
-            >
+            <button onClick={handleDelete} aria-label="댓글 삭제" className="cursor-pointer">
               <Image
                 src="/icon/community/trash.svg"
                 alt=""
@@ -93,34 +136,46 @@ function CommentRootItem({ comment }: CommentProps) {
           </div>
         )}
       </header>
-      <main className="text-sm font-light mb-2">{content}</main>
-      <footer className="flex items-center gap-3">
-        <LikeButton liked={liked} count={likeCount} iconSize={12} onToggle={toggleLike} />
-        <button
-          onClick={() => setOpenReplies((prev) => !prev)}
-          aria-label="댓글"
-          className="cursor-pointer inline-flex gap-1 items-center"
-        >
-          <Image
-            src="/icon/community/comment.svg"
-            alt=""
-            width={12}
-            height={12}
-            unoptimized
-            priority={false}
-          />
-          <span className="text-sm">{replyCount}</span>
-          <>
-            <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
-            <span className="text-xs text-text-secondary">
-              {openReplies ? '숨기기' : '답글 보기'}
-            </span>
-          </>
-        </button>
-      </footer>
+      {isEditing ? (
+        <CommentEditor
+          target={{ postId, commentId }}
+          initialContent={content ?? ''}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditing(false)}
+          isEditMode
+        />
+      ) : (
+        <main className="text-sm font-light mb-2">{content}</main>
+      )}
+      {!isEditing && (
+        <footer className="flex items-center gap-3">
+          <LikeButton liked={liked} count={likeCount} iconSize={12} onToggle={toggleLike} />
+          <button
+            onClick={() => setOpenReplies((prev) => !prev)}
+            aria-label="댓글"
+            className="cursor-pointer inline-flex gap-1 items-center"
+          >
+            <Image
+              src="/icon/community/comment.svg"
+              alt=""
+              width={12}
+              height={12}
+              unoptimized
+              priority={false}
+            />
+            <span className="text-sm">{replyCount}</span>
+            <>
+              <span className="block mx-1 bg-black rounded-full w-0.5 h-0.5" />
+              <span className="text-xs text-text-secondary">
+                {openReplies ? '숨기기' : '답글 보기'}
+              </span>
+            </>
+          </button>
+        </footer>
+      )}
 
       {openReplies && (
-        <div className="bg-secondary-100 w-11/12 ml-auto">
+        <div className="bg-secondary-100 w-19/20 ml-auto pb-2 rounded-xl">
           <CommentEditor
             target={{ postId, parentCommentId: commentId }}
             onSubmit={handleSubmitReply}

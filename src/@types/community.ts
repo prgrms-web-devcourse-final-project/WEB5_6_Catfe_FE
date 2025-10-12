@@ -41,6 +41,11 @@ export type CreatePostRequest = {
   categoryIds: number[];
 };
 
+export type CreateCommentRequest = {
+  content: string;
+};
+
+/** GET 통신 시 떨어지는 data */
 type CommentBase = {
   commentId: number;
   postId: number;
@@ -64,9 +69,22 @@ export type ReplyComment = CommentBase & {
   replyCount?: never;
 };
 
+/** PUT / POST 통신 시 떨어지는 data */
+export type CommentResponseData = {
+  commentId: number;
+  postId: number;
+  parentId?: number | null; // 대댓글일 경우 parentId가 존재
+  author: UserSummary;
+  content: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Comment = RootComment | ReplyComment;
 export type CommentTree = RootComment[];
 export type CommentsResponse = ApiResponse<ApiPaginationResponse<RootComment>>;
+export type CommentMutationResponse = ApiResponse<CommentResponseData>;
+export type CommentDeleteResponse = ApiResponse<null>;
 
 export type CategoryType = 'SUBJECT' | 'DEMOGRAPHIC' | 'GROUP_SIZE';
 export type CategoryItem = {

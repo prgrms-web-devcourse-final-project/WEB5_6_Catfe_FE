@@ -3,8 +3,16 @@ import Button from '../Button';
 
 interface CommentEditorProps {
   target: CommentTarget;
-  onSubmit: (data: { postId: number; parentCommentId?: number; content: string }) => Promise<void>;
+  onSubmit: (data: {
+    postId: number;
+    parentCommentId?: number;
+    commentId?: number;
+    content: string;
+  }) => Promise<void>;
   className?: string;
+  initialContent?: string;
+  isEditMode?: boolean;
+  onCancel?: () => void;
 }
 
 function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
@@ -22,9 +30,11 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
     cancel,
     contentLength,
     limit,
+    isEditMode: isEditorEditMode,
   } = useCommentEditor({ target, onSubmit });
 
-  const showCancelButton = value.length > 0 && !isSubmitting;
+  const showCancelButton = isEditorEditMode || (value.length > 0 && !isSubmitting);
+  const submitButtonLabel = isEditorEditMode ? '수정' : '등록';
 
   return (
     <div
@@ -43,7 +53,13 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
         onChange={(e) => setValue(e.target.value)}
         onInput={resize}
         onKeyDown={handleKeyDown}
-        placeholder={isReply ? '답글을 입력하세요' : '댓글을 남겨보세요'}
+        placeholder={
+          isEditorEditMode
+            ? '댓글 내용을 수정하세요'
+            : isReply
+              ? '답글을 입력하세요'
+              : '댓글을 남겨보세요'
+        }
         className="w-full resize-none outline-none text-sm leading-6 placeholder:text-text-secondary disabled:opacity-70 bg-background-white p-3 rounded-lg border border-secondary-800/40 focus:ring-2 focus:ring-secondary-400"
         rows={1}
         maxLength={limit + 1}
@@ -78,7 +94,7 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
             onClick={submitComment}
             aria-busy={isSubmitting}
           >
-            {isSubmitting ? '등록 중...' : '댓글 달기'}
+            {isSubmitting ? `${submitButtonLabel} 중...` : submitButtonLabel}
           </Button>
         </div>
       </div>

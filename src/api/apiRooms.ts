@@ -1,5 +1,5 @@
 import api from "@/utils/api";
-import type { CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
+import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
 
 export type PageResponse<T> = {
   content: T[];
@@ -16,9 +16,39 @@ type ApiEnvelope<T> = {
   success: boolean;
 };
 
-function safeErrorMessage(err: unknown, fallback = "요청 처리 중 오류가 발생했어요.") {
+type RoomsPayload<T> = {
+  rooms: T[];
+  page: number;
+  size: number;
+  totalPages: number;
+  totalElements: number;
+  hasNext: boolean;
+};
+
+function safeErrorMessage(err: unknown, fallback: string) {
   const e = err as { response?: { data?: { message?: string } }; message?: string } | undefined;
   return e?.response?.data?.message ?? e?.message ?? fallback;
+}
+
+async function fetchRooms<T extends MyRoomsList | AllRoomsList>(
+  url: string,
+  page: number,
+  size: number,
+  fallbackMsg: string
+): Promise<PageResponse<T>> {
+  try {
+    const res = await api.get<ApiEnvelope<RoomsPayload<T>>>(url, { params: { page, size } });
+    const d = res.data.data;
+    return {
+      content: d.rooms,
+      totalPages: d.totalPages,
+      number: d.page,
+      size: d.size,
+      totalElements: d.totalElements,
+    };
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, fallbackMsg));
+  }
 }
 
 export async function getMyRooms(page: number, size: number): Promise<PageResponse<MyRoomsList>> {
@@ -45,49 +75,27 @@ export async function getMyRooms(page: number, size: number): Promise<PageRespon
 
     return {
       content: payload.content ?? [],
-      totalPages: typeof payload.totalPages === "number" ? payload.totalPages : 1,
-      number: typeof payload.number === "number" ? payload.number : page,
-      size: typeof payload.size === "number" ? payload.size : size,
-      totalElements:
-        typeof payload.totalElements === "number"
-          ? payload.totalElements
-          : payload.content?.length ?? 0,
+      totalPages: payload.totalPages ?? 1,
+      number: payload.number ?? page,
+      size: payload.size ?? size,
+      totalElements: payload.totalElements ?? payload.content?.length ?? 0,
     };
   } catch (err: unknown) {
     throw new Error(safeErrorMessage(err, "내가 참여 중인 캣페 목록을 불러오지 못했어요."));
   }
 }
 
-type HostingRoomsPayload = {
-  rooms: MyRoomsList[];
-  page: number;
-  size: number;
-  totalPages: number;
-  totalElements: number;
-  hasNext: boolean;
-};
+export const getMyHostingRooms = (page: number, size: number) =>
+  fetchRooms<MyRoomsList>("/api/rooms/my/hosting", page, size, "내가 만든 캣페 목록을 불러오지 못했어요.");
 
-export async function getMyHostingRooms(
-  page: number,
-  size: number
-): Promise<PageResponse<MyRoomsList>> {
-  try {
-    const res = await api.get<ApiEnvelope<HostingRoomsPayload>>(
-      "/api/rooms/my/hosting",
-      { params: { page, size } }
-    );
-    const d = res.data.data;
-    return {
-      content: d.rooms,
-      totalPages: d.totalPages,
-      number: d.page,
-      size: d.size,
-      totalElements: d.totalElements,
-    };
-  } catch (err: unknown) {
-    throw new Error(safeErrorMessage(err, "내가 만든 캣페 목록을 불러오지 못했어요."));
-  }
-}
+export const getAllRooms = (page: number, size: number) =>
+  fetchRooms<AllRoomsList>("/api/rooms/all", page, size, "전체 스터디룸 목록을 불러오지 못했어요.");
+
+export const getPopularRooms = (page: number, size: number) =>
+  fetchRooms<AllRoomsList>("/api/rooms/popular", page, size, "인기 스터디룸 목록을 불러오지 못했어요.");
+
+export const getEnterRooms = (page: number, size: number) =>
+  fetchRooms<AllRoomsList>("/api/rooms", page, size, "입장 가능한 공개 스터디룸 목록을 불러오지 못했어요.");
 
 export async function createRoom(dto: CreateRoomDto): Promise<CreateRoomRes> {
   try {

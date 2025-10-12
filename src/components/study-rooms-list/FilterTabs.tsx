@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import cat1 from "@/assets/cats/cat-5.svg"
-import cat2 from "@/assets/cats/cat-15.svg"
+import cat1 from "@/assets/cats/cat-5.svg";
+import cat2 from "@/assets/cats/cat-15.svg";
 
 type SortKey = "all" | "enter" | "popular";
 
@@ -10,15 +10,14 @@ type Props = {
   sort?: SortKey;
 };
 
-function buildQS(base: { search?: string; sort: SortKey; page: number }) {
+function buildQS(base: { sort: SortKey; page: number }) {
   const p = new URLSearchParams();
-  if (base.search?.trim()) p.set("search", base.search);
   p.set("sort", base.sort);
   p.set("page", String(base.page));
   return `?${p.toString()}`;
 }
 
-export default function FilterTabs({ search = "", sort = "all" }: Props) {
+export default function FilterTabs({ sort = "all" }: Props) {
   const tabs: { key: SortKey; label: string }[] = [
     { key: "all", label: "전체" },
     { key: "popular", label: "인기순" },
@@ -33,7 +32,7 @@ export default function FilterTabs({ search = "", sort = "all" }: Props) {
           return (
             <Link
               key={t.key}
-              href={buildQS({ search, sort: t.key, page: 1 })}
+              href={buildQS({ sort: t.key, page: 1 })}
               className={`rounded-t-md px-5 py-2 h-auto ${
                 active ? "bg-secondary-500" : "bg-secondary-300 hover:bg-secondary-500"
               }`}

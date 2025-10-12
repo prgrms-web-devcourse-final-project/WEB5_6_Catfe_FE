@@ -73,15 +73,10 @@ function isServerError(p: ServerSignal): p is ServerError {
 /* ================================== Client ================================== */
 export default class SignalingClient {
   private client: Client;
-<<<<<<< HEAD
   private _ready = false;
 
   get ready()   { return this._ready; }
   get isReady() { return this._ready; }
-=======
-  private connected = false;
-  private outboundQueue: WebRTCSignal[] = [];
->>>>>>> 7b9b1ce (브랜치 최신화)
 
   constructor(
     private roomId: string,
@@ -90,7 +85,6 @@ export default class SignalingClient {
     private onReady?: () => void,
     private onMediaState?: (userId: string, state: MediaState) => void,
   ) {
-<<<<<<< HEAD
     const RAW_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || 'http://localhost:8080/ws';
     const token = (getAccessToken() || '').replace(/^Bearer\s+/i, '');
     const urlWithToken = token ? `${RAW_URL}?access_token=${encodeURIComponent(token)}` : RAW_URL;
@@ -107,14 +101,14 @@ export default class SignalingClient {
 
       onConnect: () => {
         this._ready = true;
-        console.log('[STOMP] connected'); 
+        console.log('[STOMP] connected');
 
         const userQ = `/user/queue/webrtc`;
         console.log('[STOMP] SUB', userQ);
         this.client.subscribe(userQ, (frame: IMessage) => this.handleFrame(frame, 'userQ'));
 
         const roomTopic = `/topic/room/${this.roomId}/webrtc`;
-        console.log('[STOMP] SUB', roomTopic); 
+        console.log('[STOMP] SUB', roomTopic);
         this.client.subscribe(roomTopic, (frame: IMessage) => this.handleFrame(frame, 'room'));
 
         this.onReady?.();
@@ -130,79 +124,10 @@ export default class SignalingClient {
 
       onWebSocketError: (e: Event) => {
         console.error('[STOMP] WS error:', e instanceof Event ? e.type : e);
-=======
-    const WS_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || 'http://localhost:8080/ws';
-    const token = getAccessToken();
-    console.log('[STOMP] init', WS_URL);
-
-    // SockJS 인스턴스 생성 및 상태 로그
-    const sock = new SockJS(WS_URL, null, {
-      transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
-      timeout: 45000,
-    });
-    sock.onopen = () => console.log('[SockJS] open');
-    sock.onclose = (e: any) => console.warn('[SockJS] close', e);
-    sock.onerror = (e: any) => console.error('[SockJS] error', e);
-
-    this.client = new Client({
-      webSocketFactory: () => sock as any,
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-      debug: (m) => console.log('[STOMP]', m),
-      reconnectDelay: 3000,
-
-      onConnect: () => {
-        console.log('[STOMP] connected');
-        this.connected = true;
-
-        const topic = `/topic/room/${this.roomId}/webrtc`;
-        console.log('[STOMP] subscribe', topic);
-        this.client.subscribe(topic, (frame) => {
-          const payload = JSON.parse(frame.body) as ServerSignal;
-          const from = String(payload.fromUserId ?? '');
-          const to = payload.targetUserId != null ? String(payload.targetUserId) : undefined;
-
-          if (payload.type === 'OFFER' && payload.sdp) {
-            this.onSignal({ type: 'offer', fromUserId: from, toUserId: to, sdp: payload.sdp });
-          } else if (payload.type === 'ANSWER' && payload.sdp) {
-            this.onSignal({ type: 'answer', fromUserId: from, toUserId: to, sdp: payload.sdp });
-          } else if (payload.type === 'ICE_CANDIDATE' && payload.candidate) {
-            this.onSignal({ type: 'ice', fromUserId: from, toUserId: to, candidate: payload.candidate });
-          } else if (payload.type === 'ERROR') {
-            console.warn('[webrtc:error]', payload.error);
-          }
-        });
-
-        this.flushQueue();
-      },
-
-      onDisconnect: () => {
-        this.connected = false;
-        console.warn('[STOMP] disconnected');
-      },
-
-      onStompError: (frame) => {
-        this.connected = false;
-        console.error('[STOMP ERROR]', frame.headers['message'], frame.body);
-      },
-
-      onWebSocketClose: () => {
-        this.connected = false;
-        console.warn('[STOMP] websocket closed; will try to reconnect');
-      },
-
-      onWebSocketError: (e) => {
-        this.connected = false;
-        console.error('[STOMP] websocket error', e);
->>>>>>> 7b9b1ce (브랜치 최신화)
       },
     });
 
-    // Fast Refresh/마운트 타이밍 문제 방지
-    setTimeout(() => this.client.activate(), 0);
-  }
-
-  isConnected() {
-    return this.connected && this.client.connected;
+    this.client.activate();
   }
 
   /* ------------------------------- 수신 처리부 ------------------------------- */
@@ -264,7 +189,6 @@ export default class SignalingClient {
 
   /** WebRTC 시그널 전송 (offer/answer/ice) */
   sendSignal(signal: WebRTCSignal) {
-<<<<<<< HEAD
     const roomIdNum = toNumericId(this.roomId);
     const targetIdNum = signal.toUserId ? toNumericId(signal.toUserId) : undefined;
     const fromIdNum = toNumericId(this.userId);
@@ -291,50 +215,10 @@ export default class SignalingClient {
         candidate: c?.candidate ?? '',
         sdpMid: c?.sdpMid ?? null,
         sdpMLineIndex: c?.sdpMLineIndex ?? null,
-=======
-    // 항상 먼저 로그
-    console.log('[SIG->]', signal.type, {
-      to: signal.toUserId,
-      room: this.roomId,
-      payload: signal,
-    });
-
-    if (!this.isConnected()) {
-      this.outboundQueue.push(signal);
-      console.warn('[STOMP] not connected; queued:', signal.type);
-      return;
-    }
-
-    // roomId, targetUserId 그대로 사용
-    const roomIdVal = this.roomId;
-    const targetIdVal = signal.toUserId;
-
-    if (signal.type === 'offer' || signal.type === 'answer') {
-      this.client.publish({
-        destination: signal.type === 'offer' ? '/app/webrtc/offer' : '/app/webrtc/answer',
-        body: JSON.stringify({
-          roomId: roomIdVal,
-          targetUserId: targetIdVal,
-          sdp: signal.sdp,
-          mediaType: 'VIDEO',
-        }),
-      });
-    } else if (signal.type === 'ice') {
-      this.client.publish({
-        destination: '/app/webrtc/ice-candidate',
-        body: JSON.stringify({
-          roomId: roomIdVal,
-          targetUserId: targetIdVal,
-          candidate: signal.candidate,
-          sdpMid: signal.candidate?.sdpMid ?? null,
-          sdpMLineIndex: signal.candidate?.sdpMLineIndex ?? null,
-        }),
->>>>>>> 7b9b1ce (브랜치 최신화)
       });
     }
   }
 
-<<<<<<< HEAD
   /** 내 미디어 상태 브로드캐스트 */
   sendMediaState(state: MediaState, toUserId?: string) {
     const dest = '/app/webrtc/media-state';
@@ -348,19 +232,9 @@ export default class SignalingClient {
       shareOn: !!state.shareOn,
       timestamp: new Date().toISOString(),
     });
-=======
-  private flushQueue() {
-    if (!this.isConnected() || this.outboundQueue.length === 0) return;
-    const queued = [...this.outboundQueue];
-    this.outboundQueue.length = 0;
-    console.log('[STOMP] flushing queued signals:', queued.length);
-    queued.forEach((s) => this.sendSignal(s));
->>>>>>> 7b9b1ce (브랜치 최신화)
   }
 
   disconnect() {
-    this.connected = false;
-    this.outboundQueue.length = 0;
     this.client.deactivate();
   }
 }

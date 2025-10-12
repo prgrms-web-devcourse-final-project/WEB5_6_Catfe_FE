@@ -1,4 +1,4 @@
-import { useComboboxLogic } from '@/hook/useComboboxLogic';
+import { useComboboxLogic } from '@/hook/community/useComboboxLogic';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 import { useMemo } from 'react';

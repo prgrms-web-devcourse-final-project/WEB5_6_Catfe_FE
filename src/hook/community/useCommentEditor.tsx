@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useConfirm } from './useConfirm';
+import { useConfirm } from '../useConfirm';
 
 export interface CommentTarget {
   postId: number;

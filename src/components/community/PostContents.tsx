@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
 import { useUser } from '@/api/apiUsersMe';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiDeletePost, communityQueryKey } from '@/hook/useCommunityPost';
+import { apiDeletePost, communityQueryKey } from '@/hook/community/useCommunityPost';
 import { useConfirm } from '@/hook/useConfirm';
 
 function PostContents({ post }: { post: PostDetail }) {

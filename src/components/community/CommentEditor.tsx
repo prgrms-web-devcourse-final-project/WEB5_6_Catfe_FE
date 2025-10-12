@@ -1,4 +1,4 @@
-import { CommentTarget, useCommentEditor } from '@/hook/useCommentEditor';
+import { CommentTarget, useCommentEditor } from '@/hook/community/useCommentEditor';
 import Button from '../Button';
 
 interface CommentEditorProps {

@@ -19,7 +19,7 @@ import {
   useQueryClient,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { PostQueryParams, PostSort } from './usePostSearchUrl';
+import { PostQueryParams, PostSort } from '../usePostSearchUrl';
 import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
 

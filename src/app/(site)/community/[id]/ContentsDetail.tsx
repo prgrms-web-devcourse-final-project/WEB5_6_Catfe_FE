@@ -3,7 +3,7 @@
 import CommentList from '@/components/community/CommentList';
 import PostContents from '@/components/community/PostContents';
 import Spinner from '@/components/Spinner';
-import { usePost } from '@/hook/useCommunityPost';
+import { usePost } from '@/hook/community/useCommunityPost';
 import { useEffect } from 'react';
 
 function ContentsDetail({ postId }: { postId: number }) {

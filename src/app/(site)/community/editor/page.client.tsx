@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useCategoriesQuery, usePost, usePostMutations } from '@/hook/useCommunityPost';
+import { useCategoriesQuery, usePost, usePostMutations } from '@/hook/community/useCommunityPost';
 import Spinner from '@/components/Spinner';
 import PostEditor from '@/components/community/PostEditor';
 

@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from 'react';
 import RoomStage from '@/components/study-room/RoomStage';
 import { makeRtcConfig } from '@/lib/webrtcApi';
@@ -10,6 +11,17 @@ import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from '@/@types/room
 
 const DEBUG = false;
 
+=======
+import { useEffect, useMemo, useRef, useState } from "react";
+import RoomStage from "@/components/study-room/RoomStage";
+import { makeRtcConfig } from "@/lib/webrtcApi";
+import { useWebRTC } from "@/hook/useWebRTC";
+import { useMediaStream } from "@/hook/useMediaStream";
+import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from "@/@types/room";
+import { getLocalUser, getMeIdFromLocal } from "@/utils/localUser";
+
+/** 숫자 비교용 */
+>>>>>>> 7b9b1ce (브랜치 최신화)
 function idNum(id: string) {
   const p = id.split('-')[1] ?? id;
   const n = Number(p);
@@ -31,7 +43,9 @@ function getMyUidFromLocal(): string | null {
   } catch { return null; }
 }
 
+/** 게이트: 마운트 전에는 아무것도 렌더하지 않음 */
 export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
+<<<<<<< HEAD
   // 0) 내 uid 확정 (로컬 → 스냅샷 me → null)
   const myUid = useMemo(
     () =>
@@ -101,9 +115,55 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   const meId = me?.id ?? myUid ?? null; 
 
   // 2) 로컬 스트림
+=======
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return <MediaRoomInner room={room} />;
+}
+
+/** 실제 훅/로직은 이 안쪽 컴포넌트에서만 사용 */
+function MediaRoomInner({ room }: { room: RoomSnapshotUI }) {
+  // 0) 로컬 유저로부터 meId 산출 및 members 동기화
+  const localUser = getLocalUser();
+  const meIdFromLocal = getMeIdFromLocal(); // "u-123" | null
+  const fallbackMeId = room.members.find((m) => m.isMe)?.id ?? room.members[0]?.id ?? "u-0";
+  const meId = meIdFromLocal ?? fallbackMeId;
+
+  const patchedRoom: RoomSnapshotUI = {
+    ...room,
+    members: room.members.map<UsersListItem>((m) =>
+      m.id === meId ? { ...m, isMe: true } : { ...m, isMe: false }
+    ),
+  };
+
+  const hasMe = patchedRoom.members.some((m) => m.id === meId);
+  const displayRoom: RoomSnapshotUI = hasMe
+    ? patchedRoom
+    : {
+        ...patchedRoom,
+        members: [
+          ...patchedRoom.members,
+          {
+            id: meId,
+            name: localUser?.nickname || localUser?.username || "me",
+            role: "member",
+            email: localUser?.email || "",
+            avatarUrl: "/image/cat.png",
+            isMe: true,
+            media: { camOn: true, screenOn: false },
+          } as UsersListItem,
+        ],
+      };
+
+  const me = displayRoom.members.find((m) => m.isMe)!;
+
+  // 1) 로컬 스트림
+>>>>>>> 7b9b1ce (브랜치 최신화)
   const { localStream, initMedia } = useMediaStream();
   useEffect(() => { initMedia(); }, [initMedia]);
 
+<<<<<<< HEAD
   // 3) RTC Config (백엔드 ICE 서버 사용, 실패 시 STUN)
   const [rtcConfig, setRtcConfig] = useState<RTCConfiguration>(DEFAULT_RTC);
   useEffect(() => {
@@ -126,14 +186,37 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   const { remoteStreams, callUser } = useWebRTC({
     roomId,
     meId: meId ?? '__unknown__',
+=======
+  // 2) RTC 구성
+  const [rtcConfig, setRtcConfig] = useState<RTCConfiguration>({ iceServers: [] });
+  useEffect(() => {
+    (async () => {
+      const cfg = await makeRtcConfig({
+        userId: Number(me.id?.split("-")[1]) || 0,
+        roomId: Number(displayRoom.info.id?.split("-")[1]) || 0,
+      });
+      setRtcConfig(cfg);
+    })();
+  }, [me.id, displayRoom.info.id]);
+
+  // 3) P2P 훅
+  const { remoteStreams, callUser } = useWebRTC({
+    roomId: displayRoom.info.id,
+    meId: me.id,
+>>>>>>> 7b9b1ce (브랜치 최신화)
     localStream,
     rtcConfig,
   });
 
+<<<<<<< HEAD
   // 5) 발신 트리거 — 신규 피어에게만, 그리고 내가 더 작은 id일 때만 OFFER
+=======
+  // 4) initiator 로직
+>>>>>>> 7b9b1ce (브랜치 최신화)
   const startedRef = useRef<Set<string>>(new Set());
   const lastPeerIdsRef = useRef<string>('');
   useEffect(() => {
+<<<<<<< HEAD
     if (!localStream || !meId) {
       if (DEBUG) console.log('[offer] skip: localStream or meId not ready', { hasStream: !!localStream, meId });
       return;
@@ -169,10 +252,32 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   }, [unionMembers, meId, localStream, callUser]);
 
   // 6) 렌더 스트림(내 로컬 포함)
+=======
+    if (!localStream) return;
+
+    const started = startedRef.current;
+    const currentIds = new Set(displayRoom.members.map((m) => m.id));
+    for (const pid of Array.from(started)) {
+      if (!currentIds.has(pid)) started.delete(pid);
+    }
+
+    displayRoom.members
+      .filter((m) => !m.isMe)
+      .forEach((peer) => {
+        if (started.has(peer.id)) return;
+        if (!shouldInitiate(me.id, peer.id)) return;
+        started.add(peer.id);
+        setTimeout(() => callUser(peer.id), 120);
+      });
+  }, [displayRoom.members, me.id, localStream, callUser]);
+
+  // 5) 타일용 스트림 맵
+>>>>>>> 7b9b1ce (브랜치 최신화)
   const streamsByUser: StreamsByUser = useMemo(() => {
     const m: StreamsByUser = { ...remoteStreams };
     if (meId) m[meId.startsWith('u-') ? meId : `u-${meId}`] = localStream ?? null;
 
+<<<<<<< HEAD
     if (DEBUG) {
       console.log('[render] meId:', meId, 'members:', Object.keys(m).sort().join(','));
     }
@@ -189,4 +294,7 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
       streamsByUser={streamsByUser}
     />
   );
+=======
+  return <RoomStage room={displayRoom} streamsByUser={streamsByUser} />;
+>>>>>>> 7b9b1ce (브랜치 최신화)
 }

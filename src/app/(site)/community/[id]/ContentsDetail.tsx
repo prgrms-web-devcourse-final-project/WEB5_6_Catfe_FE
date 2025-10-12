@@ -13,9 +13,6 @@ function ContentsDetail({ postId }: { postId: number }) {
     if (postId) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [postId]);
 
-  // api 연결 전 UI 확인용 임시
-  // const loadingComments = true;
-
   if (loadingPost)
     return (
       <div className="h-full w-full">

@@ -73,7 +73,9 @@ function Header() {
         } z-[9999]`}
       >
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/image/logo-light.svg" alt="Catfé Logo" width={145} height={35} priority />
+          <div className="w-[145px] h-[35px] relative">
+            <Image src="/image/logo-light.svg" alt="Catfé Logo" fill priority />
+          </div>
         </Link>
         <div className="flex items-center gap-5 relative">
           <nav className="flex gap-5 text-gray-700 text-sm">

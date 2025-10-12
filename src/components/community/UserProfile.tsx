@@ -19,15 +19,14 @@ function UserProfile({
     <div className={tw('flex gap-2 items-center', className)}>
       <div
         className={tw(
-          'size-8 rounded-full border-2 border-gray-400 overflow-hidden',
+          'size-8 rounded-full border-2 border-gray-400 overflow-hidden relative',
           isComment && 'size-5'
         )}
       >
         <Image
-          src={author.profileImageUrl ?? '/image/cat-default.svg'}
+          src={author.profileImageUrl || '/image/cat-default.svg'}
           alt={author.nickname}
-          width={isComment ? 20 : 30}
-          height={isComment ? 20 : 30}
+          fill
         />
       </div>
       <span className={isComment ? 'text-xs' : 'text-base'}>{author.nickname}</span>

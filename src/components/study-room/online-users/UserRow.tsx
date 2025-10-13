@@ -4,16 +4,16 @@ import Image from 'next/image';
 
 export default function UserRow({
   user,
-  canControl,
-  onToggleMute,
+  // canControl,
+  // onToggleMute,
 }: {
   user: UsersListItem;
   canControl?: boolean;
   onToggleMute?: (id: string) => void;
 }) {
-  const muted = !!user.voice?.muted;
+  // const muted = !!user.voice?.muted;
 
-  const showMicButton = !!canControl && !user.isMe && user.role !== 'HOST';
+  // const showMicButton = !!canControl && !user.isMe && user.role !== 'HOST';
 
   return (
     <li className="flex items-center justify-between py-3">
@@ -32,23 +32,23 @@ export default function UserRow({
               />
             )}
           </div>
-          {/* 온라인 점*/}
-          <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full ring-2 ring-background-white bg-success-500" />
         </div>
 
         <span
           className={clsx(
-            'truncate text-xs',
-            user.role === 'HOST' ? 'text-primary-500 font-semibold' : 'text-text-primary-800'
+            'truncate text-xs flex items-center gap-1 text-text-primary-800 text-bold'
           )}
           title={user.name}
         >
           {user.name}
+          {user.role === 'HOST' && (
+            <span className="text-xs font-normal text-primary-500">(host)</span>
+          )}
         </span>
       </div>
 
-      {/* 마이크 제어 버튼 */}
-      {showMicButton && (
+      {/* 방 추방 버튼으로 변경 예정*/}
+      {/* {showMicButton && (
         <button
           onClick={() => onToggleMute?.(String(user.id))}
           className={clsx(
@@ -57,13 +57,13 @@ export default function UserRow({
           )}
           aria-label={muted ? `${user.name} 마이크 해제` : `${user.name} 마이크 음소거`}
         >
-          {/* {muted ? (
+          {muted ? (
             <Image src="/icon/study-room/mic-off.svg" alt="마이크 꺼짐" width={20} height={20} />
           ) : (
             <Image src="/icon/study-room/mic-on.svg" alt="마이크 켜짐" width={20} height={20} />
-          )} */}
+          )}
         </button>
-      )}
+      )} */}
     </li>
   );
 }

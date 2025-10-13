@@ -8,6 +8,7 @@ import Pagination from '../Pagination';
 import showToast from '@/utils/showToast';
 import { useCommentSortUrl } from '@/hook/community/useCommentSortUrl';
 import SortSelector, { COMMENT_SORT_OPTIONS, CommentSort } from './SortSelector';
+import { useUser } from '@/api/apiUsersMe';
 
 interface CommentListProps {
   postId: number;
@@ -21,11 +22,16 @@ function CommentList({ postId }: CommentListProps) {
   const currentPage = urlPageParam - 1; // 1-based URL page -> 0-based API page
   const { currentSort, replaceSort } = useCommentSortUrl();
 
+  const { data: me, isLoading: meLoading } = useUser();
+  const authReady = !meLoading;
+
   const { data: commentsResponse, isLoading } = useComments(
     postId,
+    me?.userId,
     currentPage,
     PAGE_SIZE,
-    currentSort
+    currentSort,
+    authReady
   );
   const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
 

@@ -26,14 +26,21 @@ import {
 import { PostQueryParams } from '../usePostSearchUrl';
 import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
-import { PostSort } from '@/components/community/SortSelector';
+
+// 로그인 사용자 -> userId, 비로그인 -> anon으로 캐싱
+export const getUserCacheKey = (userId?: number) => (userId ? `u:${userId}` : 'anon');
 
 /* ------ QueryKey ------ */
 export const communityQueryKey = {
   all: () => ['community', 'posts'] as const,
-  post: (id: number) => ['community', 'post', id] as const,
-  comments: (id: number, page: number = 0, size: number = 10, sort: string = 'createdAt,desc') =>
-    ['community', 'comments', id, { page, size, sort }] as const,
+  post: (id: number, userKey: string) => ['community', 'post', id, userKey] as const,
+  comments: (
+    id: number,
+    userKey: string,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'createdAt,desc'
+  ) => ['community', 'comments', id, userKey, { page, size, sort }] as const,
   categories: () => ['community', 'categories'] as const,
 };
 
@@ -65,38 +72,53 @@ export function usePostsQuery(
   const result = useQuery<PostsResponse, Error>({
     queryKey,
     queryFn: async () => {
-      const apiParams: {
-        page: number;
-        size: number;
-        sort?: PostSort;
-        keyword?: string;
-        searchType?: string;
-        category?: string;
-      } = {
-        page: page - 1,
-        size,
-        sort,
-      };
+      // const apiParams: {
+      //   page: number;
+      //   size: number;
+      //   sort?: PostSort;
+      //   keyword?: string;
+      //   searchType?: string;
+      //   category?: string;
+      // } = {
+      //   page: page - 1,
+      //   size,
+      //   sort,
+      // };
 
-      if (q) {
-        apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
-        apiParams.searchType = 'title';
-      }
+      // if (q) {
+      //   apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
+      //   apiParams.searchType = 'title';
+      // }
 
       const filterNames: string[] = [];
 
       if (subjects.length > 0) filterNames.push(...subjects);
       if (demographic) filterNames.push(demographic);
       if (groupSize) filterNames.push(groupSize);
-      const categoryIds = filterNames.map((name) => categoryNameToIdMap[name]).filter((id) => !!id);
+      const categoryIds = filterNames
+        .map((name) => categoryNameToIdMap[name])
+        .filter((id) => typeof id === 'number');
 
-      // category 여러개 받는 경우 어떻게 처리하는지 확인 필요
-      if (categoryIds.length > 0) apiParams.category = categoryIds.join(',');
+      const searchParam = new URLSearchParams();
+      searchParam.set('page', String(page - 1));
+      searchParam.set('size', String(size));
+      if (sort) searchParam.set('sort', sort);
 
-      const response = await api.get<PostListResponse>('/api/posts', {
-        params: apiParams,
-      });
-      const apiData = response.data.data;
+      if (q) {
+        searchParam.set('keyword', q.normalize('NFC').toLowerCase().trim());
+        searchParam.set('searchType', 'title');
+      }
+
+      if (categoryIds.length > 0) {
+        for (const id of categoryIds) {
+          searchParam.append('categoryId', String(id));
+        }
+      }
+
+      const { data: response } = await api.get<PostListResponse>(
+        `/api/posts?${searchParam.toString()}`
+      );
+      const apiData = response.data;
 
       return {
         posts: apiData.items,
@@ -112,9 +134,10 @@ export function usePostsQuery(
   return result as UseQueryResult<PostsResponse, Error> & { isPreviousData: boolean };
 }
 
-export function usePost(id: number) {
+export function usePost(id: number, userId?: number, authReady = true) {
+  const userKey = getUserCacheKey(userId);
   return useQuery<PostDetail | null>({
-    queryKey: communityQueryKey.post(id || 0),
+    queryKey: communityQueryKey.post(id || 0, userKey),
     queryFn: async (): Promise<PostDetail | null> => {
       if (!id) return null;
       const { data: response } = await api.get<ApiResponse<PostDetail>>(`/api/posts/${id}`);
@@ -122,12 +145,14 @@ export function usePost(id: number) {
       return response.data || null;
     },
     staleTime: 60_000,
-    enabled: !!id,
+    enabled: !!id && authReady,
   });
 }
 
-export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
+export function usePostMutations(isEditMode: boolean, existingPostId?: number, userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<ApiResponse<PostDetail>, Error, CreatePostRequest>({
     mutationFn: async (data: CreatePostRequest) => {
       try {
@@ -148,7 +173,9 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
       if (data.data.postId) {
-        queryClient.invalidateQueries({ queryKey: communityQueryKey.post(data.data.postId) });
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKey.post(data.data.postId, userKey),
+        });
       }
     },
   });
@@ -174,19 +201,22 @@ export async function getPostDetail(id: number): Promise<PostDetail | null> {
 /* ------ Comments ------ */
 export function useComments(
   postId: number,
+  userId?: number,
   page: number = 0,
   size: number = 10,
-  sort: string = 'createdAt,desc'
+  sort: string = 'createdAt,desc',
+  authReady = true
 ) {
+  const userKey = getUserCacheKey(userId);
   return useQuery<CommentsResponse>({
-    queryKey: communityQueryKey.comments(postId, page, size, sort),
+    queryKey: communityQueryKey.comments(postId, userKey, page, size, sort),
     queryFn: async (): Promise<CommentsResponse> => {
       const url = `/api/posts/${postId}/comments?page=${page}&size=${size}&sort=${sort}`;
       const response = await api.get<CommentsResponse>(url);
       return response.data;
     },
     staleTime: 60_000,
-    enabled: !!postId,
+    enabled: !!postId && authReady,
   });
 }
 
@@ -360,26 +390,28 @@ export async function apiToggleCommentLike(
   return res.data;
 }
 
-export function useTogglePostLikeMutation() {
+export function useTogglePostLikeMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<LikeToggleResponseData, Error, PostLikeParams & { isLiked: boolean }>({
     mutationFn: ({ postId, isLiked }) => apiTogglePostLike(postId, isLiked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
+      queryClient.refetchQueries({ queryKey: communityQueryKey.post(variables.postId, userKey) });
     },
   });
 }
 
-export function useToggleCommentLikeMutation() {
+export function useToggleCommentLikeMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<LikeToggleResponseData, Error, CommentLikeParams & { isLiked: boolean }>({
     mutationFn: ({ postId, commentId, isLiked }) =>
       apiToggleCommentLike(postId, commentId, isLiked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: communityQueryKey.comments(variables.postId),
-        refetchType: 'inactive',
+      queryClient.refetchQueries({
+        queryKey: communityQueryKey.comments(variables.postId, userKey),
       });
     },
   });
@@ -399,13 +431,14 @@ export async function apiTogglePostBookmark(
   return res.data;
 }
 
-export function useTogglePostBookmarkMutation() {
+export function useTogglePostBookmarkMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
 
   return useMutation<BookmarkToggleResponseData, Error, { postId: number; isBookmarked: boolean }>({
     mutationFn: ({ postId, isBookmarked }) => apiTogglePostBookmark(postId, isBookmarked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
+      queryClient.refetchQueries({ queryKey: communityQueryKey.post(variables.postId, userKey) });
     },
   });
 }

@@ -15,7 +15,7 @@ export function useMediaStream() {
       setLocalStream(stream);
       return stream;
     } catch (err) {
-      console.error('getUserMedia 실패:', err);
+      console.error('[media] getUserMedia 실패:', err);
       startedRef.current = false;
       return null;
     }

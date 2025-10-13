@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import RoomStage from '@/components/study-room/RoomStage';
+import MediaControlBar from '@/components/webrtc/MediaControlBar';
 import { makeRtcConfig } from '@/lib/webrtcApi';
 import { useWebRTC } from '@/hook/useWebRTC';
 import { useMediaStream } from '@/hook/useMediaStream';
 import { useRoomMembersQuery } from '@/hook/useRoomMembers';
 import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from '@/@types/room';
 
-const DEBUG = true;
+const DEBUG = false;
 
 /** 'u-12' → 12 */
 function idNumLike(id: string) {
@@ -16,7 +17,6 @@ function idNumLike(id: string) {
   const n = Number(p);
   return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
 }
-/** offer 선공 규칙: 작은 쪽이 선공 */
 function shouldInitiate(meId: string, peerId: string) {
   return idNumLike(meId) < idNumLike(peerId);
 }
@@ -24,7 +24,7 @@ function shouldInitiate(meId: string, peerId: string) {
 /** STUN fallback */
 const DEFAULT_RTC: RTCConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-/** localStorage에 저장된 유저 → 'u-<num>'로 정규화 */
+/** localStorage → 'u-<num>' 정규화 */
 function getMyUidFromLocal(): string | null {
   try {
     const raw = localStorage.getItem('user');
@@ -39,7 +39,7 @@ function getMyUidFromLocal(): string | null {
 }
 
 export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
-  /** 0) 나의 uid 확정(로컬 → 스냅샷) */
+  /** 0) 나의 uid */
   const myUid = useMemo(
     () =>
       (typeof window !== 'undefined' ? getMyUidFromLocal() : null) ??
@@ -49,8 +49,9 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   );
 
   /** room-2 → 2 */
-  const roomId = room.info.id;
+  const roomId  = room.info.id;
   const roomNum = useMemo(() => Number(roomId.split('-')[1] ?? roomId) || 0, [roomId]);
+
   if (DEBUG) console.log('[room] id=%s(%d) myUid=%s', roomId, roomNum, myUid);
 
   /** 1) 실시간 멤버 폴링 */
@@ -102,7 +103,7 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   }, [room.members, liveMembers]);
 
   /** me 식별자 */
-  const me = useMemo(
+  const me  = useMemo(
     () => room.members.find((m) => m.isMe) ?? liveMembers.find((m) => m.isMe) ?? null,
     [room.members, liveMembers]
   );
@@ -112,7 +113,7 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   const { localStream, initMedia } = useMediaStream();
   useEffect(() => { initMedia(); }, [initMedia]);
 
-  /** 3) ICE 서버 가져오기 (실패 시 STUN) */
+  /** 3) ICE 서버 설정 */
   const [rtcConfig, setRtcConfig] = useState<RTCConfiguration>(DEFAULT_RTC);
   useEffect(() => {
     (async () => {
@@ -130,26 +131,28 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
   }, [meId, roomNum]);
 
   /** 4) WebRTC 훅 */
-  const { remoteStreams, callUser } = useWebRTC({
+  const {
+    remoteStreams,
+    callUser,
+    signalingReady,
+
+    micOn, camOn, isSharing,
+    toggleMic, toggleCam,
+    startScreenShare, stopScreenShare,
+
+    localPreviewStream,
+  } = useWebRTC({
     roomId,
     meId: meId ?? '__unknown__',
     localStream,
     rtcConfig,
   });
 
-  /**
-   * 5) OFFER 트리거
-   *  - 신규 피어에 대해서만
-   *  - 내가 더 작은 id일 때만
-   *  - 트랙 붙을 시간 확보를 위해 약간의 지연
-   */
-  const startedRef = useRef<Set<string>>(new Set());
-  const lastPeerIdsRef = useRef<string>('');
+  /** 5) OFFER 트리거 */
+  const startedRef      = useRef<Set<string>>(new Set());
+  const lastPeerIdsRef  = useRef<string>('');
   useEffect(() => {
-    if (!localStream || !meId) {
-      if (DEBUG) console.log('[offer] skip: stream/meId not ready', !!localStream, meId);
-      return;
-    }
+    if (!localStream || !meId || !signalingReady) return;
 
     const candidates = unionMembers
       .filter((m) => !m.isMe && m.id !== meId)
@@ -157,55 +160,51 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
       .sort();
 
     const peerIds = candidates.join(',');
-    if (peerIds === lastPeerIdsRef.current) return;
-    lastPeerIdsRef.current = peerIds;
-
-    const started = startedRef.current;
-    const currentSet = new Set(candidates);
-    // 빠진 피어 정리
-    for (const pid of Array.from(started)) {
-      if (!currentSet.has(pid)) started.delete(pid);
+    if (peerIds !== lastPeerIdsRef.current) {
+      lastPeerIdsRef.current = peerIds;
+      const currentSet = new Set(candidates);
+      for (const pid of Array.from(startedRef.current)) {
+        if (!currentSet.has(pid)) startedRef.current.delete(pid);
+      }
     }
 
-    // 신규 피어 선공
     for (const pid of candidates) {
-      if (started.has(pid)) continue;
+      if (startedRef.current.has(pid)) continue;
       if (!shouldInitiate(meId, pid)) continue;
-
-      started.add(pid);
-      if (DEBUG) console.log('[offer] try ->', pid, 'from', meId);
-
-      // 트랙 부착 완료 후 전송(조금 여유)
-      const tryCall = (delay = 400) => {
-        setTimeout(() => {
-          try {
-            void callUser(pid);
-          } catch (e) {
-            console.warn(`[rtc] callUser(${pid}) failed, retrying...`, e);
-            setTimeout(() => void callUser(pid), 500);
-          }
-        }, delay);
-      };
-      tryCall();
+      startedRef.current.add(pid);
+      setTimeout(() => { void callUser(pid); }, 200);
     }
-  }, [unionMembers, meId, localStream, callUser]);
+  }, [unionMembers, meId, localStream, callUser, signalingReady]);
 
-  /** 6) 렌더용 스트림 매핑(내 로컬 포함) */
+  /** 6) 렌더 스트림 (내 타일은 preview) */
   const streamsByUser: StreamsByUser = useMemo(() => {
     const m: StreamsByUser = { ...remoteStreams };
-    if (meId) m[meId.startsWith('u-') ? meId : `u-${meId}`] = localStream ?? null;
+    if (meId) m[meId.startsWith('u-') ? meId : `u-${meId}`] = localPreviewStream ?? localStream ?? null;
     if (DEBUG) console.log('[render] members=', Object.keys(m).sort());
     return m;
-  }, [remoteStreams, localStream, meId]);
+  }, [remoteStreams, localPreviewStream, localStream, meId]);
 
   return (
-    <RoomStage
-      room={{
-        ...room,
-        members: liveMembers,
-        info: { ...room.info, mediaEnabled: true },
-      }}
-      streamsByUser={streamsByUser}
-    />
+    <>
+      <RoomStage
+        room={{
+          ...room,
+          members: liveMembers,
+          info: { ...room.info, mediaEnabled: true },
+        }}
+        streamsByUser={streamsByUser}
+      />
+
+      {/* 하단 중앙 컨트롤 바 */}
+      <MediaControlBar
+        className=""
+        micOn={!!micOn}
+        camOn={!!camOn}
+        shareOn={!!isSharing}
+        onToggleMic={toggleMic}
+        onToggleCam={toggleCam}
+        onToggleShare={() => (isSharing ? stopScreenShare() : startScreenShare())}
+      />
+    </>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from "react";
 
@@ -7,13 +7,14 @@ export function useLocalStream() {
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;    
+    if (startedRef.current) return;
     startedRef.current = true;
 
     let active = true;
 
     (async () => {
       try {
+        console.log('[media] (auto) getUserMedia start');
         const s = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
@@ -22,9 +23,10 @@ export function useLocalStream() {
           s.getTracks().forEach(t => t.stop());
           return;
         }
+        console.log('[media] (auto) OK', s.getTracks().map(t=>`${t.kind}:${t.readyState}`));
         setStream(s);
       } catch (e) {
-        console.error("getUserMedia 실패:", e);
+        console.error('[media] (auto) getUserMedia 실패:', e);
       }
     })();
 
@@ -34,6 +36,7 @@ export function useLocalStream() {
         prev?.getTracks().forEach(t => t.stop());
         return null;
       });
+      console.log('[media] (auto) cleanup: tracks stopped');
     };
   }, []);
 

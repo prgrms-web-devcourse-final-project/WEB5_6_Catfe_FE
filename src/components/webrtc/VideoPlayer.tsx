@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useRef } from "react";
 
@@ -17,8 +17,14 @@ export default function VideoPlayer({
     const el = ref.current;
     if (!el) return;
     if (el.srcObject !== stream) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[video] bind srcObject ->', stream ? 'MediaStream' : 'null');
+      }
       el.srcObject = stream ?? null;
     }
+    return () => {
+      if (ref.current) ref.current.srcObject = null;
+    };
   }, [stream]);
 
   return (

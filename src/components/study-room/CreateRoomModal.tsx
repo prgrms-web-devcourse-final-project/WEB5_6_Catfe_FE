@@ -19,13 +19,8 @@ type Props = {
 
 // 컨트롤드 초기값 상수
 const INITIAL_INFO: RoomInfoValue = {
-<<<<<<< HEAD
   title: '',
   description: '',
-=======
-  title: "",
-  description: "",
->>>>>>> cc61f42 (feat: webrtc 기능 작성,차후 백엔드 갱신에따라 추가수정)
   maxParticipants: 2,
   isPrivate: false,
   coverPreviewUrl: null,
@@ -72,7 +67,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
   const onCreate = async () => {
     setErrorMsg(null);
 
-<<<<<<< HEAD
     // Data Transfer Object
     const base = {
       title: info.title.trim(),
@@ -118,16 +112,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     } finally {
       setSubmitting(false);
     }
-=======
-  // Data Transfer Object
-  const base = {
-    title: info.title.trim(),
-    description: info.description.trim(),
-    isPrivate: privacy.enabled,
-    maxParticipants: info.maxParticipants,
-    useWebRTC: mediaEnabled,
-    password:"",
->>>>>>> cc61f42 (feat: webrtc 기능 작성,차후 백엔드 갱신에따라 추가수정)
   };
 
   return (

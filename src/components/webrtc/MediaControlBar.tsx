@@ -1,4 +1,3 @@
-// src/components/webrtc/MediaControlBar.tsx
 "use client";
 
 import { IoVideocamOutline, IoVideocamOffOutline } from "react-icons/io5";

@@ -1,4 +1,3 @@
-// src/utils/authToken.ts
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {

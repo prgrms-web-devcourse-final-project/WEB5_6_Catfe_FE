@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/utils/api';
+import type { AxiosError } from 'axios';
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -30,11 +31,15 @@ export default function VerifyEmailPage() {
           setStatus('error');
           setMessage(res.data.message || '인증에 실패했습니다.');
         }
-      } catch (err: any) {
+      } catch (error) {
+        const err = error as AxiosError<{ message?: string }>;
         const code = err.response?.status;
-        if (code === 401) setMessage('유효하지 않거나 만료된 링크입니다.');
-        else if (code === 409) setMessage('이미 인증이 완료된 계정입니다.');
-        else setMessage('서버 오류가 발생했습니다.');
+        const msg = err.response?.data?.message;
+
+        if (code === 401) setMessage(msg || '유효하지 않거나 만료된 링크입니다.');
+        else if (code === 409) setMessage(msg || '이미 인증이 완료된 계정입니다.');
+        else setMessage(msg || '서버 오류가 발생했습니다.');
+
         setStatus('error');
       }
     };
@@ -55,7 +60,9 @@ export default function VerifyEmailPage() {
         <>
           <h1 className="text-2xl font-semibold text-green-600 mb-4">인증 완료!</h1>
           <p className="text-text-primary">{message}</p>
-          <p className="text-text-secondary text-sm mt-4">잠시 후 로그인 페이지로 이동합니다.</p>
+          <p className="text-text-secondary text-sm mt-4">
+            잠시 후 로그인 페이지로 이동합니다.
+          </p>
         </>
       )}
 

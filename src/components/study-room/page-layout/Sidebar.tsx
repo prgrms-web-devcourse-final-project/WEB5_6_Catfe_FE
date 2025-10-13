@@ -132,7 +132,7 @@ export default function Sidebar({
         >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
           {unreadCount > 0 && (
-            <span className="inline-flex bg-primary-700 text-white rounded-full size-5 items-center justify-center absolute -right-2 top-0">
+            <span className="inline-flex bg-primary-700 text-white rounded-full min-w-5 h-5 items-center justify-center absolute -right-2 top-0">
               {unreadCount}
             </span>
           )}

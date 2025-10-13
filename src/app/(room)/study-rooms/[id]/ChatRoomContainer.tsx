@@ -57,7 +57,6 @@ function ChatRoomContainer({
           );
           setMessages(mappedMessages);
           onOpen();
-          setLastReadAt(Date.now());
         }
       } catch (err) {
         console.error('채팅 기록 로드 실패:', err);
@@ -100,7 +99,7 @@ function ChatRoomContainer({
   return (
     <ChatWindow
       open={open}
-      onToggleOpen={onClose}
+      onClose={onClose}
       messages={messages}
       onSend={handleSend}
       lastReadAt={lastReadAt}

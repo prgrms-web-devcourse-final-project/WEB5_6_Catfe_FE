@@ -189,19 +189,18 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           <main className="px-6">{children}</main>
         </div>
       </div>
-      {chatOpen && (
-        <ChatRoomContainer
-          roomId={roomId}
-          open={chatOpen}
-          onOpen={() => chatRoom.resetUnread()}
-          onClose={() => setChatOpen(false)}
-          isConnected={chatRoom.isConnected}
-          sendChatMessage={chatRoom.sendChatMessage}
-          bindOnMessage={(fn) => {
-            onChatRoomRef.current = fn;
-          }}
-        />
-      )}
+
+      <ChatRoomContainer
+        roomId={roomId}
+        open={chatOpen}
+        onOpen={() => chatRoom.resetUnread()}
+        onClose={() => setChatOpen(false)}
+        isConnected={chatRoom.isConnected}
+        sendChatMessage={chatRoom.sendChatMessage}
+        bindOnMessage={(fn) => {
+          onChatRoomRef.current = fn;
+        }}
+      />
 
       <SettingsModal
         open={settingsOpen}

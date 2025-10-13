@@ -11,20 +11,13 @@ type Mode = 'docked' | 'floating';
 
 interface ChatWindowProps {
   open: boolean;
-  onToggleOpen: () => void;
+  onClose: () => void;
   messages: ChatMsg[];
   onSend?: (text: string) => void;
   lastReadAt?: number;
   onMarkRead?: (payload: { lastReadAt: number; lastReadId: ChatMsg['id'] }) => void;
 }
-function ChatWindow({
-  open,
-  onToggleOpen,
-  messages,
-  onSend,
-  lastReadAt,
-  onMarkRead,
-}: ChatWindowProps) {
+function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }: ChatWindowProps) {
   // container / anchor / bottom ref
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -76,6 +69,7 @@ function ChatWindow({
     const base = lastReadAt ?? 0;
     return ordered.findIndex((m) => (m.createdAt ?? 0) > base);
   }, [ordered, lastReadAt]);
+  const hasUnread = firstUnreadIdx >= 0;
 
   // 최신 메시지
   const latest = ordered.length ? ordered[ordered.length - 1] : undefined;
@@ -103,13 +97,13 @@ function ChatWindow({
 
   // 채팅방 열면 마지막 읽은 위치로 이동 (없으면 맨 아래)
   useEffect(() => {
-    if (!open) return;
+    if (!open || ordered.length === 0) return;
     const raf = requestAnimationFrame(() => {
       const hasUnread = scrollToUnreadAnchor('auto');
       if (!hasUnread) scrollToBottom('auto');
     });
     return () => cancelAnimationFrame(raf);
-  }, [open, firstUnreadIdx]);
+  }, [open, firstUnreadIdx, ordered.length]);
 
   // 스크롤 위치 추적 + 바닥이면 toast count 초기화
   useEffect(() => {
@@ -135,6 +129,8 @@ function ChatWindow({
       prevCountRef.current = ordered.length;
       return;
     }
+    if (ordered.length === 0) return;
+
     const prev = prevCountRef.current;
     const added = Math.max(0, ordered.length - prev);
     prevCountRef.current = ordered.length;
@@ -144,7 +140,7 @@ function ChatWindow({
     // 내가 보낸 경우 count에서 제외
     const isLatestMine = latest && latest.from === 'ME';
 
-    if (isAtBottom || isLatestMine) {
+    if ((isAtBottom && !hasUnread) || isLatestMine) {
       scrollToBottom('smooth');
       if (latest && lastMarkedIdRef.current !== latest.id) {
         if ((lastReadAt ?? 0) < (latest.createdAt ?? 0)) {
@@ -155,7 +151,7 @@ function ChatWindow({
     } else {
       if (!isLatestMine) setPendingNewCount((n) => n + added);
     }
-  }, [ordered, open, isAtBottom, latest, lastReadAt, onMarkRead]);
+  }, [ordered, open, isAtBottom, latest, lastReadAt, onMarkRead, hasUnread]);
 
   // 메시지 전송
   const handleSend = () => {
@@ -166,11 +162,20 @@ function ChatWindow({
     requestAnimationFrame(() => scrollToBottom('smooth'));
   };
 
+  console.log({ base: lastReadAt, firstUnreadIdx, latest: latest?.createdAt });
+
   // toast click -> 마지막 읽은 위치로 이동
   const handleToastClick = () => {
     const jumped = scrollToUnreadAnchor('smooth');
     if (!jumped) scrollToBottom('smooth');
     setPendingNewCount(0);
+  };
+
+  const handleClose = () => {
+    if (isAtBottom && latest) {
+      onMarkRead?.({ lastReadAt: latest.createdAt, lastReadId: latest.id });
+    }
+    onClose();
   };
 
   // 패널 크기
@@ -199,7 +204,7 @@ function ChatWindow({
       className={[
         'fixed z-50 flex flex-col gap-3 px-3 py-2',
         mode === 'floating'
-          ? 'rounded-xl bg-black/40'
+          ? 'rounded-xl bg-gray-800/40'
           : 'bg-background-white border-r border-zinc-300',
         !open && 'hidden',
       ].join(' ')}
@@ -250,7 +255,7 @@ function ChatWindow({
           <button
             type="button"
             aria-label="닫기"
-            onClick={onToggleOpen}
+            onClick={handleClose}
             className="cursor-pointer p-1 rounded hover:bg-zinc-100"
           >
             <Image

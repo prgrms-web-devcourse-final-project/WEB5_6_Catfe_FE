@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Sidebar from "@/components/study-room/page-layout/Sidebar";
 import Button from "@/components/Button";
 import Image from "next/image";
@@ -36,7 +35,12 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     data: membersDto,
     isLoading: membersLoading,
     error: membersError,
-  } = useRoomMembersQuery(roomId);
+  } = useRoomMembersQuery(roomId, {
+    refetchInterval: 2000, 
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
   const users = useMemo(
     () =>

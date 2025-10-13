@@ -1,4 +1,3 @@
-// src/hook/useWebRTC.ts
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

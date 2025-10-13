@@ -8,11 +8,7 @@ export type RoomInfo = {
   isPrivate: boolean;
   coverPreviewUrl: string | null;
   currentParticipants: number;
-<<<<<<< HEAD
   status: 'WAITING' | 'ACTIVE' | 'PAUSED';
-=======
-  status: "WAITING" | "ACTIVE" | "PAUSED";
->>>>>>> cc61f42 (feat: webrtc 기능 작성,차후 백엔드 갱신에따라 추가수정)
   allowCamera: boolean;
   allowAudio: boolean;
   allowScreenShare: boolean;

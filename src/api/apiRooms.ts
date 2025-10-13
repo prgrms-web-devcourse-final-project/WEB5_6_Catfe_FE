@@ -1,10 +1,6 @@
 import api from "@/utils/api";
-<<<<<<< HEAD
 import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
-=======
-import type { CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
 import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/room";
->>>>>>> cc61f42 (feat: webrtc 기능 작성,차후 백엔드 갱신에따라 추가수정)
 
 export type PageResponse<T> = {
   content: T[];

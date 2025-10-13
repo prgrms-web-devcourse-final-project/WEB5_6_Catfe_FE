@@ -5,7 +5,7 @@ import Image from 'next/image';
 import TiptapRenderer from './TiptapRenderer';
 import UserProfile from './UserProfile';
 import LikeButton from '../LikeButton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import showToast from '@/utils/showToast';
 import { useUser } from '@/api/apiUsersMe';
@@ -46,6 +46,13 @@ function PostContents({ post }: { post: PostDetail }) {
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(bookmarkedByMe);
   const [bookmarkCount, setBookmarkCount] = useState<number>(bookmarkCountProp);
+
+  useEffect(() => {
+    setLiked(likedByMe);
+    setLikeCount(likeCountProp);
+    setIsBookmarked(bookmarkedByMe);
+    setBookmarkCount(bookmarkCountProp);
+  }, [likedByMe, likeCountProp, bookmarkedByMe, bookmarkCountProp]);
 
   const { mutate: togglePostLikeMutate } = useTogglePostLikeMutation();
   const { mutate: togglePostBookmarkMutate } = useTogglePostBookmarkMutation();
@@ -102,7 +109,7 @@ function PostContents({ post }: { post: PostDetail }) {
     mutationFn: (id: number) => apiDeletePost(id),
     onSuccess: () => {
       queryClient.removeQueries({
-        queryKey: communityQueryKey.post(postId),
+        queryKey: communityQueryKey.post(postId, ''),
       });
       queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
       showToast('success', '게시글이 삭제되었습니다.');
@@ -178,9 +185,7 @@ function PostContents({ post }: { post: PostDetail }) {
           >
             <div className="size-5 relative">
               <Image
-                src={
-                  bookmarkedByMe ? '/icon/community/heart-fill.svg' : '/icon/community/heart.svg'
-                }
+                src={isBookmarked ? '/icon/community/heart-fill.svg' : '/icon/community/heart.svg'}
                 alt=""
                 fill
                 unoptimized

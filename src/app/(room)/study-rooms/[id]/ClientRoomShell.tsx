@@ -14,6 +14,7 @@ import { useRoomMembersQuery } from '@/hook/useRoomMembers';
 import ChatRoomContainer from './ChatRoomContainer';
 import { useChatRoom } from '@/hook/useChatRoom';
 import { ApiChatMsg } from '@/@types/websocket';
+import { ChatRoomMode } from '@/components/study-room/chatting/ChatWindow';
 
 type Props = {
   children: ReactNode;
@@ -25,6 +26,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatMode, setChatMode] = useState<ChatRoomMode>('floating');
 
   const popRef = useRef<HTMLDivElement>(null);
   const usersRef = useRef<HTMLDivElement>(null);
@@ -113,9 +115,17 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     if (chatOpen) chatRoom.resetUnread();
   }, [chatOpen, chatRoom]);
 
+  /* ------------ Layout --------------- */
+  const chatDockWidth = 'min(33dvw, 420px)';
+  const gridStyle: React.CSSProperties =
+    chatOpen && chatMode === 'docked'
+      ? { gridTemplateColumns: `56px ${chatDockWidth} 1fr` }
+      : { gridTemplateColumns: '56px 1fr' };
+
   return (
     <div className="min-h-screen w-full">
-      <div className="grid grid-cols-[56px_1fr]">
+      <div className="grid" style={gridStyle}>
+        {/* grid 1열: sidebar */}
         <Sidebar
           onOpenSettings={onOpenSettings}
           onOpenTimer={onOpenTimer}
@@ -125,6 +135,9 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           unreadCount={chatRoom.unread}
         />
 
+        {/* grid 2열: chatting (docked) */}
+        {chatOpen && chatMode === 'docked' && <div className="relative" />}
+        {/* grid 3열: contents */}
         <div className="relative">
           <header className="h-14 flex items-center justify-end px-6">
             <div className="flex items-center gap-2">
@@ -200,6 +213,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         bindOnMessage={(fn) => {
           onChatRoomRef.current = fn;
         }}
+        onModeChange={setChatMode}
       />
 
       <SettingsModal

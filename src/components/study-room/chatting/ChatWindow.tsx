@@ -7,7 +7,7 @@ import MessageBubble from './MessageBubble';
 import Button from '@/components/Button';
 import { ChatMsg } from '@/@types/websocket';
 
-type Mode = 'docked' | 'floating';
+export type ChatRoomMode = 'docked' | 'floating';
 
 interface ChatWindowProps {
   open: boolean;
@@ -16,18 +16,27 @@ interface ChatWindowProps {
   onSend?: (text: string) => void;
   lastReadAt?: number;
   onMarkRead?: (payload: { lastReadAt: number; lastReadId: ChatMsg['id'] }) => void;
+  onModeChange: (mode: ChatRoomMode) => void;
 }
-function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }: ChatWindowProps) {
+function ChatWindow({
+  open,
+  onClose,
+  messages,
+  onSend,
+  lastReadAt,
+  onMarkRead,
+  onModeChange,
+}: ChatWindowProps) {
   // container / anchor / bottom ref
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const unreadAnchorRef = useRef<HTMLDivElement | null>(null);
 
   // 채팅창 모드
-  const [mode, setMode] = useState<Mode>(() => {
+  const [mode, setMode] = useState<ChatRoomMode>(() => {
     if (typeof window === 'undefined') return 'floating';
     try {
-      return (sessionStorage.getItem('chat:mode') as Mode) || 'floating';
+      return (sessionStorage.getItem('chat:mode') as ChatRoomMode) || 'floating';
     } catch {
       return 'floating';
     }
@@ -35,9 +44,10 @@ function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }:
 
   useEffect(() => {
     try {
+      onModeChange?.(mode);
       sessionStorage.setItem('chat:mode', mode);
     } catch {}
-  }, [mode]);
+  }, [mode, onModeChange]);
 
   //  입력값 state
   const [draft, setDraft] = useState<string>('');
@@ -162,8 +172,6 @@ function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }:
     requestAnimationFrame(() => scrollToBottom('smooth'));
   };
 
-  console.log({ base: lastReadAt, firstUnreadIdx, latest: latest?.createdAt });
-
   // toast click -> 마지막 읽은 위치로 이동
   const handleToastClick = () => {
     const jumped = scrollToUnreadAnchor('smooth');
@@ -182,15 +190,15 @@ function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }:
   const panelStyle: React.CSSProperties =
     mode === 'floating'
       ? {
-          left: 20,
+          left: 56 + 20, // sidebar 56px로 고정 + 8px정도 띄우기
           bottom: 20,
-          width: 'max(28dvw, 340px)',
+          width: '340px',
           height: 'min(50dvh, 560px)',
         }
       : {
           top: 0,
-          left: 0,
-          width: 'min(33dvw, 420px)',
+          left: 56,
+          width: 'min(33dvw, 340px)',
           height: '100dvh',
         };
 
@@ -202,10 +210,10 @@ function ChatWindow({ open, onClose, messages, onSend, lastReadAt, onMarkRead }:
       aria-label="채팅"
       aria-modal={false}
       className={[
-        'fixed z-50 flex flex-col gap-3 px-3 py-2',
+        'fixed flex flex-col gap-3 px-3 py-2',
         mode === 'floating'
-          ? 'rounded-xl bg-gray-800/40'
-          : 'bg-background-white border-r border-zinc-300',
+          ? 'z-50 rounded-xl bg-gray-800/40'
+          : 'z-30 bg-background-white border-x border-zinc-300',
         !open && 'hidden',
       ].join(' ')}
       style={panelStyle}

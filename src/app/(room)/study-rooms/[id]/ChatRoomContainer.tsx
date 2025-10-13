@@ -1,7 +1,7 @@
 'use client';
 
 import { ApiChatMsg, ChatMsg } from '@/@types/websocket';
-import ChatWindow from '@/components/study-room/chatting/ChatWindow';
+import ChatWindow, { ChatRoomMode } from '@/components/study-room/chatting/ChatWindow';
 import { mapApiToChatMsg } from '@/hook/useChatRoom';
 import { useAuthInfo } from '@/hook/useChatWebSocket';
 import api from '@/utils/api';
@@ -16,6 +16,7 @@ interface ChatRoomContainerProps {
   isConnected: boolean;
   sendChatMessage: (text: string) => boolean;
   bindOnMessage: (fn: (msg: ApiChatMsg) => void) => void;
+  onModeChange: (mode: ChatRoomMode) => void;
 }
 
 function ChatRoomContainer({
@@ -26,6 +27,7 @@ function ChatRoomContainer({
   isConnected,
   sendChatMessage,
   bindOnMessage,
+  onModeChange,
 }: ChatRoomContainerProps) {
   const { userId: currentUserId } = useAuthInfo();
 
@@ -104,6 +106,7 @@ function ChatRoomContainer({
       onSend={handleSend}
       lastReadAt={lastReadAt}
       onMarkRead={handleMarkRead}
+      onModeChange={onModeChange}
     />
   );
 }

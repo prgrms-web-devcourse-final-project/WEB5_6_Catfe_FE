@@ -1,4 +1,3 @@
-// src/app/(room)/study-rooms/[id]/MediaRoomEntry.tsx
 "use client";
 
 import { useMemo } from "react";

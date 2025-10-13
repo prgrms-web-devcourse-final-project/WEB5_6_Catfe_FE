@@ -1,4 +1,3 @@
-// src/components/study-room/Tile.tsx
 "use client";
 import Image from "next/image";
 import VideoPlayer from "@/components/webrtc/VideoPlayer";

@@ -36,7 +36,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     isLoading: membersLoading,
     error: membersError,
   } = useRoomMembersQuery(roomId, {
-    refetchInterval: 2000,
+    refetchInterval: 2000, 
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     staleTime: 0,

@@ -57,7 +57,11 @@ api.interceptors.response.use(
 
     // 401 → AccessToken 만료
     if (err.response?.status === 401 && !originalRequest._retry) {
-      // Logout 요청일 경우 Refresh 하지 않음
+      if (!accessToken) {
+        console.error('[401 감지] AccessToken이 null이므로 refresh 시도하지 않음 → 강제 로그아웃');
+        setAccessToken(null);
+        return Promise.reject(err);
+      }
       if (isLogoutRequest) {
         return Promise.reject(err);
       }

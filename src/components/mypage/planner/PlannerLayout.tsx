@@ -29,16 +29,13 @@ function PlannerLayout() {
   const gridHeight = hourHeight * 24;
 
   return (
-    <div
-      className="relative flex-1 p-6 rounded-2xl border border-secondary-900 overflow-auto bg-background-white pt-0"
-      style={{ height: hourHeight * 12, maxHeight: gridHeight }}
-    >
-      <div className="sticky top-0 z-40 bg-background-white flex items-center justify-between p-2 pt-6">
+    <div className="relative p-6 rounded-xl border border-secondary-900 overflow-auto bg-background-white pt-0 h-full min-h-0">
+      <div className="sticky top-0 z-40 flex items-center justify-between p-2 pt-6 bg-background-base">
         <span className="font-semibold whitespace-nowrap w-1/2 text-left">PLAN</span>
         <span className="font-semibold whitespace-nowrap w-1/2 text-right">RECORD</span>
       </div>
 
-      <div className="flex relative" style={{ minHeight: gridHeight }}>
+      <div className="relative" style={{ height: gridHeight }}>
         <div className="absolute inset-0 -z-0">
           {Array.from({ length: 25 }).map((_, i) => (
             <div
@@ -49,32 +46,35 @@ function PlannerLayout() {
           ))}
         </div>
 
-        {/* Plan */}
-        <div className="flex-1 relative overflow-auto">
-          <PlanDataContainer hourHeight={hourHeight} />
-        </div>
-
-        {/* Time Label */}
-        <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border border-secondary-900 sticky left-1/2 -translate-x-1/2 z-20 bg-background-white">
-          {HOURS.map((hour) => (
-            <div
-              key={hour}
-              className="text-xs text-text-secondary font-bold text-center"
-              style={{ height: `${hourHeight}px`, lineHeight: `${hourHeight}px` }}
-            >
-              {hour.toString().padStart(2, '0')}
+        <div className="flex relative h-full">
+          {/* Plan */}
+          <div className="flex-1 relative">
+            <div className="relative" style={{ height: gridHeight }}>
+              <PlanDataContainer hourHeight={hourHeight} />
             </div>
-          ))}
-        </div>
+          </div>
+          {/* Time Label */}
+          <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border border-secondary-900 sticky left-1/2 -translate-x-1/2 z-20 bg-background-white">
+            {HOURS.map((hour) => (
+              <div
+                key={hour}
+                className="text-xs text-text-secondary font-bold text-center"
+                style={{ height: `${hourHeight}px`, lineHeight: `${hourHeight}px` }}
+              >
+                {hour.toString().padStart(2, '0')}
+              </div>
+            ))}
+          </div>
 
-        {/* Record */}
-        <div className="flex-1 relative overflow-auto">
-          <RecordDataContainer hourHeight={hourHeight} />
+          {/* Record */}
+          <div className="flex-1 relative overflow-auto">
+            <RecordDataContainer hourHeight={hourHeight} />
+          </div>
         </div>
 
         {/* 현재 시간 indicator */}
         {isToday && nowTop >= 0 && nowTop <= gridHeight && (
-          <div className="pointer-events-none absolute left-8 right-0 z-30" style={{ top: nowTop }}>
+          <div className="pointer-events-none absolute left-0 right-0 z-30" style={{ top: nowTop }}>
             <div className="h-0 border-t-2 border-primary-700" />
             <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-primary-700" />
           </div>

@@ -1,4 +1,3 @@
-// src/utils/api.ts
 import axios, { AxiosRequestConfig } from 'axios';
 
 let accessToken: string | null = null;

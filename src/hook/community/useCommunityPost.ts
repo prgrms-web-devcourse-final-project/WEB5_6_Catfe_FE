@@ -26,7 +26,6 @@ import {
 import { PostQueryParams } from '../usePostSearchUrl';
 import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
-import { PostSort } from '@/components/community/SortSelector';
 
 // 로그인 사용자 -> userId, 비로그인 -> anon으로 캐싱
 export const getUserCacheKey = (userId?: number) => (userId ? `u:${userId}` : 'anon');
@@ -73,38 +72,53 @@ export function usePostsQuery(
   const result = useQuery<PostsResponse, Error>({
     queryKey,
     queryFn: async () => {
-      const apiParams: {
-        page: number;
-        size: number;
-        sort?: PostSort;
-        keyword?: string;
-        searchType?: string;
-        category?: string;
-      } = {
-        page: page - 1,
-        size,
-        sort,
-      };
+      // const apiParams: {
+      //   page: number;
+      //   size: number;
+      //   sort?: PostSort;
+      //   keyword?: string;
+      //   searchType?: string;
+      //   category?: string;
+      // } = {
+      //   page: page - 1,
+      //   size,
+      //   sort,
+      // };
 
-      if (q) {
-        apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
-        apiParams.searchType = 'title';
-      }
+      // if (q) {
+      //   apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
+      //   apiParams.searchType = 'title';
+      // }
 
       const filterNames: string[] = [];
 
       if (subjects.length > 0) filterNames.push(...subjects);
       if (demographic) filterNames.push(demographic);
       if (groupSize) filterNames.push(groupSize);
-      const categoryIds = filterNames.map((name) => categoryNameToIdMap[name]).filter((id) => !!id);
+      const categoryIds = filterNames
+        .map((name) => categoryNameToIdMap[name])
+        .filter((id) => typeof id === 'number');
 
-      // category 여러개 받는 경우 어떻게 처리하는지 확인 필요
-      if (categoryIds.length > 0) apiParams.category = categoryIds.join(',');
+      const searchParam = new URLSearchParams();
+      searchParam.set('page', String(page - 1));
+      searchParam.set('size', String(size));
+      if (sort) searchParam.set('sort', sort);
 
-      const response = await api.get<PostListResponse>('/api/posts', {
-        params: apiParams,
-      });
-      const apiData = response.data.data;
+      if (q) {
+        searchParam.set('keyword', q.normalize('NFC').toLowerCase().trim());
+        searchParam.set('searchType', 'title');
+      }
+
+      if (categoryIds.length > 0) {
+        for (const id of categoryIds) {
+          searchParam.append('categoryId', String(id));
+        }
+      }
+
+      const { data: response } = await api.get<PostListResponse>(
+        `/api/posts?${searchParam.toString()}`
+      );
+      const apiData = response.data;
 
       return {
         posts: apiData.items,

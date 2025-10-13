@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@/api/apiUsersMe';
 import CommentList from '@/components/community/CommentList';
 import PostContents from '@/components/community/PostContents';
 import Spinner from '@/components/Spinner';
@@ -7,7 +8,10 @@ import { usePost } from '@/hook/community/useCommunityPost';
 import { useEffect } from 'react';
 
 function ContentsDetail({ postId }: { postId: number }) {
-  const { data: post, isLoading: loadingPost } = usePost(postId);
+  const { data: me, isLoading: meLoading } = useUser();
+  const authReady = !meLoading;
+
+  const { data: post, isLoading: loadingPost } = usePost(postId, me?.userId, authReady);
 
   useEffect(() => {
     if (postId) window.scrollTo({ top: 0, behavior: 'instant' });
@@ -29,7 +33,7 @@ function ContentsDetail({ postId }: { postId: number }) {
 
   return (
     <div className="mx-auto flex flex-col gap-3">
-      <PostContents post={post} />
+      <PostContents post={post} key={`${post.postId}-${post.updatedAt}`} />
       <CommentList postId={postId} />
     </div>
   );

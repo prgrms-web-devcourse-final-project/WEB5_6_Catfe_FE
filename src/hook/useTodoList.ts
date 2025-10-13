@@ -7,6 +7,7 @@ import {
   TodoItem,
   toggleTodoStatus,
 } from '@/api/apiTodoList';
+import showToast from '@/utils/showToast';
 
 export function useTodoList() {
   const { ymd: selectedDateYMD } = useSelectedDate();
@@ -73,7 +74,8 @@ export function useTodoList() {
       return { previousTodos };
     },
     onError: (err, idToToggle, context) => {
-      alert(`상태 변경 실패: ${err.message}`);
+      console.error(`상태 변경 실패: ${err.message}`);
+      showToast('error', '할일 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
       }
@@ -98,7 +100,8 @@ export function useTodoList() {
       return { previousTodos };
     },
     onError: (err, idToDelete, context) => {
-      alert(`삭제 실패: ${err.message}`);
+      console.error(`삭제 실패: ${err.message}`);
+      showToast('error', '할일 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
       if (context?.previousTodos) {
         queryClient.setQueryData(queryKey, context.previousTodos);
       }

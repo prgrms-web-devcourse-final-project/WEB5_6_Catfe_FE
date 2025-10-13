@@ -2,6 +2,7 @@
 
 import DatePicker from '@/components/mypage/planner/DatePicker';
 import PlannerLayout from '@/components/mypage/planner/PlannerLayout';
+import PlannerMemo from '@/components/mypage/planner/PlannerMemo';
 import TodoList from '@/components/mypage/planner/TodoList';
 import { useSelectedDate } from '@/hook/useSelectedDate';
 
@@ -25,7 +26,7 @@ function PlannerClient() {
               <TodoList />
             </div>
             <div className="flex-1 min-h-0 h-full">
-              <TodoList />
+              <PlannerMemo />
             </div>
           </div>
         </div>

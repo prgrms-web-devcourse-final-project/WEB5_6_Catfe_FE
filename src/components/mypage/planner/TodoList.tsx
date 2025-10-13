@@ -5,7 +5,7 @@ import { useTodoList } from '@/hook/useTodoList';
 import Image from 'next/image';
 import { useState } from 'react';
 
-export default function TodoList() {
+function TodoList() {
   const [newTodoText, setNewTodoText] = useState('');
 
   const {
@@ -122,3 +122,5 @@ export default function TodoList() {
     </div>
   );
 }
+
+export default TodoList;

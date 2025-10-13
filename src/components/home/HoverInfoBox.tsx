@@ -9,7 +9,7 @@ function HoverInfoBox() {
     "flex flex-col gap-5 text-xl font-bold text-center opacity-0 translate-y-2 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0";
 
   return (
-    <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-15 justify-items-center">
+    <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-15 justify-items-center px-[100px]">
       {/* 1 */}
       <div
         className={`${BOX_BASE} bg-[url('/image/home-descript-1.png')] bg-[length:100%_100%] bg-no-repeat`}
@@ -20,9 +20,9 @@ function HoverInfoBox() {
           <span>당신의 공부 시간에 아늑함을 더해➕드립니다.</span>
         </div>
       </div>
-
+      
       {/* 2 */}
-      <div className={`${BOX_BASE} bg-secondary-200`}>
+      <div className={`${BOX_BASE} bg-[url('/image/invitation-cat.svg')] bg-[length:100%_100%] bg-no-repeat`}>
         <div className={OVERLAY_BASE}></div>
         <div className={TEXT_BASE}>
           <span>혼자👤보다 함께👥 집중할 수 있는 공간</span>

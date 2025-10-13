@@ -3,7 +3,7 @@ import React from "react";
 
 type Props = {
   search?: string;
-  sort?: "all" | "time" | "popular";
+  sort?: "all" | "enter" | "popular";
 };
 
 export default function SearchBar({ search = "", sort = "all" }: Props) {
@@ -17,11 +17,9 @@ export default function SearchBar({ search = "", sort = "all" }: Props) {
           className="text-sm outline-none px-2"
         />
         <button className="p-2 hover:bg-text-secondary/20 cursor-pointer rounded-xl">
-          <Image src="/icon/study-room/search.svg" alt="검색 아이콘" width={20} height={20}/>
+          <Image src="/icon/study-room/search.svg" alt="검색 아이콘" width={20} height={20} />
         </button>
       </div>
-
-      {/* 검색 시 페이지 1로 초기화 + sort 유지 */}
       <input type="hidden" name="sort" value={sort} />
       <input type="hidden" name="page" value="1" />
     </form>

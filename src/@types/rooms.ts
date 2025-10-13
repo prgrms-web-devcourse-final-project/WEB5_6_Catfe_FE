@@ -83,3 +83,18 @@ export type MyRoomsList = {
   myRole: 'HOST' | 'SUB_HOST' | 'MEMBER';
   createdAt: string;
 };
+
+export type AllRoomsList = {
+  roomId: number;
+  title: string;
+  description: string;
+  isPrivate: boolean;
+  currentParticipants: number;
+  maxParticipants: number;
+  status: "WAITING" | "ACTIVE" | "PAUSED" | "TERMINATED" | string;
+  createdBy: string;
+  createdAt: string;
+  allowCamera: boolean;
+  allowAudio: boolean;
+  allowScreenShare: boolean;
+};

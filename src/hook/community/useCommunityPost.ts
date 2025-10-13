@@ -28,12 +28,20 @@ import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
 import { PostSort } from '@/components/community/SortSelector';
 
+// 로그인 사용자 -> userId, 비로그인 -> anon으로 캐싱
+export const getUserCacheKey = (userId?: number) => (userId ? `u:${userId}` : 'anon');
+
 /* ------ QueryKey ------ */
 export const communityQueryKey = {
   all: () => ['community', 'posts'] as const,
-  post: (id: number) => ['community', 'post', id] as const,
-  comments: (id: number, page: number = 0, size: number = 10, sort: string = 'createdAt,desc') =>
-    ['community', 'comments', id, { page, size, sort }] as const,
+  post: (id: number, userKey: string) => ['community', 'post', id, userKey] as const,
+  comments: (
+    id: number,
+    userKey: string,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'createdAt,desc'
+  ) => ['community', 'comments', id, userKey, { page, size, sort }] as const,
   categories: () => ['community', 'categories'] as const,
 };
 
@@ -112,9 +120,10 @@ export function usePostsQuery(
   return result as UseQueryResult<PostsResponse, Error> & { isPreviousData: boolean };
 }
 
-export function usePost(id: number) {
+export function usePost(id: number, userId?: number, authReady = true) {
+  const userKey = getUserCacheKey(userId);
   return useQuery<PostDetail | null>({
-    queryKey: communityQueryKey.post(id || 0),
+    queryKey: communityQueryKey.post(id || 0, userKey),
     queryFn: async (): Promise<PostDetail | null> => {
       if (!id) return null;
       const { data: response } = await api.get<ApiResponse<PostDetail>>(`/api/posts/${id}`);
@@ -122,12 +131,14 @@ export function usePost(id: number) {
       return response.data || null;
     },
     staleTime: 60_000,
-    enabled: !!id,
+    enabled: !!id && authReady,
   });
 }
 
-export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
+export function usePostMutations(isEditMode: boolean, existingPostId?: number, userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<ApiResponse<PostDetail>, Error, CreatePostRequest>({
     mutationFn: async (data: CreatePostRequest) => {
       try {
@@ -148,7 +159,9 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
       if (data.data.postId) {
-        queryClient.invalidateQueries({ queryKey: communityQueryKey.post(data.data.postId) });
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKey.post(data.data.postId, userKey),
+        });
       }
     },
   });
@@ -174,19 +187,22 @@ export async function getPostDetail(id: number): Promise<PostDetail | null> {
 /* ------ Comments ------ */
 export function useComments(
   postId: number,
+  userId?: number,
   page: number = 0,
   size: number = 10,
-  sort: string = 'createdAt,desc'
+  sort: string = 'createdAt,desc',
+  authReady = true
 ) {
+  const userKey = getUserCacheKey(userId);
   return useQuery<CommentsResponse>({
-    queryKey: communityQueryKey.comments(postId, page, size, sort),
+    queryKey: communityQueryKey.comments(postId, userKey, page, size, sort),
     queryFn: async (): Promise<CommentsResponse> => {
       const url = `/api/posts/${postId}/comments?page=${page}&size=${size}&sort=${sort}`;
       const response = await api.get<CommentsResponse>(url);
       return response.data;
     },
     staleTime: 60_000,
-    enabled: !!postId,
+    enabled: !!postId && authReady,
   });
 }
 
@@ -360,26 +376,28 @@ export async function apiToggleCommentLike(
   return res.data;
 }
 
-export function useTogglePostLikeMutation() {
+export function useTogglePostLikeMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<LikeToggleResponseData, Error, PostLikeParams & { isLiked: boolean }>({
     mutationFn: ({ postId, isLiked }) => apiTogglePostLike(postId, isLiked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
+      queryClient.refetchQueries({ queryKey: communityQueryKey.post(variables.postId, userKey) });
     },
   });
 }
 
-export function useToggleCommentLikeMutation() {
+export function useToggleCommentLikeMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
+
   return useMutation<LikeToggleResponseData, Error, CommentLikeParams & { isLiked: boolean }>({
     mutationFn: ({ postId, commentId, isLiked }) =>
       apiToggleCommentLike(postId, commentId, isLiked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: communityQueryKey.comments(variables.postId),
-        refetchType: 'inactive',
+      queryClient.refetchQueries({
+        queryKey: communityQueryKey.comments(variables.postId, userKey),
       });
     },
   });
@@ -399,13 +417,14 @@ export async function apiTogglePostBookmark(
   return res.data;
 }
 
-export function useTogglePostBookmarkMutation() {
+export function useTogglePostBookmarkMutation(userId?: number) {
   const queryClient = useQueryClient();
+  const userKey = getUserCacheKey(userId);
 
   return useMutation<BookmarkToggleResponseData, Error, { postId: number; isBookmarked: boolean }>({
     mutationFn: ({ postId, isBookmarked }) => apiTogglePostBookmark(postId, isBookmarked),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKey.post(variables.postId) });
+      queryClient.refetchQueries({ queryKey: communityQueryKey.post(variables.postId, userKey) });
     },
   });
 }

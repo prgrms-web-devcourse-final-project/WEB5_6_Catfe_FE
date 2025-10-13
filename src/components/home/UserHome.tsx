@@ -5,12 +5,12 @@ import Image from 'next/image';
 import { debounce } from '@/utils/debounce';
 import Button from '@/components/Button';
 import CreateRoomModal from '@/components/study-room/CreateRoomModal';
-import cat12 from '@/assets/cats/cat-12.svg';
 import cat13 from '@/assets/cats/cat-13.svg';
 import UserHomeBanner from './UserHomeBanner';
 import HostList from './HostList';
 import JoinList from './JoinList';
 import { User } from '@/@types/type';
+import MarqueeRow from './MarqueeRow';
 
 export default function UserHome({ user }: { user: User }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -87,14 +87,10 @@ export default function UserHome({ user }: { user: User }) {
 
         <HostList search={search} />
 
-        <div className="flex justify-between py-20">
-          {[cat13, cat12, cat13, cat12, cat13, cat12, cat13, cat12, cat13, cat12, cat13].map(
-            (src, i) => (
-              <Image key={i} src={src} alt={`cat${i}`} width={40} height={40} />
-            )
-          )}
+        <div className="py-20">
+          <MarqueeRow direction="ltr"></MarqueeRow>
         </div>
-
+        
         <JoinList search={search} />
       </div>
 

@@ -25,7 +25,6 @@ export default function VerifyEmailPage() {
         if (res.data.success) {
           setStatus('success');
           setMessage('이메일 인증이 완료되었습니다!');
-          // 2초 뒤 로그인 페이지로 이동
           setTimeout(() => router.replace('/login'), 2000);
         } else {
           setStatus('error');

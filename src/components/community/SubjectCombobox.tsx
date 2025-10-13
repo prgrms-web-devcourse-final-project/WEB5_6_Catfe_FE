@@ -93,7 +93,14 @@ function SubjectCombobox({
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeydown}
-            onBlur={() => setOpen(false)}
+            onBlur={() => {
+              setOpen(false);
+              if (allowCustom && inputValue && inputValue !== value) {
+                handleSelect(inputValue);
+              } else if (!inputValue && value) {
+                handleSelect('');
+              }
+            }}
             placeholder={placeholder}
             autoComplete="off"
             className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"

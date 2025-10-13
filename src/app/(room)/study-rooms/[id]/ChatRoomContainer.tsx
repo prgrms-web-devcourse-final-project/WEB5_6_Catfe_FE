@@ -1,103 +1,111 @@
 'use client';
 
-import Button from '@/components/Button';
-import ChatWindow, { ChatMsg } from '@/components/study-room/chatting/ChatWindow';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { ApiChatMsg, ChatMsg } from '@/@types/websocket';
+import ChatWindow from '@/components/study-room/chatting/ChatWindow';
+import { mapApiToChatMsg } from '@/hook/useChatRoom';
+import { useAuthInfo } from '@/hook/useChatWebSocket';
+import api from '@/utils/api';
+import showToast from '@/utils/showToast';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-function ChatRoomContainer() {
-  /* !! 채팅 테스트용 임시 mock data 생성 */
-  const idRef = useRef(0);
-  const uid = useCallback((p = 'm') => `${p}${++idRef.current}`, []);
+interface ChatRoomContainerProps {
+  roomId: number;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  isConnected: boolean;
+  sendChatMessage: (text: string) => boolean;
+  bindOnMessage: (fn: (msg: ApiChatMsg) => void) => void;
+}
 
-  const makeSeed = useCallback((): { messages: ChatMsg[]; lastReadAt: number } => {
-    const now = Date.now();
-    const t = (min: number) => now - min * 60_000; // N분 전
+function ChatRoomContainer({
+  roomId,
+  open,
+  onOpen,
+  onClose,
+  isConnected,
+  sendChatMessage,
+  bindOnMessage,
+}: ChatRoomContainerProps) {
+  const { userId: currentUserId } = useAuthInfo();
 
-    const msgs: ChatMsg[] = [
-      { id: uid(), from: 'other', content: '안녕하세요! 반가워요 😺', createdAt: t(5) },
-      { id: uid(), from: 'me', content: '안녕하세요, 채팅 UI 테스트 중이에요.', createdAt: t(4.8) },
-      {
-        id: uid(),
-        from: 'other',
-        content: '스크롤/읽음선 잘 보이는지 확인해볼게요.',
-        createdAt: t(4.5),
-      },
-      {
-        id: uid(),
-        from: 'me',
-        content: '좋아요! 새 메시지도 몇 개 보내주세요.',
-        createdAt: t(4.2),
-      },
-      { id: uid(), from: 'other', content: '지금 하나 보냈고요…', createdAt: t(3.9) },
-      { id: uid(), from: 'other', content: '두 개째 보냅니다!', createdAt: t(3.6) },
-      { id: uid(), from: 'me', content: '확인 완료 🙌', createdAt: t(3.3) },
-      { id: uid(), from: 'other', content: '읽음선이 어디 생기는지 봐주세요.', createdAt: t(3.0) },
-      {
-        id: uid(),
-        from: 'other',
-        content:
-          '길이가 조금 긴 메시지를 보내 레이아웃 확인 중입니다. 말풍선 더보기/접기 버튼도 떠야 합니다. 길이가 조금 긴 메시지를 보내 레이아웃 확인 중입니다. 말풍선 더보기/접기 버튼도 떠야 합니다.',
-        createdAt: t(2.5),
-      },
-    ];
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [lastReadAt, setLastReadAt] = useState<number>(0);
 
-    // 예시: 4번째 메시지까지 읽은 상태(= 그 시각 이후는 미읽음)
-    const lastReadAt = msgs[3].createdAt ?? now;
-    return { messages: msgs, lastReadAt };
-  }, [uid]);
+  // Websocket 연결 중 중복 데이터 방지
+  const seenMessages = useRef<Set<ChatMsg['id']>>(new Set());
+  const pushIfNew = useCallback((msg: ChatMsg) => {
+    if (seenMessages.current.has(msg.id)) return;
+    seenMessages.current.add(msg.id);
+    setMessages((prev) => [...prev, msg]);
+  }, []);
 
-  const [chatOpen, setChatOpen] = useState(false);
-  const seed = useMemo(() => makeSeed(), [makeSeed]);
-  const [messages, setMessages] = useState<ChatMsg[]>(seed.messages);
-  const [lastReadAt, setLastReadAt] = useState<number>(seed.lastReadAt);
+  // 채팅창 열면 history 로드 + 뱃지 0 + 읽음 기준 갱신
+  useEffect(() => {
+    if (!open || !isConnected || !currentUserId) return;
+    let abort = false;
+
+    const fetchInitialMessage = async () => {
+      if (abort) return;
+      try {
+        const { data: response } = await api.get(`api/rooms/${roomId}/messages?size=50`);
+        if (response.success) {
+          const apiMessages: ApiChatMsg[] = response.data.content;
+          apiMessages.forEach((message) => seenMessages.current.add(message.messageId));
+          const mappedMessages = apiMessages.map((apiMessage) =>
+            mapApiToChatMsg(apiMessage, currentUserId ?? 0)
+          );
+          setMessages(mappedMessages);
+          onOpen();
+          setLastReadAt(Date.now());
+        }
+      } catch (err) {
+        console.error('채팅 기록 로드 실패:', err);
+        showToast('error', '채팅 기록 불러오기에 실패했습니다.');
+      }
+    };
+
+    fetchInitialMessage();
+
+    return () => {
+      abort = true;
+    };
+  }, [open, isConnected, roomId, currentUserId, onOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (apiRes: ApiChatMsg) => pushIfNew(mapApiToChatMsg(apiRes, currentUserId ?? 0));
+    bindOnMessage(handler);
+    return () => bindOnMessage(() => {});
+  }, [open, currentUserId, bindOnMessage, pushIfNew]);
+
   const handleSend = (text: string) => {
-    const msg: ChatMsg = {
-      id: uid('me-'),
-      from: 'me',
-      content: text,
-      createdAt: Date.now(),
-    };
-    setMessages((prev) => [...prev, msg]);
+    if (!isConnected) {
+      console.error('WebSocket 연결 실패: 메시지 전송 불가');
+      showToast('error', '메시지 전송에 실패했습니다.');
+      return;
+    }
+    const success = sendChatMessage(text);
+    if (!success) {
+      console.error('STOMP Publish 오류: 메시지 전송 불가');
+      showToast('error', '메시지 전송에 실패했습니다.');
+      return;
+    }
   };
-  const simulateIncoming = () => {
-    const samples = [
-      '방금 새 메시지 도착!',
-      '길이가 조금 긴 메시지를 보내 레이아웃 확인 중입니다. 말풍선 더보기/접기 버튼도 떠야 합니다. 길이가 조금 긴 메시지를 보내 레이아웃 확인 중입니다. 말풍선 더보기/접기 버튼도 떠야 합니다.',
-      '토스트가 잘 떠요?',
-      '이제 거의 다 된 것 같네요 :)',
-    ];
-    const text = samples[Math.floor(Math.random() * samples.length)];
-    const msg: ChatMsg = {
-      id: uid('other-'),
-      from: 'other',
-      content: text,
-      createdAt: Date.now(),
-    };
-    setMessages((prev) => [...prev, msg]);
-  };
-  const handleMarkRead = ({ lastReadAt: at }: { lastReadAt: number }) => {
-    setLastReadAt((prev) => (at > prev ? at : prev));
+
+  const handleMarkRead = ({ lastReadAt }: { lastReadAt: number }) => {
+    setLastReadAt((prev) => (lastReadAt > prev ? lastReadAt : prev));
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button className="mx-auto" onClick={() => setChatOpen(true)}>
-        채팅방
-      </Button>
-      <Button color="secondary" borderType="outline" size="sm" onClick={simulateIncoming}>
-        새 메시지 수신
-      </Button>
-      {chatOpen && (
-        <ChatWindow
-          open={chatOpen}
-          onToggleOpen={() => setChatOpen((prev) => !prev)}
-          messages={messages}
-          onSend={handleSend}
-          lastReadAt={lastReadAt}
-          onMarkRead={handleMarkRead}
-        />
-      )}
-    </div>
+    <ChatWindow
+      open={open}
+      onToggleOpen={onClose}
+      messages={messages}
+      onSend={handleSend}
+      lastReadAt={lastReadAt}
+      onMarkRead={handleMarkRead}
+    />
   );
 }
 export default ChatRoomContainer;

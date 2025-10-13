@@ -17,6 +17,7 @@ type Props = {
   onOpenProfile?: () => void;
   onOpenUsers?: () => void;
   onOpenInvite?: () => void;
+  unreadCount: number;
 };
 
 export default function Sidebar({
@@ -27,6 +28,7 @@ export default function Sidebar({
   onOpenChat,
   onOpenPlanner,
   onOpenProfile,
+  unreadCount,
 }: Props) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
@@ -124,12 +126,18 @@ export default function Sidebar({
           <Image src="/icon/study-room/notice.svg" alt="게시판 아이콘" width={20} height={20} />
         </button> */}
         <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5 relative"
           aria-label="채팅"
           onClick={onOpenChat}
         >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
+          {unreadCount > 0 && (
+            <span className="inline-flex bg-primary-700 text-white rounded-full size-5 items-center justify-center absolute -right-2 top-0">
+              {unreadCount}
+            </span>
+          )}
         </button>
+
         <button
           className="rounded-full p-2 cursor-pointer hover:bg-black/5"
           aria-label="플래너"

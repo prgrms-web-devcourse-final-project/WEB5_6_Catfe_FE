@@ -5,15 +5,10 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import UnreadDivider from './UnreadDivider';
 import MessageBubble from './MessageBubble';
 import Button from '@/components/Button';
+import { ChatMsg } from '@/@types/websocket';
 
 type Mode = 'docked' | 'floating';
 
-export interface ChatMsg {
-  id: string | number;
-  from: 'me' | 'other'; // 이건 api 타입 보고 다시 설정
-  content: string;
-  createdAt?: number;
-}
 interface ChatWindowProps {
   open: boolean;
   onToggleOpen: () => void;
@@ -147,7 +142,7 @@ function ChatWindow({
     if (added === 0) return;
 
     // 내가 보낸 경우 count에서 제외
-    const isLatestMine = latest && latest.from === 'me';
+    const isLatestMine = latest && latest.from === 'ME';
 
     if (isAtBottom || isLatestMine) {
       scrollToBottom('smooth');
@@ -206,6 +201,7 @@ function ChatWindow({
         mode === 'floating'
           ? 'rounded-xl bg-black/40'
           : 'bg-background-white border-r border-zinc-300',
+        !open && 'hidden',
       ].join(' ')}
       style={panelStyle}
     >
@@ -280,7 +276,7 @@ function ChatWindow({
                 </div>
               </>
             )}
-            <MessageBubble mine={m.from === 'me'}>{m.content}</MessageBubble>
+            <MessageBubble mine={m.from === 'ME'}>{m.content}</MessageBubble>
           </Fragment>
         ))}
         <div ref={endRef} />

@@ -4,23 +4,25 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import SignalingClient from '@/lib/signalingClient';
 import type { WebRTCSignal } from '@/lib/types';
-import type { RoomSnapshotUI } from '@/@types/room';
+import type { RoomSnapshotUI } from '@/@types/rooms';
 import { getRoomSnapshot } from '@/api/apiRooms';
 import MediaRoomClient from './MediaRoomClient';
 
 /* ---------- helpers ---------- */
 const getAccessToken = () => {
-  try { return localStorage.getItem('accessToken') ?? ''; } catch { return ''; }
+  try {
+    return localStorage.getItem('accessToken') ?? '';
+  } catch {
+    return '';
+  }
 };
 
 const readUserSafely = () => {
   try {
     const raw = localStorage.getItem('user');
     const u = raw ? JSON.parse(raw) : {};
-    const id =
-      u?.userid ?? u?.userId ?? u?.UserId ?? u?.id ?? u?.user_id ?? u?.ID ?? null;
-    const name =
-      u?.username ?? u?.userName ?? u?.name ?? u?.nickname ?? u?.Nickname ?? null;
+    const id = u?.userid ?? u?.userId ?? u?.UserId ?? u?.id ?? u?.user_id ?? u?.ID ?? null;
+    const name = u?.username ?? u?.userName ?? u?.name ?? u?.nickname ?? u?.Nickname ?? null;
     return { userId: id as string | number | null, username: name as string | null };
   } catch {
     return { userId: null, username: null };
@@ -28,8 +30,7 @@ const readUserSafely = () => {
 };
 
 type JsonLike = Record<string, unknown>;
-const isRecord = (v: unknown): v is JsonLike =>
-  !!v && typeof v === 'object' && !Array.isArray(v);
+const isRecord = (v: unknown): v is JsonLike => !!v && typeof v === 'object' && !Array.isArray(v);
 
 type JoinError = Error & { code?: string; payload?: unknown };
 
@@ -72,7 +73,9 @@ export default function RoomContent() {
 
   // 클라이언트 마운트 플래그 (SSR-클라이언트 값 불일치 방지)
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 로컬 사용자 정보
   const userFromLS = mounted ? readUserSafely() : { userId: null, username: null };
@@ -94,7 +97,9 @@ export default function RoomContent() {
 
   // userId를 의존성에 넣지 않기 위한 안정 ref (로그/표시만 사용)
   const userIdRef = useRef(userId);
-  useEffect(() => { userIdRef.current = userId; }, [userId]);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   /* 1) WS 먼저 연결 */
   useEffect(() => {
@@ -106,15 +111,10 @@ export default function RoomContent() {
       return;
     }
 
-    const client = new SignalingClient(
-      roomId,
-      userIdRef.current,
-      handleSignal,
-      () => {
-        console.log(`[room ${roomId}] [me ${userIdRef.current}] [ws] connected`);
-        setWsReady(true);
-      }
-    );
+    const client = new SignalingClient(roomId, userIdRef.current, handleSignal, () => {
+      console.log(`[room ${roomId}] [me ${userIdRef.current}] [ws] connected`);
+      setWsReady(true);
+    });
     signalingRef.current = client;
 
     return () => {
@@ -145,7 +145,7 @@ export default function RoomContent() {
       setJoining(true);
       setJoinError(null);
 
-      const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
       try {
         for (let i = 1; i <= 5 && !canceled; i++) {
@@ -206,22 +206,22 @@ export default function RoomContent() {
         const snap = await getRoomSnapshot(roomId); // RoomSnapshotUI
 
         // isMe 보정
-        const myUid =
-          userFromLS.userId != null ? `u-${userFromLS.userId}` : null;
-        const members = snap.members.map(m => ({ ...m, isMe: m.id === myUid }));
+        const myUid = userFromLS.userId != null ? `u-${userFromLS.userId}` : null;
+        const members = snap.members.map((m) => ({ ...m, isMe: m.id === myUid }));
         const fixed: RoomSnapshotUI = { ...snap, members };
 
         if (alive) setRoomSnap(fixed);
         console.log('[snapshot]', fixed);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'snapshot load failed';
+        const message = err instanceof Error ? err.message : 'snapshot load failed';
         console.error('[snapshot] error', err);
         if (alive) setSnapError(message);
       }
     })();
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [joined, roomId, userFromLS.userId]);
 
   /* 4) 수신 시그널 로깅 */
@@ -237,11 +237,13 @@ export default function RoomContent() {
           {wsReady ? 'WS 연결 완료' : 'WS 연결 중...'}
         </span>
         {' · '}
-        {joined
-          ? <span className="text-green-600">JOIN 완료</span>
-          : joining
-          ? <span className="text-orange-600">JOIN 시도 중...</span>
-          : <span className="text-red-600">JOIN 대기</span>}
+        {joined ? (
+          <span className="text-green-600">JOIN 완료</span>
+        ) : joining ? (
+          <span className="text-orange-600">JOIN 시도 중...</span>
+        ) : (
+          <span className="text-red-600">JOIN 대기</span>
+        )}
       </div>
 
       {joinError && (

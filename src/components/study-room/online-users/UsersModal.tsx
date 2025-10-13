@@ -36,7 +36,7 @@ export default function UsersModal({
     const filtered = term ? users.filter((u) => u.name.toLowerCase().includes(term)) : users;
     return {
       admins: filtered.filter((u) => u.role === 'HOST' || u.role === 'SUB_HOST'),
-      members: filtered.filter((u) => u.role === 'MEMBER'),
+      members: filtered.filter((u) => u.role === 'MEMBER' || u.role === 'VISITOR'),
     };
   }, [users, search]);
 

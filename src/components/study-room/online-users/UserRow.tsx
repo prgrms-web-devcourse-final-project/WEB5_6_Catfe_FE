@@ -57,11 +57,11 @@ export default function UserRow({
           )}
           aria-label={muted ? `${user.name} 마이크 해제` : `${user.name} 마이크 음소거`}
         >
-          {muted ? (
+          {/* {muted ? (
             <Image src="/icon/study-room/mic-off.svg" alt="마이크 꺼짐" width={20} height={20} />
           ) : (
             <Image src="/icon/study-room/mic-on.svg" alt="마이크 켜짐" width={20} height={20} />
-          )}
+          )} */}
         </button>
       )}
     </li>

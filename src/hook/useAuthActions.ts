@@ -1,7 +1,7 @@
 import { userQueryKey } from '@/api/apiUsersMe';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { communityQueryKey } from './useCommunityPost';
+import { communityQueryKey } from './community/useCommunityPost';
 import { User } from '@/@types/type';
 
 export function useLogout() {

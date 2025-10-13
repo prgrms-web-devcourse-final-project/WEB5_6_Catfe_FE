@@ -1,9 +1,8 @@
 'use client';
 
+import { PostSort } from '@/components/community/SortSelector';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
-
-export type PostSort = 'createdAt,desc' | 'createdAt,asc' | 'likeCount,desc' | 'commentCount,desc';
 
 export interface PostQueryParams {
   q: string;

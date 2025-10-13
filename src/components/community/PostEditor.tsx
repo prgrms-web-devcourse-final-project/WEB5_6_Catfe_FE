@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import showToast from '@/utils/showToast';
 import Button from '../Button';
 import Toolbar from './Toolbar';
-import { isDocEmpty, useEditorDraft } from '@/hook/useEditorDraft';
+import { isDocEmpty, useEditorDraft } from '@/hook/community/useEditorDraft';
 import SubjectCombobox from './SubjectCombobox';
 import DemographicSelect from './DemographicSelect';
 import GroupSizeSelect from './GroupSizeSelect';
@@ -13,7 +13,7 @@ import { CategoryItem, CreatePostRequest, InitialPost, PostDetail } from '@/@typ
 import { TIPTAP_EXTENSIONS } from '@/lib/tiptapExtensions';
 import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
 import { ApiResponse } from '@/@types/type';
-import { useCategoryRegisterMutation } from '@/hook/useCommunityPost';
+import { useCategoryRegisterMutation } from '@/hook/community/useCommunityPost';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/hook/useConfirm';
 import { useMutation } from '@tanstack/react-query';

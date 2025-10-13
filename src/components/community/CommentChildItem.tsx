@@ -5,36 +5,108 @@ import { useState, memo } from 'react';
 import UserProfile from './UserProfile';
 import Image from 'next/image';
 import LikeButton from '../LikeButton';
+import {
+  useDeleteCommentMutation,
+  useToggleCommentLikeMutation,
+  useUpdateCommentMutation,
+} from '@/hook/community/useCommunityPost';
+import { useParams } from 'next/navigation';
+import showToast from '@/utils/showToast';
+import { useConfirm } from '@/hook/useConfirm';
+import CommentEditor from './CommentEditor';
+import { useUser } from '@/api/apiUsersMe';
 
 function CommentChildItem({ reply }: { reply: ReplyComment }) {
+  const { id } = useParams<{ id: string }>();
+  const postId = Number(id);
+  const confirm = useConfirm();
+
+  const { data: currentUser } = useUser();
+  const currentUserId = currentUser?.userId;
+
+  // Mutation 훅 호출
+  const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
+  const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
+  const { mutate: toggleCommentLikeMutate } = useToggleCommentLikeMutation();
+
   const {
+    commentId,
     author,
     content,
     likeCount: likeCountProp = 0,
-    isLikedByMe = false,
+    likedByMe = false,
     createdAt,
     updatedAt,
   } = reply;
 
-  const [liked, setLiked] = useState<boolean>(isLikedByMe);
+  const [liked, setLiked] = useState<boolean>(likedByMe);
   const [likeCount, setLikeCount] = useState<number>(likeCountProp);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  // user 정보 붙이기 전 임시 코드
-  const isAuthor = true;
+  const isAuthor = !!currentUserId && currentUserId === author.id;
 
   const toggleLike = () => {
-    setLiked((prev) => !prev);
-    setLikeCount((c) => c + (liked ? -1 : 1));
+    const nextLiked = !liked;
+    const nextLikeCount = likeCount + (nextLiked ? 1 : -1);
+
+    // Optimistic Update
+    setLiked(nextLiked);
+    setLikeCount(nextLikeCount);
+
+    toggleCommentLikeMutate(
+      { postId, commentId, isLiked: nextLiked },
+      {
+        onError: (error) => {
+          console.error('댓글 좋아요 토글 실패:', error);
+          showToast('error', '좋아요 처리에 실패했습니다. 다시 시도해주세요.');
+
+          // 실패 시 롤백 (Optimistic Update 취소)
+          setLiked(!nextLiked);
+          setLikeCount(nextLikeCount + (nextLiked ? -1 : 1));
+        },
+      }
+    );
+  };
+
+  const handleUpdate = async ({ content }: { content: string }) => {
+    try {
+      await updateCommentMutate({ postId, commentId, content });
+      showToast('success', '댓글이 수정되었습니다.');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('대댓글 수정 실패:', error);
+      showToast('error', '댓글 수정에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmOk = await confirm({
+      title: '댓글을 삭제하시겠습니까?',
+      description: <>삭제된 댓글은 복원할 수 없습니다.</>,
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+
+    try {
+      await deleteCommentMutate({ postId, commentId });
+      showToast('success', '댓글이 삭제되었습니다.');
+    } catch (error) {
+      console.error('대댓글 삭제 실패:', error);
+      showToast('error', '댓글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   return (
-    <div className="rounded-lg w-full p-4 flex flex-col gap-3">
+    <div className="w-full p-4 pb-0 flex flex-col gap-3">
+      <hr className="border-secondary-600" />
       <header className="flex justify-between">
         <UserProfile author={author} createdAt={createdAt} updatedAt={updatedAt} isComment={true} />
         {isAuthor && (
           <div className="flex gap-3">
             <button
-              onClick={() => console.log('수정')}
+              onClick={() => setIsEditing((prev) => !prev)}
               aria-label="댓글 수정"
               className="cursor-pointer"
             >
@@ -47,11 +119,7 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
                 priority={false}
               />
             </button>
-            <button
-              onClick={() => console.log('삭제')}
-              aria-label="댓글 삭제"
-              className="cursor-pointer"
-            >
+            <button onClick={handleDelete} aria-label="댓글 삭제" className="cursor-pointer">
               <Image
                 src="/icon/community/trash.svg"
                 alt=""
@@ -64,10 +132,22 @@ function CommentChildItem({ reply }: { reply: ReplyComment }) {
           </div>
         )}
       </header>
-      <main className="text-sm font-light mb-2">{content}</main>
-      <footer className="flex items-center gap-3">
-        <LikeButton liked={liked} count={likeCount} onToggle={toggleLike} iconSize={12} />
-      </footer>
+      {isEditing ? (
+        <CommentEditor
+          target={{ postId, commentId }}
+          initialContent={content ?? ''}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditing(false)}
+          isEditMode={true}
+        />
+      ) : (
+        <main className="text-sm font-light mb-1">{content}</main>
+      )}
+      {!isEditing && (
+        <footer className="flex items-center gap-3">
+          <LikeButton liked={liked} count={likeCount} onToggle={toggleLike} iconSize={12} />
+        </footer>
+      )}
     </div>
   );
 }

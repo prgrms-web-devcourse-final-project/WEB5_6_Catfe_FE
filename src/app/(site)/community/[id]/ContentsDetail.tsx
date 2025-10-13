@@ -3,19 +3,15 @@
 import CommentList from '@/components/community/CommentList';
 import PostContents from '@/components/community/PostContents';
 import Spinner from '@/components/Spinner';
-import { useComments, usePost } from '@/hook/useCommunityPost';
+import { usePost } from '@/hook/community/useCommunityPost';
 import { useEffect } from 'react';
 
 function ContentsDetail({ postId }: { postId: number }) {
   const { data: post, isLoading: loadingPost } = usePost(postId);
-  const { data: comments, isLoading: loadingComments } = useComments(postId);
 
   useEffect(() => {
     if (postId) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [postId]);
-
-  // api 연결 전 UI 확인용 임시
-  // const loadingComments = true;
 
   if (loadingPost)
     return (
@@ -34,7 +30,7 @@ function ContentsDetail({ postId }: { postId: number }) {
   return (
     <div className="mx-auto flex flex-col gap-3">
       <PostContents post={post} />
-      <CommentList comments={comments} isLoading={loadingComments} />
+      <CommentList postId={postId} />
     </div>
   );
 }

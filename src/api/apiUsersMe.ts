@@ -1,5 +1,3 @@
-/* /api/users/me GET & PATCH 함수 */
-
 import { ApiResponse, UpdateUserBody, User } from '@/@types/type';
 import api, { hasAccessToken } from '../utils/api';
 import { useQuery } from '@tanstack/react-query';

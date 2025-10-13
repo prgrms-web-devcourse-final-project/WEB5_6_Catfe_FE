@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import MediaRoomClient from "./MediaRoomClient";
 import { useRoomInfoQuery } from "@/hook/useRoomInfo";
 import { useRoomMembersQuery } from "@/hook/useRoomMembers";
-import type { RoomSnapshotUI, UsersListItem, RoomInfo } from "@/@types/room";
+import type { RoomSnapshotUI, UsersListItem, RoomInfo } from "@/@types/rooms";
 
 function getMeUid(): string | null {
   try {
@@ -32,30 +32,34 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     if (!infoDto) return null;
 
     const info: RoomInfo = {
-      id: String(infoDto.roomId),
+      id: infoDto.roomId,
       title: infoDto.title,
-      description: infoDto.description ?? null,
-      maxMember: infoDto.maxParticipants,
+      description: infoDto.description ?? "",
+      maxParticipants: infoDto.maxParticipants,
       isPrivate: !!infoDto.private,
-      password: null,
       coverPreviewUrl: null,
-      // 스트림만 있으면 그리므로 true로 고정
+      currentParticipants: infoDto.currentParticipants ?? 0,
+      status: infoDto.status,
+      allowCamera: !!infoDto.allowCamera,
+      allowAudio: !!infoDto.allowAudio,
+      allowScreenShare: !!infoDto.allowScreenShare,
       mediaEnabled: true,
     };
 
     const members: UsersListItem[] = membersDto.map((m) => ({
-      id: `u-${m.userId}`,
+      id: m.userId,
       name: m.nickname,
-      role: m.role === "HOST" ? "owner" : "member",
+      role: m.role,
       email: "",
       avatarUrl: m.profileImageUrl ?? null,
       isMe: meUid === `u-${m.userId}`,
       media: { camOn: true, screenOn: false },
+      joinedAt: m.joinedAt ?? null,
     }));
 
-    // isMe가 하나도 못 찍히면 fallback
     if (!members.some((x) => x.isMe) && meUid) {
-      const i = members.findIndex((x) => x.id === meUid);
+      const n = Number(meUid.split("-")[1]);
+      const i = members.findIndex((x) => x.id === n);
       if (i >= 0) members[i] = { ...members[i], isMe: true };
     }
 

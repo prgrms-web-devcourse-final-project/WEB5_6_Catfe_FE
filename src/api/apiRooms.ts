@@ -1,6 +1,6 @@
 import api from "@/utils/api";
 import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
-import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/room";
+import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/rooms";
 
 export type PageResponse<T> = {
   content: T[];
@@ -136,24 +136,29 @@ function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
   const mediaEnabled = !!(d.allowCamera || d.allowAudio || d.allowScreenShare);
 
   const info: RoomInfo = {
-    id: String(d.roomId),
+    id: d.roomId,
     title: d.title,
-    description: d.description ?? null,
-    maxMember: d.maxParticipants,
+    description: d.description ?? "",
+    maxParticipants: d.maxParticipants,
     isPrivate: !!d.private,
-    password: null,
     coverPreviewUrl: null,
+    currentParticipants: d.currentParticipants ?? 0,
+    status: d.status,
+    allowCamera: !!d.allowCamera,
+    allowAudio: !!d.allowAudio,
+    allowScreenShare: !!d.allowScreenShare,
     mediaEnabled,
   };
 
   const members: UsersListItem[] = (d.members ?? []).map((m) => ({
-    id: `u-${m.userId}`,
+    id: m.userId,
     name: m.nickname ?? `u-${m.userId}`,
-    role: m.role === "HOST" ? "owner" : "member",
+    role: m.role,
     email: "",
     avatarUrl: m.profileImageUrl ?? null,
-    isMe: false, 
+    isMe: false,
     media: { camOn: false, screenOn: false },
+    joinedAt: m.joinedAt ?? null,
   }));
 
   return { info, members };

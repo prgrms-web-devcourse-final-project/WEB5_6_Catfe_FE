@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from "@/@types/room";
+import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from "@/@types/rooms";
 import Tile from "./Tile";
 
 type Props = {
@@ -14,12 +14,13 @@ export default function RoomStage({ room, streamsByUser = {} }: Props) {
   return (
     <div className="grid grid-cols-2 gap-4">
       {room.members.map((m) => {
-        const stream = (streamsByUser as StreamsByUser)[m.id] ?? null;
+        const id = typeof m.id === 'number' ? `u-${m.id}` : String(m.id);
+        const stream = (streamsByUser as StreamsByUser)[id] ?? null;
         const showVideo = mediaEnabled && !!stream;
 
         return (
           <Tile
-            key={m.id}
+            key={id}
             member={m as UsersListItem}
             stream={showVideo ? stream : null}
           />

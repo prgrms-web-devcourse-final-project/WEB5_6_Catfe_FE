@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import VideoPlayer from "@/components/webrtc/VideoPlayer";
-import type { UsersListItem } from "@/@types/room";
+import type { UsersListItem } from "@/@types/rooms";
 import MicOffBadge from "@/components/webrtc/MicOffBadge";
 
 export default function Tile({

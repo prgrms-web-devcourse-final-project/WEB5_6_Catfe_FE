@@ -11,6 +11,8 @@ import useEscapeKey from "@/hook/useEscapeKey";
 
 import { useRoomInfoQuery } from "@/hook/useRoomInfo";
 import { useRoomMembersQuery } from "@/hook/useRoomMembers";
+import { useUser } from "@/api/apiUsersMe";
+import type { Role, UsersListItem } from "@/@types/rooms";
 
 type Props = {
   children: ReactNode;
@@ -25,24 +27,21 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const popRef = useRef<HTMLDivElement>(null);
   const usersRef = useRef<HTMLDivElement>(null);
 
-  const {
-    data: infoDto,
-    error: infoError,
-    isLoading: infoLoading,
-  } = useRoomInfoQuery(roomId);
-
+  const { data: infoDto, error: infoError, isLoading: infoLoading } = useRoomInfoQuery(roomId);
   const {
     data: membersDto,
     isLoading: membersLoading,
     error: membersError,
   } = useRoomMembersQuery(roomId, {
-    refetchInterval: 2000, 
+    refetchInterval: 2000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
-  const users = useMemo(
+  const { data: me } = useUser();
+
+  const users: UsersListItem[] = useMemo(
     () =>
       (membersDto ?? []).map((m) => ({
         id: Number(m.userId),
@@ -53,6 +52,30 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       })),
     [membersDto]
   );
+
+  const myRole: Role = useMemo(() => {
+    if (!membersDto) return "MEMBER";
+
+    let myNumericId: number | null = null;
+    if (me && "id" in me && typeof (me as { id: number }).id === "number") {
+      myNumericId = (me as { id: number }).id;
+    } else if (me && "userId" in me && typeof (me as { userId: number }).userId === "number") {
+      myNumericId = (me as { userId: number }).userId;
+    }
+
+    const myNickname =
+      me && "nickname" in me && typeof (me as { nickname?: string }).nickname === "string"
+        ? (me as { nickname?: string }).nickname
+        : undefined;
+
+    const mine =
+      membersDto.find((m) => myNumericId !== null && Number(m.userId) === myNumericId) ??
+      (myNickname ? membersDto.find((m) => m.nickname === myNickname) : undefined);
+
+    return mine?.role ?? "MEMBER";
+  }, [me, membersDto]);
+
+  const canManage = myRole === "HOST" || myRole === "SUB_HOST";
 
   const roomUrl = useMemo(() => {
     if (!infoDto) return "";
@@ -85,17 +108,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [usersOpen]);
 
-  const onOpenSettings = () => setSettingsOpen(true);
-  const onCloseSettings = () => setSettingsOpen(false);
-
-  const onOpenTimer = () => {};
-  const onOpenNotice = () => {};
-  const onOpenChat = () => {};
-  const onOpenPlanner = () => {};
-
-  const onToggleUsers = () => setUsersOpen((v) => !v);
-  const onToggleInvite = () => setInviteOpen((v) => !v);
-
   const usersCount = membersLoading ? "?" : (membersDto?.length ?? 0);
 
   return (
@@ -103,35 +115,29 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       <div className="grid grid-cols-[56px_1fr]">
         <Sidebar
           roomId={roomId}
-          onOpenSettings={onOpenSettings}
-          onOpenTimer={onOpenTimer}
-          onOpenNotice={onOpenNotice}
-          onOpenChat={onOpenChat}
-          onOpenPlanner={onOpenPlanner}
+          role={myRole}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenTimer={() => {}}
+          onOpenChat={() => {}}
+          onOpenPlanner={() => {}}
         />
 
         <div className="relative">
           <header className="h-14 flex items-center justify-end px-6">
             <div className="flex items-center gap-2">
-              {/* Users */}
               <div className="relative inline-block" ref={usersRef}>
                 <Button
                   size="sm"
                   borderType="outline"
                   color="primary"
                   hasIcon
-                  onClick={onToggleUsers}
+                  onClick={() => setUsersOpen((v) => !v)}
                   aria-expanded={usersOpen}
                   aria-haspopup="dialog"
                   disabled={!!membersError}
                   title={membersError ? "멤버 로드 실패" : undefined}
                 >
-                  <Image
-                    src="/icon/study-room/user.svg"
-                    alt="사용자 아이콘"
-                    width={16}
-                    height={16}
-                  />
+                  <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
                   {usersCount}
                 </Button>
 
@@ -139,20 +145,19 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   <div className="absolute right-0 top-full mt-2 z-50">
                     <UsersModal
                       users={users}
-                      canControl
+                      canControl={canManage}
                       onClose={() => setUsersOpen(false)}
                     />
                   </div>
                 )}
               </div>
 
-              {/* 초대하기 */}
               <div className="relative inline-block" ref={popRef}>
                 <Button
                   size="sm"
                   borderType="solid"
                   color="primary"
-                  onClick={onToggleInvite}
+                  onClick={() => setInviteOpen((v) => !v)}
                   aria-expanded={inviteOpen}
                   aria-haspopup="dialog"
                   disabled={infoLoading || !infoDto || !!infoError}
@@ -179,12 +184,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         </div>
       </div>
 
-      <SettingsModal
-        open={settingsOpen}
-        onClose={onCloseSettings}
-        defaultTab="general"
-        roomId={roomId}
-      />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} defaultTab="general" roomId={roomId} />
     </div>
   );
 }

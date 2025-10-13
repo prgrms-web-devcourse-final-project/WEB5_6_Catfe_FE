@@ -9,10 +9,12 @@ import UserProfileModal from '@/components/study-room/UserProfileModal';
 import TimerPanel from '@/components/study-room/timer/TimerPanel';
 import { leaveRoom } from '@/api/apiRooms';
 import showToast from '@/utils/showToast';
+import type { Role } from '@/@types/rooms';
 
 type Props = {
   roomId: number;
   className?: string;
+  role: Role;
   onOpenSettings?: () => void;
   onOpenTimer?: () => void;
   onOpenChat?: () => void;
@@ -23,6 +25,7 @@ type Props = {
 export default function Sidebar({
   roomId,
   className,
+  role,
   onOpenSettings,
   onOpenTimer,
   onOpenChat,
@@ -40,7 +43,6 @@ export default function Sidebar({
   useEscapeKey(profileOpen, () => setProfileOpen(false));
   useEscapeKey(timerOpen, () => setTimerOpen(false));
 
-  // 프로필 외부 클릭 시 닫기
   useEffect(() => {
     if (!profileOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -53,7 +55,6 @@ export default function Sidebar({
     return () => document.removeEventListener('mousedown', onDown);
   }, [profileOpen]);
 
-  // 타이머 외부 클릭 시 닫기
   useEffect(() => {
     if (!timerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -76,7 +77,6 @@ export default function Sidebar({
     onOpenTimer?.();
   };
 
-  // 방 퇴장 핸들러
   const handleLeave = async () => {
     if (leaving) return;
     setLeaving(true);
@@ -84,15 +84,15 @@ export default function Sidebar({
       await leaveRoom(roomId);
       showToast('success', '방 퇴장 완료');
       router.back();
-    } catch (error: unknown) {
+    } catch (error) {
       let message = '방 퇴장에 실패했어요.';
-      if (error instanceof Error && error.message) {
-        message = error.message;
-      }
+      if (error instanceof Error && error.message) message = error.message;
       showToast('error', message);
       setLeaving(false);
     }
   };
+
+  const canManage = role === 'HOST' || role === 'SUB_HOST';
 
   return (
     <aside
@@ -103,39 +103,22 @@ export default function Sidebar({
       )}
       aria-label="Room sidebar"
     >
-      {/* 퇴장 버튼 */}
       <button
-        className={clsx(
-          'rounded-full p-2 cursor-pointer hover:bg-black/5',
-          leaving && 'opacity-60 cursor-not-allowed'
-        )}
+        className={clsx('rounded-full p-2 cursor-pointer hover:bg-black/5', leaving && 'opacity-60 cursor-not-allowed')}
         aria-label="뒤로가기"
         onClick={handleLeave}
         disabled={leaving}
         aria-busy={leaving}
       >
-        <Image
-          src="/icon/study-room/exit.svg"
-          alt="뒤로가기 아이콘"
-          width={20}
-          height={20}
-        />
+        <Image src="/icon/study-room/exit.svg" alt="뒤로가기 아이콘" width={20} height={20} />
       </button>
 
-      {/* 하단 기능 아이콘들 */}
       <div className="flex flex-col items-center justify-center gap-4">
-        <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
-          aria-label="설정"
-          onClick={onOpenSettings}
-        >
-          <Image
-            src="/icon/study-room/settings.svg"
-            alt="설정 아이콘"
-            width={20}
-            height={20}
-          />
-        </button>
+        {canManage && (
+          <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="설정" onClick={onOpenSettings}>
+            <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
+          </button>
+        )}
 
         <div className="relative">
           <button
@@ -145,12 +128,7 @@ export default function Sidebar({
             aria-expanded={timerOpen}
             onClick={toggleTimer}
           >
-            <Image
-              src="/icon/study-room/clock.svg"
-              alt="타이머 아이콘"
-              width={20}
-              height={20}
-            />
+            <Image src="/icon/study-room/clock.svg" alt="타이머 아이콘" width={20} height={20} />
           </button>
 
           {timerOpen && (
@@ -160,33 +138,14 @@ export default function Sidebar({
           )}
         </div>
 
-        <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
-          aria-label="채팅"
-          onClick={onOpenChat}
-        >
-          <Image
-            src="/icon/study-room/chat.svg"
-            alt="채팅 아이콘"
-            width={20}
-            height={20}
-          />
+        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="채팅" onClick={onOpenChat}>
+          <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
         </button>
 
-        <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
-          aria-label="플래너"
-          onClick={onOpenPlanner}
-        >
-          <Image
-            src="/icon/study-room/planner.svg"
-            alt="플래너 아이콘"
-            width={20}
-            height={20}
-          />
+        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="플래너" onClick={onOpenPlanner}>
+          <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
         </button>
 
-        {/* 프로필 */}
         <div className="relative" ref={profileAnchorRef}>
           <button
             className="rounded-full cursor-pointer overflow-hidden w-7 h-7 ring-1 ring-text-secondary"

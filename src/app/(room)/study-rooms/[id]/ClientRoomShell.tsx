@@ -102,6 +102,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     <div className="min-h-screen w-full">
       <div className="grid grid-cols-[56px_1fr]">
         <Sidebar
+          roomId={roomId}
           onOpenSettings={onOpenSettings}
           onOpenTimer={onOpenTimer}
           onOpenNotice={onOpenNotice}

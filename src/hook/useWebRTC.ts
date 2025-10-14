@@ -1,13 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WebRTCSignal } from '@/lib/types';
 import SignalingClient from '@/lib/signalingClient';
 
-/** ---------- helpers ---------- */
 const DEBUG = process.env.NODE_ENV !== 'production';
 const dlog = (...a: unknown[]) => { if (DEBUG) console.log('[rtc]', ...a); };
-
 const sigKey = (id: string | number) => {
   const s = String(id); const p = s.split('-')[1] ?? s; const n = Number(p);
   return Number.isFinite(n) ? String(n) : s;
@@ -26,7 +24,6 @@ function getDisplayStream(constraints: DisplayMediaStreamConstraints): Promise<M
   return navigator.mediaDevices.getDisplayMedia(constraints);
 }
 
-/** ---------- types ---------- */
 type PeerConnections = Record<string, RTCPeerConnection>;
 type RemoteStreams = Record<string, MediaStream>;
 
@@ -50,7 +47,6 @@ export function useWebRTC(params: {
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
-  
   const shareStreamRef = useRef<MediaStream | null>(null);
   const [localPreviewStream, setLocalPreviewStream] = useState<MediaStream | null>(null);
   const [activeVideoTrack, setActiveVideoTrack] = useState<MediaStreamTrack | null>(null);

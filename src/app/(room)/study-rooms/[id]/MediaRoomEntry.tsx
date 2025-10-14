@@ -73,7 +73,7 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     return { info, members };
   }, [infoDto, membersDto, meUid]);
 
-  /** ---- SignalingClient 생성/해제 ---- */
+  // SignalingClient 생성/해제 
   const signalingRef = useRef<SignalingClient | null>(null);
 
   useEffect(() => {

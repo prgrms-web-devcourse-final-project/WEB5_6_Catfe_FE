@@ -1,6 +1,28 @@
 'use client';
 
+import { useUser } from '@/api/apiUsersMe';
+import MyHomeProfile from '@/components/mypage/home/MyHomeProfile';
+import MyHomeTodo from '@/components/mypage/home/MyHomeTodo';
+import MyPostContainer from '@/components/mypage/home/MyPostContainer';
+
 function MyPageClient() {
-  return <div>MyPageClient</div>;
+  const { data: user, isLoading } = useUser();
+
+  if (isLoading) return null;
+
+  return (
+    <div className="flex flex-col gap-10 p-10">
+      <h2 className="text-text-primary font-extrabold text-3xl">
+        {user?.profile.nickname ?? 'GUEST'} 님, 오늘의 공부를 시작해볼까요?
+      </h2>
+      <div className="flex flex-col md:flex-row md:items-start gap-10">
+        <MyHomeProfile />
+        <div className="flex-1 flex flex-col gap-5">
+          <MyHomeTodo />
+          <MyPostContainer />
+        </div>
+      </div>
+    </div>
+  );
 }
 export default MyPageClient;

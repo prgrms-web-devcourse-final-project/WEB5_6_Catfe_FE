@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import SidebarItem from './SidebarItem';
 import { UserProfile } from '@/@types/type';
-import Cat7 from '@/assets/cats/cat-7.svg';
 import SideBarToggle from './SideBarToggle';
+import { useUser } from '@/api/apiUsersMe';
 
 interface NavItem {
   href: string;
@@ -42,6 +42,7 @@ const STORAGE_KEY = 'mypage.sidebar.collapsed';
 function MyPageSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<boolean>(true);
+  const { data: user, isLoading } = useUser();
 
   // 최초 로드 시 접힘 상태 기억 및 복원
   useEffect(() => {
@@ -49,19 +50,16 @@ function MyPageSidebar() {
     if (raw) setCollapsed(raw === 'closed');
   }, []);
 
-  // useEffect(() => {
-  //   if (typeof window !== 'undefined') {
-  //     localStorage.setItem(STORAGE_KEY, collapsed ? 'closed' : 'open');
-  //   }
-  // }, [collapsed]);
-
   // 현재 페이지 확인
   const isActive = useMemo(() => (href: string) => pathname === href, [pathname]);
 
-  // 유저 정보 (!! 임시 -> 전역 상태에서 받아서 관리할 것 !!)
-  const user: Partial<UserProfile> = {
-    nickname: 'Prong FE',
-    profileImageUrl: Cat7,
+  if (isLoading) {
+    return <div className="w-1/8 max-w-[70px] h-full bg-gray-300 animate-pulse"></div>;
+  }
+
+  const currentUser: Partial<UserProfile> = user?.profile || {
+    nickname: 'GUEST',
+    profileImageUrl: '/image/cat-default.svg',
   };
 
   return (
@@ -83,29 +81,31 @@ function MyPageSidebar() {
             className="focus:outline-none focus:ring-2 focus:ring-secondary-400 bg-secondary-100"
           >
             {collapsed ? (
-              <Image
-                src="/image/logo-mypage.svg"
-                alt="Catfé Logo"
-                width={38}
-                height={30}
-                priority
-                className={[
-                  'transition-opacity duration-300 ease-out',
-                  collapsed ? 'opacity-100' : 'opacity-0',
-                ].join(' ')}
-              />
+              <div className="w-[38px] h-[30px] relative">
+                <Image
+                  src="/image/logo-mypage.svg"
+                  alt="Catfé Logo"
+                  fill
+                  priority
+                  className={[
+                    'transition-opacity duration-300 ease-out',
+                    collapsed ? 'opacity-100' : 'opacity-0',
+                  ].join(' ')}
+                />
+              </div>
             ) : (
-              <Image
-                src="/image/logo-light.svg"
-                alt="Catfé Logo"
-                width={145}
-                height={35}
-                priority
-                className={[
-                  'transition-opacity duration-300 ease-out',
-                  collapsed ? 'opacity-0' : 'opacity-100',
-                ].join(' ')}
-              />
+              <div className="w-[145px] h-[35px] relative">
+                <Image
+                  src="/image/logo-light.svg"
+                  alt="Catfé Logo"
+                  fill
+                  priority
+                  className={[
+                    'transition-opacity duration-300 ease-out',
+                    collapsed ? 'opacity-0' : 'opacity-100',
+                  ].join(' ')}
+                />
+              </div>
             )}
           </Link>
         </h1>
@@ -141,8 +141,8 @@ function MyPageSidebar() {
         >
           <div className="size-8 rounded-full border-2 border-gray-400 overflow-hidden relative">
             <Image
-              src={user.profileImageUrl ?? '/image/cat-default.svg'}
-              alt={user.nickname ?? '프로필 사진'}
+              src={currentUser.profileImageUrl || '/image/cat-default.svg'}
+              alt={currentUser.nickname || '프로필 사진'}
               fill
             />
           </div>
@@ -154,7 +154,7 @@ function MyPageSidebar() {
               ].join(' ')}
             >
               <p className="text-xs text-gray-500 font-light">환영합니다👋</p>
-              <p className="text-sm">{user.nickname} 님</p>
+              <p className="text-sm">{currentUser.nickname} 님</p>
             </div>
           )}
         </Link>

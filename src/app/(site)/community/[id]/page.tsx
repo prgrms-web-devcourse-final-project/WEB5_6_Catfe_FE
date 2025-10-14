@@ -33,7 +33,7 @@ async function Page({ params }: { params: Promise<{ id: string }> }) {
   const postId = Number(id);
   const qc = new QueryClient();
   await qc.prefetchQuery({
-    queryKey: communityQueryKey.post(postId),
+    queryKey: communityQueryKey.post(postId, 'anon'),
     queryFn: () => getPostDetail(postId),
   });
 

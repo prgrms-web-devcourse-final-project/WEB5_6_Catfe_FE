@@ -7,27 +7,38 @@ import { makeRtcConfig } from '@/lib/webrtcApi';
 import { useWebRTC } from '@/hook/useWebRTC';
 import { useMediaStream } from '@/hook/useMediaStream';
 import { useRoomMembersQuery } from '@/hook/useRoomMembers';
-import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from '@/@types/rooms';
+import type {
+  RoomSnapshotUI,
+  StreamsByUser,
+  UsersListItem,
+  ApiRoomMemberDto,   
+} from '@/@types/rooms';
 import * as UITypes from '@/@types/rooms';
 import SignalingClient from '@/lib/signalingClient';
 
 const DEBUG = false;
 
 /** STUN fallback */
-const DEFAULT_RTC: RTCConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const DEFAULT_RTC: RTCConfiguration = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+};
 
 /** ── id helpers ───────────────────────────────────────────────────────────── */
 const toUid = (id: number | string) => `u-${Number(id) || 0}`;
 const fromUid = (uid: string) => Number(String(uid).replace(/^u-/, '')) || 0;
-/** ─────────────────────────────────────────────────────────────────────────── */
+
 
 type Props = {
   room: RoomSnapshotUI;
-  meId: string; // '12' 또는 'u-12' 둘 다 허용 (안에서 정규화)
+  meId: string; 
   signalingClient: SignalingClient;
 };
 
-export default function MediaRoomClient({ room, meId: meIdProp, signalingClient }: Props) {
+export default function MediaRoomClient({
+  room,
+  meId: meIdProp,
+  signalingClient,
+}: Props) {
   /** 내 uid를 'u-<숫자>'로 정규화 */
   const myUid = useMemo(() => toUid(meIdProp), [meIdProp]);
 
@@ -38,21 +49,28 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
   if (DEBUG) console.log('[room] id=%s myUid=%s', roomId, myUid);
 
   /** 서버 멤버 목록 폴링 */
-  const { data: membersDto = [] } = useRoomMembersQuery(roomNum, {
+  const query = useRoomMembersQuery(roomNum, {
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     staleTime: 4000,
   });
 
+
+  const membersDto: ApiRoomMemberDto[] = useMemo(
+    () => (Array.isArray(query.data) ? (query.data as ApiRoomMemberDto[]) : []),
+    [query.data]
+  );
+
   /** 실시간 멤버 → UsersListItem으로 매핑( id:number ) */
   const liveMembers: UsersListItem[] = useMemo(() => {
     const myNum = fromUid(myUid);
-    const arr: UsersListItem[] = membersDto.map((m: any) => ({
-      id: Number(m.userId), // number 고정
+
+    const arr: UsersListItem[] = membersDto.map((m: ApiRoomMemberDto) => ({
+      id: Number(m.userId),
       name: m.nickname,
       role: (m.role as UITypes.Role) ?? 'MEMBER',
-      email: '',
+      email: m.email ?? '',
       avatarUrl: m.profileImageUrl ?? null,
       isMe: myNum > 0 ? Number(m.userId) === myNum : false,
       media: { camOn: true, screenOn: false },
@@ -85,9 +103,12 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
   }, [room.members, liveMembers]);
 
   /** 내 정보(num/string 동시 보유) */
-  const me = useMemo(() => unionMembers.find((m) => m.isMe) ?? null, [unionMembers]);
+  const me = useMemo(
+    () => unionMembers.find((m) => m.isMe) ?? null,
+    [unionMembers]
+  );
   const meNum = me?.id ?? fromUid(myUid); // number
-  const meId = toUid(meNum);              // 'u-<num>' string
+  const meId = toUid(meNum); // 'u-<num>' string
 
   /** 로컬 미디어 준비 */
   const { localStream, initMedia } = useMediaStream();
@@ -111,7 +132,10 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
   }, [meNum, roomNum]);
 
   /** WebRTC 대상 피어 id는 문자열 uid 배열 */
-  const peerIds = useMemo(() => unionMembers.map((m) => toUid(m.id)), [unionMembers]);
+  const peerIds = useMemo(
+    () => unionMembers.map((m) => toUid(m.id)),
+    [unionMembers]
+  );
 
   /** WebRTC 훅 (문자열만 넘김) */
   const {
@@ -128,11 +152,11 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
     localPreviewStream,
   } = useWebRTC({
     roomId: String(roomId), // string
-    meId,                   // 'u-<num>'
+    meId, // 'u-<num>'
     localStream,
     rtcConfig,
     signalingClient,
-    peerIds,                // 'u-<num>'[]
+    peerIds, // 'u-<num>'[]
   });
 
   /** 피어 목록 변경 감지 → offer 트리거 */
@@ -165,7 +189,7 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
       <RoomStage
         room={{
           ...room,
-          members: unionMembers,               
+          members: unionMembers,
           info: { ...room.info, mediaEnabled: true },
         }}
         streamsByUser={streamsByUser}

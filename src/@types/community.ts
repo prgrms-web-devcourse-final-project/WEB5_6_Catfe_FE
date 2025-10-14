@@ -23,7 +23,7 @@ export type PostListItem = {
   author: UserSummary;
   title: string;
   categories: ApiCategory[];
-  content: string | null;
+  content?: string;
 
   likeCount: number;
   bookmarkCount: number;
@@ -36,7 +36,9 @@ export type PostListItem = {
   updatedAt: string;
 };
 
-export type PostDetail = PostListItem;
+export type PostDetail = Omit<PostListItem, 'content'> & {
+  content: string;
+};
 
 export type InitialPost =
   | Pick<PostDetail, 'postId' | 'title' | 'categories' | 'content'>
@@ -113,3 +115,23 @@ export type BookmarkToggleResponseData = {
   bookmarkCount: number;
 };
 export type BookmarkToggleResponse = ApiResponse<BookmarkToggleResponseData>;
+
+/* ------ MyPage용 ------ */
+export type MyPostListDto = {
+  postId: number;
+  author: UserSummary;
+  title: string;
+  thumbnailUrl: string | null;
+  categories: CategoryItem[];
+  likeCount: number;
+  bookmarkCount: number;
+  commentCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+export type MyPostListPageResponse = ApiListPaginationResponse<MyPostListDto>;
+export interface MyPostListQuery {
+  page?: number;
+  size?: number;
+  sort?: string;
+}

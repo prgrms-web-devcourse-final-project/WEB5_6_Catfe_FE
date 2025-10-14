@@ -3,7 +3,7 @@ import SockJS from 'sockjs-client';
 import { getAccessToken } from '@/utils/authToken';
 import type { WebRTCSignal } from '@/lib/types';
 
-/** 서버 페이로드 */
+
 type ServerOfferAnswer = {
   type: 'OFFER' | 'ANSWER';
   fromUserId: number | string;

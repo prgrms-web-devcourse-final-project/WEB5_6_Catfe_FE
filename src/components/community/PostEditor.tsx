@@ -20,7 +20,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiUploadFile } from '@/api/apiUploadFile';
 import fileToDataUrl from '@/utils/fileToDataUrl';
 import { useCategoryOptions } from '@/hook/community/useCategoryOptions';
-import { processCategories, processImagesAndContent } from '@/utils/editorHelpers';
+import { processCategories, processImagesInContent } from '@/utils/editorHelpers';
 
 type EditorProps = {
   initialData?: InitialPost;
@@ -173,7 +173,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
         thumbnailUrl,
         imageIds,
         error: imageError,
-      } = await processImagesAndContent(htmlContent, uploadMutation);
+      } = await processImagesInContent(htmlContent, uploadMutation);
 
       if (imageError) {
         showToast('error', imageError);

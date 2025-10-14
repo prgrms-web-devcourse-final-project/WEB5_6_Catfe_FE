@@ -59,45 +59,72 @@ interface ImageProcessResult {
   error: string | null;
 }
 
-export async function processImagesAndContent(
+interface ImageMap {
+  url: string;
+  attachmentId: number | null;
+}
+
+export async function processImagesInContent(
   htmlContent: string,
-  uploadMutation: ReturnType<typeof useMutation<{ url: string; attachmentId: number }, Error, File>>
+  uploadMutation: ReturnType<typeof useMutation<ImageMap, Error, File>>
 ): Promise<ImageProcessResult> {
   let finalHtml = htmlContent;
-  const uploadedImages: { url: string; id: number }[] = [];
-  const base64Regex = /data:image\/[^;]+;base64,([a-zA-Z0-9+/=]+)/g;
-  const base64Images = Array.from(finalHtml.matchAll(base64Regex));
 
-  if (base64Images.length > 0) {
-    showToast('info', `${base64Images.length}개의 이미지를 서버에 업로드 중입니다.`);
+  const allImagesInOrder: ImageMap[] | null = [];
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const images = doc.querySelectorAll('img');
 
-    const uploadPromises = base64Images.map(async (match) => {
-      const base64Src = match[0];
+  images.forEach((img) => {
+    const dataId = img.getAttribute('data-id');
+    const src = img.getAttribute('src');
+
+    if (!src) return;
+    if (src.startsWith('data:')) {
+      // Base64 이미지 (새로 추가된 이미지)
+      allImagesInOrder.push({ url: src, attachmentId: null });
+    } else if (dataId) {
+      // 기존 서버 URL 이미지
+      allImagesInOrder.push({ url: src, attachmentId: Number(dataId) });
+    }
+  });
+  const imageToUpload = allImagesInOrder.filter((img) => img.attachmentId === null);
+
+  if (imageToUpload.length > 0) {
+    showToast('info', `${imageToUpload.length}개의 이미지를 서버에 업로드 중입니다.`);
+
+    const uploadPromises = imageToUpload.map(async (image) => {
+      const base64Src = image.url;
 
       // Base64 Data URL을 Blob으로 변환 후 File 객체 생성
       const blob = await fetch(base64Src).then((res) => res.blob());
       const fileType = blob.type.split('/')[1] || 'png';
       const file = new File([blob], `uploaded_image.${fileType}`, { type: blob.type });
 
-      // 파일 업로드 API 호출 (apiUploadFile은 { url: string; attachmentId: number } 반환)
+      // 파일 업로드 API 호출
       const res = await uploadMutation.mutateAsync(file);
-
-      uploadedImages.push({ url: res.url, id: res.attachmentId });
-      return { oldSrc: base64Src, newSrc: res.url };
+      return { oldSrc: base64Src, newUrl: res.url, newId: res.attachmentId };
     });
 
     try {
       const results = await Promise.all(uploadPromises);
-
-      // 업로드된 새 URL로 HTML 내용 교체
-      results.forEach(({ oldSrc, newSrc }) => {
-        // 정규식으로 안전하게 모든 Base64 URL을 새 URL로 교체
-        finalHtml = finalHtml.replace(
-          new RegExp(oldSrc.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
-          newSrc
-        );
+      results.forEach(({ oldSrc, newUrl, newId }) => {
+        // allImagesInOrder 배열 업데이트
+        const index = allImagesInOrder.findIndex((img) => img.url === oldSrc);
+        if (index !== -1) {
+          allImagesInOrder[index] = { url: newUrl, attachmentId: newId };
+        }
+        Array.from(images).forEach((img) => {
+          const src = img.getAttribute('src');
+          if (src === oldSrc) {
+            img.setAttribute('src', newUrl);
+            img.setAttribute('data-id', newId!.toString());
+          }
+        });
       });
       showToast('success', '이미지 업로드 완료.');
+
+      finalHtml = doc.body.innerHTML;
     } catch (error) {
       console.error('이미지 업로드 실패:', error);
       return {
@@ -108,11 +135,12 @@ export async function processImagesAndContent(
       };
     }
   }
-
+  const finalImageIds = allImagesInOrder.map((img) => img.attachmentId).filter((id) => id !== null);
+  const finalThumbnailUrl = allImagesInOrder.length > 0 ? allImagesInOrder[0].url : null;
   return {
     content: finalHtml,
-    thumbnailUrl: uploadedImages.length > 0 ? uploadedImages[0].url : null,
-    imageIds: uploadedImages.map((img) => img.id),
+    thumbnailUrl: finalThumbnailUrl,
+    imageIds: finalImageIds,
     error: null,
   };
 }

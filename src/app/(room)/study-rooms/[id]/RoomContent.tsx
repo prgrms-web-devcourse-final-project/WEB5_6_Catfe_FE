@@ -7,7 +7,7 @@ import * as UITypes from '@/@types/rooms';
 import { getRoomSnapshot } from '@/api/apiRooms';
 import MediaRoomClient from './MediaRoomClient';
 
-/* ---------- helpers ---------- */
+
 const getAccessToken = () => {
   try { return localStorage.getItem('accessToken') ?? ''; } catch { return ''; }
 };
@@ -51,10 +51,8 @@ const readUserSafely = () => {
         }
       }
     }
-    console.warn('[user] 로그인 정보를 찾을 수 없습니다');
     return { userId: null, username: null };
-  } catch (e) {
-    console.error('[user] parse error:', e);
+  } catch {
     return { userId: null, username: null };
   }
 };
@@ -78,9 +76,8 @@ function buildJoinError(status: number, data: unknown): JoinError {
 async function apiJoinRoom(roomId: string | number) {
   const token = getAccessToken();
   const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
-  const url = `${base}api/rooms/${roomId}/join`;
+  const url = `${base}/api/rooms/${roomId}/join`;
 
-  console.log('[join] POST', url);
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -92,12 +89,8 @@ async function apiJoinRoom(roomId: string | number) {
 
   const data: unknown = await res.json().catch(() => ({}));
   if (!res.ok) throw buildJoinError(res.status, data);
-
-  console.log('[join] OK', data);
   return data;
 }
-
-/* ------------------------------------------ */
 
 export default function RoomContent() {
   const params = useParams<{ id: string }>();
@@ -106,7 +99,7 @@ export default function RoomContent() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const { userId: rawUserId, username } = useMemo(() => {
+  const { userId: rawUserId } = useMemo(() => {
     if (!mounted) return { userId: null, username: null };
     return readUserSafely();
   }, [mounted]);
@@ -118,8 +111,6 @@ export default function RoomContent() {
   }, [rawUserId]);
 
   const [wsReady, setWsReady] = useState(false);
-  // [REMOVED] 'joining' state is removed to simplify the logic
-  // const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
@@ -128,31 +119,19 @@ export default function RoomContent() {
 
   const signalingRef = useRef<SignalingClient | null>(null);
 
+  // WS 연결
   useEffect(() => {
-    if (!roomId || !mounted || !userId) {
-      if (mounted && !userId) console.warn('[ws] skip connect - userId 없음');
-      return;
-    }
-
-    if (signalingRef.current) {
-      console.log(`[ws] already connected or connecting`);
-      return;
-    }
-
-    console.log(`[ws] connecting... (room: ${roomId}, user: ${userId})`);
+    if (!roomId || !mounted || !userId) return;
+    if (signalingRef.current) return;
 
     const client = new SignalingClient(
       roomId,
       userId,
-      () => {
-        console.log(`[ws] connected (room: ${roomId}, user: ${userId})`);
-        setWsReady(true);
-      }
+      () => setWsReady(true)
     );
     signalingRef.current = client;
 
     return () => {
-      console.log(`[ws] cleanup`);
       client.disconnect();
       signalingRef.current = null;
       setWsReady(false);
@@ -160,122 +139,67 @@ export default function RoomContent() {
     };
   }, [mounted, roomId, userId]);
 
-  // [MODIFIED] Simplified join logic
+  // JOIN
   useEffect(() => {
-    // Only run when WebSocket is ready and we haven't joined yet.
     if (!wsReady || joined) return;
 
     let canceled = false;
-    const run = async () => {
-      setJoinError(null);
-      console.log(`[join] Attempting to join room via API...`);
-
+    (async () => {
       try {
+        setJoinError(null);
         await apiJoinRoom(roomId);
-        if (canceled) return;
-        
-        console.log(`[join] API call successful. Room joined.`);
-        setJoined(true); // This will trigger the next useEffect to fetch snapshot
-      } catch (e: unknown) {
-        if (canceled) return;
-        const err = e as JoinError;
-        console.warn('[join] ERR', err.message);
-        setJoinError(err.message || 'Failed to join the room.');
+        if (!canceled) setJoined(true);
+      } catch (e) {
+        if (!canceled) setJoinError((e as Error).message || 'Failed to join the room.');
       }
-    };
-    
-    run();
-
+    })();
     return () => { canceled = true; };
-  }, [wsReady, joined, roomId]); // Removed 'joining' from dependencies
+  }, [wsReady, joined, roomId]);
 
   useEffect(() => {
-    // Added more detailed logging for debugging
-    console.log(`[snapshot effect check] joined: ${joined}, userId: ${userId}`);
     if (!joined || !userId) return;
 
     let alive = true;
     (async () => {
       try {
-        console.log(`[snapshot] fetch...`);
-        const snap: UITypes.RoomSnapshotUI = await getRoomSnapshot(roomId);
+        const snap = await getRoomSnapshot(roomId);
         const myUserIdNum = Number(userId);
-
-        const membersWithMeFlag = snap.members.map(member => ({
-          ...member,
-          // isMe: member.id === `u-${myUserIdNum}`,
-          isMe: member.id === myUserIdNum,
-        }));
-
         const fixed: UITypes.RoomSnapshotUI = {
           ...snap,
-          members: membersWithMeFlag,
+          members: snap.members.map(m => ({ ...m, isMe: m.id === myUserIdNum })),
         };
-        
-        console.log('[snapshot] Fetched and processed:', fixed);
-        if (alive) {
-          setRoomSnap(fixed);
-        }
+        if (alive) setRoomSnap(fixed);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'snapshot load failed';
-        console.error('[snapshot] error', err);
-        if (alive) {
-          setSnapError(message);
-        }
+        if (alive) setSnapError(err instanceof Error ? err.message : 'snapshot load failed');
       }
     })();
+
     return () => { alive = false; };
   }, [joined, roomId, userId]);
-
   if (mounted && !userId) {
     return (
-      <div className="flex flex-col gap-3 p-4">
-        <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-          <p className="font-semibold">로그인 정보를 찾을 수 없습니다</p>
-          <p className="mt-1 text-xs">다시 로그인하거나 페이지를 새로고침해주세요.</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[360px]">
+        <p className="text-sm text-neutral-500">로그인이 필요합니다.</p>
       </div>
     );
   }
-
+  if (joined && roomSnap && userId && signalingRef.current) {
+    return (
+      <MediaRoomClient
+        room={roomSnap}
+        meId={userId}
+        signalingClient={signalingRef.current}
+      />
+    );
+  }
   return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="text-sm text-neutral-500">
-        방 #{roomId} · <span suppressHydrationWarning>{username ?? '사용자'}</span> ·
-        <span suppressHydrationWarning> ID: {userId ?? '?'}</span> · {' '}
-        <span className={wsReady ? 'text-green-600' : 'text-orange-600'}>
-          {wsReady ? 'WS 연결 완료' : 'WS 연결 중...'}
-        </span>
-        {' · '}
-        {joined
-          ? <span className="text-green-600">JOIN 완료</span>
-          // [REMOVED] 'joining' state display is removed
-          : <span className="text-orange-600">JOIN 시도 중...</span>}
-      </div>
-
-      {joinError && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {joinError}
-        </div>
-      )}
-      {snapError && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          {snapError}
-        </div>
-      )}
-
-      {joined && roomSnap && userId && signalingRef.current ? (
-        <MediaRoomClient
-          room={roomSnap}
-          meId={userId}
-          signalingClient={signalingRef.current}
-        />
+    <div className="flex items-center justify-center min-h-[360px]">
+      {joinError || snapError ? (
+        <p className="text-sm text-red-600">
+          {joinError ?? snapError}
+        </p>
       ) : (
-        <div className="h-[360px] rounded-xl border border-neutral-200 bg-neutral-50 flex items-center justify-center">
-          <p className="text-neutral-400">
-            {wsReady && joined ? '방 정보를 불러오는 중...' : '미디어 세션을 준비 중입니다...'}
-          </p>
-        </div>
+        <p className="text-neutral-400">미디어 세션 준비 중…</p>
       )}
     </div>
   );

@@ -111,3 +111,11 @@ export type AllRoomsList = {
   allowAudio: boolean;
   allowScreenShare: boolean;
 };
+
+export type ApiRoomMemberDto = {
+  userId: number | string;
+  nickname: string;
+  role?: Role;                   
+  profileImageUrl?: string | null;
+  email?: string | null;
+};

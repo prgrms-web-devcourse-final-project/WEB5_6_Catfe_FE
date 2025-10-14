@@ -11,7 +11,7 @@ type ServerOfferAnswer = {
   roomId?: number;
   sdp: string | RTCSessionDescriptionInit;
   sdpType?: 'offer' | 'answer' | 'OFFER' | 'ANSWER';
-  mediaType?: 'VIDEO' | 'AUDIO' | 'SCREEN'; // [수정] SCREEN 타입 추가
+  mediaType?: 'VIDEO' | 'AUDIO' | 'SCREEN';
 };
 
 type ServerIce = {
@@ -24,9 +24,8 @@ type ServerIce = {
   sdpMLineIndex?: number | null;
 };
 
-// [수정] 백엔드 DTO와 일치하도록 미디어 상태 타입 변경
 type ServerMediaState = {
-  type: 'MEDIA_STATE_CHANGE'; // 타입 이름 명확화
+  type: 'MEDIA_STATE_CHANGE';
   userId: number | string;
   username: string;
   mediaType: 'AUDIO' | 'VIDEO' | 'SCREEN';
@@ -42,10 +41,8 @@ type ServerError = {
 
 type ServerSignal = ServerOfferAnswer | ServerIce | ServerMediaState | ServerError;
 
-
 /* -------------------------------- 유틸/가드 ---------------------------------- */
 export type MediaState = { micOn: boolean; camOn: boolean; shareOn: boolean };
-// [수정] 백엔드에 보낼 미디어 타입 정의
 export type TogglingMediaType = 'AUDIO' | 'VIDEO' | 'SCREEN';
 
 function toNumericId(input: string): number {
@@ -64,7 +61,6 @@ function isIce(p: ServerSignal): p is ServerIce {
   return p.type === 'ICE_CANDIDATE' && 'candidate' in p;
 }
 function isMediaState(p: ServerSignal): p is ServerMediaState {
-  // [수정] 변경된 타입 이름으로 확인
   return p.type === 'MEDIA_STATE_CHANGE';
 }
 function isServerError(p: ServerSignal): p is ServerError {
@@ -83,20 +79,24 @@ export default class SignalingClient {
   private stoppedByAuthError = false;
   private activated = false;
 
+  /** -------- STOMP join 가드 & 큐 -------- */
+  private joinedOk = false;
+  private joinedResolvers: Array<() => void> = [];
+  /** webrtc 목적지로 가는 메시지 임시 큐 */
+  private outbox: Array<{ dest: string; body: object }> = [];
+  private readonly OUTBOX_MAX = 50; // 안전한 상한
+
   get ready() { return this._ready; }
   get isReady() { return this._ready; }
 
-  // [추가] 리스너 관리
+  // 리스너
   private signalListeners = new Set<(s: WebRTCSignal) => void>();
   private mediaStateListeners = new Set<(userId: string, state: ServerMediaState) => void>();
 
   constructor(
     private roomId: string,
     private userId: string,
-    // [삭제] 생성자에서 콜백을 직접 받지 않음
-    // private onSignal: (s: WebRTCSignal) => void,
     private onReady?: () => void,
-    // private onMediaState?: (userId: string, state: MediaState) => void,
     private onAuthError?: (reason?: string) => void,
   ) {
     const RAW_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || 'http://localhost:8080/ws';
@@ -111,7 +111,7 @@ export default class SignalingClient {
     this.client = new Client({
       webSocketFactory: () => new SockJS(urlWithToken) as unknown as IStompSocket,
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-      debug: DEBUG ? (m: string) => dlog(m) : () => { },
+      debug: DEBUG ? (m: string) => dlog(m) : () => {},
       reconnectDelay: 3000,
 
       onConnect: (_frame?: IFrame) => {
@@ -119,22 +119,25 @@ export default class SignalingClient {
         this.retryCount = 0;
         dlog('connected');
 
-        // [수정] 백엔드와 일치하도록 에러 큐 주소 변경
+        // error queue
         const errorQ = `/user/queue/errors`;
         dlog('SUB', errorQ);
         this.client.subscribe(errorQ, (frame: IMessage) => this.handleFrame(frame, 'errorQ'));
 
-        // WebRTC 시그널링 토픽 구독
+        // room topics
         const roomWebrtcTopic = `/topic/room/${toNumericId(this.roomId)}/webrtc`;
         dlog('SUB', roomWebrtcTopic);
         this.client.subscribe(roomWebrtcTopic, (frame: IMessage) => this.handleFrame(frame, 'room-webrtc'));
 
-        // 미디어 상태 토픽 구독
         const roomMediaTopic = `/topic/room/${toNumericId(this.roomId)}/media-status`;
         dlog('SUB', roomMediaTopic);
         this.client.subscribe(roomMediaTopic, (frame: IMessage) => this.handleFrame(frame, 'room-media'));
 
+        // 조인 후에만 시그널 허용
+        this.joinedOk = false;
+        this.outbox = [];
         this.joinRoom();
+
         this.onReady?.();
       },
 
@@ -172,20 +175,11 @@ export default class SignalingClient {
     this.activate();
   }
 
-  // [추가] 리스너 등록/해제 메서드
-  addSignalListener(listener: (s: WebRTCSignal) => void) {
-    this.signalListeners.add(listener);
-  }
-  removeSignalListener(listener: (s: WebRTCSignal) => void) {
-    this.signalListeners.delete(listener);
-  }
-  addMediaStateListener(listener: (userId: string, state: ServerMediaState) => void) {
-    this.mediaStateListeners.add(listener);
-  }
-  removeMediaStateListener(listener: (userId: string, state: ServerMediaState) => void) {
-    this.mediaStateListeners.delete(listener);
-  }
-
+  /** ===== 리스너 등록/해제 ===== */
+  addSignalListener(listener: (s: WebRTCSignal) => void) { this.signalListeners.add(listener); }
+  removeSignalListener(listener: (s: WebRTCSignal) => void) { this.signalListeners.delete(listener); }
+  addMediaStateListener(listener: (userId: string, state: ServerMediaState) => void) { this.mediaStateListeners.add(listener); }
+  removeMediaStateListener(listener: (userId: string, state: ServerMediaState) => void) { this.mediaStateListeners.delete(listener); }
 
   private activate() {
     if (this.activated) return;
@@ -198,13 +192,48 @@ export default class SignalingClient {
     this.stoppedByAuthError = true;
     dlog('stop reconnect due to', reason);
     this.client.reconnectDelay = 0;
-    try { this.client.deactivate(); } catch { }
+    try { this.client.deactivate(); } catch {}
     this._ready = false;
     this.activated = false;
     this.onAuthError?.(reason);
   }
 
-  /* ------------------------------- 수신 처리부 ------------------------------- */
+  /* -------------------- STOMP-조인 완료 관리 -------------------- */
+  private resolveJoined() {
+    if (this.joinedOk) return;
+    this.joinedOk = true;
+    this.joinedResolvers.forEach(r => r());
+    this.joinedResolvers = [];
+    // 조인 대기 중 보낸 webrtc 메시지 flush
+    this.flushOutbox();
+  }
+
+  private waitUntilJoined(): Promise<void> {
+    if (this.joinedOk) return Promise.resolve();
+    return new Promise(res => this.joinedResolvers.push(res));
+  }
+
+  private enqueue(dest: string, body: object) {
+    // webrtc 목적지면 큐잉, 아닌 것은 즉시 전송
+    if (!this.joinedOk && dest.startsWith('/app/webrtc')) {
+      if (this.outbox.length >= this.OUTBOX_MAX) this.outbox.shift();
+      this.outbox.push({ dest, body });
+      dlog('queued (await join):', dest, body);
+      return;
+    }
+    this._publish(dest, body);
+  }
+
+  private flushOutbox() {
+    if (!this.outbox.length) return;
+    dlog('flush outbox (%d)', this.outbox.length);
+    // 같은 타이밍 폭주 방지: 순차 전송
+    const items = [...this.outbox];
+    this.outbox = [];
+    for (const it of items) this._publish(it.dest, it.body);
+  }
+
+  /* ----------------------------- 수신 처리부 ----------------------------- */
   private handleFrame(frame: IMessage, src: 'errorQ' | 'room-webrtc' | 'room-media') {
     const payload = safeJsonParse<ServerSignal>(frame.body);
     if (!payload) {
@@ -214,14 +243,17 @@ export default class SignalingClient {
     dlog(`[${src}] <-`, payload);
 
     if (isServerError(payload)) {
-      console.warn('[STOMP][ERROR]', {
-        code: payload.error?.code,
-        message: payload.error?.message,
-        detail: (payload as { error?: { detail?: string } }).error?.detail,
-        raw: payload,
-      });
-      const msg = (payload.error?.message || '').toLowerCase();
-      if (/unauth|auth|인증|token/.test(msg)) this.stopReconnect('auth-error(server-error)');
+      const code = payload.error?.code;
+      const msg = payload.error?.message || '';
+      console.warn('[STOMP][ERROR]', { code, message: msg, raw: payload });
+
+      // ROOM_009: 서버 입장에선 아직 방-세션 참가자가 아님 → 조금 더 기다렸다가 전송하도록
+      if (code === 'ROOM_009') {
+        // 조인 준비 중일 가능성이 높으니, 아주 짧게 지연 후 joined resolve
+        setTimeout(() => this.resolveJoined(), 300);
+      }
+
+      if (/unauth|auth|인증|token/i.test(msg)) this.stopReconnect('auth-error(server-error)');
       return;
     }
 
@@ -240,9 +272,17 @@ export default class SignalingClient {
     }
 
     if (isOfferAnswer(payload)) {
-      const lowerType = (payload.sdpType?.toString().toLowerCase() as 'offer' | 'answer' | undefined) ?? (payload.type === 'OFFER' ? 'offer' : 'answer');
-      const remoteSdp: RTCSessionDescriptionInit = typeof payload.sdp === 'string' ? { type: lowerType, sdp: payload.sdp } : payload.sdp;
-      const signal: WebRTCSignal = { type: payload.type === 'OFFER' ? 'offer' : 'answer', fromUserId: from, toUserId: to, sdp: remoteSdp };
+      // 조인 완료 신호로 취급 가능한 브로드캐스트가 있다면 여기서 resolveJoined() 호출 가능
+      const lowerType = (payload.sdpType?.toString().toLowerCase() as 'offer' | 'answer' | undefined)
+        ?? (payload.type === 'OFFER' ? 'offer' : 'answer');
+      const remoteSdp: RTCSessionDescriptionInit =
+        typeof payload.sdp === 'string' ? { type: lowerType, sdp: payload.sdp } : payload.sdp;
+      const signal: WebRTCSignal = {
+        type: payload.type === 'OFFER' ? 'offer' : 'answer',
+        fromUserId: from,
+        toUserId: to,
+        sdp: remoteSdp
+      };
       this.signalListeners.forEach(cb => cb(signal));
       return;
     }
@@ -260,7 +300,6 @@ export default class SignalingClient {
     }
 
     if (isMediaState(payload)) {
-      // [수정] 변경된 ServerMediaState 타입으로 리스너에 전달
       this.mediaStateListeners.forEach(cb => cb(from, payload));
       return;
     }
@@ -268,8 +307,8 @@ export default class SignalingClient {
     console.warn('[STOMP] unknown payload', payload);
   }
 
-  /* -------------------------------- 발신 유틸 -------------------------------- */
-  private pub<T extends object>(dest: string, body: T) {
+  /* ------------------------------ 발신 유틸 ------------------------------ */
+  private _publish<T extends object>(dest: string, body: T) {
     if (!this.client.active) {
       dlog('Cannot publish. Client not active.', dest, body);
       return;
@@ -278,17 +317,34 @@ export default class SignalingClient {
     this.client.publish({ destination: dest, body: JSON.stringify(body) });
   }
 
+  private pub<T extends object>(dest: string, body: T) {
+    // webrtc 목적지는 조인 완료까지 큐잉
+    if (dest.startsWith('/app/webrtc')) this.enqueue(dest, body);
+    else this._publish(dest, body);
+  }
+
   joinRoom() {
     const roomIdNum = toNumericId(this.roomId);
     const userIdNum = toNumericId(this.userId);
     dlog('JOIN room', roomIdNum, 'user', userIdNum);
-    this.pub(`/app/rooms/${roomIdNum}/join`, {
+
+    // STOMP-조인 전 상태로 초기화
+    this.joinedOk = false;
+    this.joinedResolvers = [];
+    this.outbox = [];
+
+    this._publish(`/app/rooms/${roomIdNum}/join`, {
       roomId: roomIdNum,
       userId: userIdNum,
     });
+    // 서버에서 별도 ACK가 없다면 소프트 딜레이 후 조인 완료 처리
+    setTimeout(() => this.resolveJoined(), 500);
   }
 
-  sendSignal(signal: WebRTCSignal) {
+  async sendSignal(signal: WebRTCSignal) {
+    // 안전: 조인 완료 전에는 대기
+    await this.waitUntilJoined();
+
     const roomIdNum = toNumericId(this.roomId);
     const targetIdNum = signal.toUserId ? toNumericId(signal.toUserId) : undefined;
     const fromIdNum = toNumericId(this.userId);
@@ -296,14 +352,11 @@ export default class SignalingClient {
     if (signal.type === 'offer' || signal.type === 'answer') {
       const dest = signal.type === 'offer' ? '/app/webrtc/offer' : '/app/webrtc/answer';
       const sdpText = signal.sdp?.sdp ?? '';
-      const sdpType = (signal.sdp?.type === 'answer' ? 'answer' : 'offer');
-
       this.pub(dest, {
         roomId: roomIdNum,
         fromUserId: fromIdNum,
         targetUserId: targetIdNum ?? null,
         sdp: sdpText,
-        // [수정] 백엔드 DTO에 맞게 mediaType 전달
         mediaType: 'VIDEO',
       });
       return;
@@ -323,10 +376,9 @@ export default class SignalingClient {
     }
   }
 
-  // [수정] 백엔드 DTO에 맞게 미디어 상태 전송 메서드 변경
   sendMediaToggle(mediaType: TogglingMediaType, enabled: boolean) {
-    const dest = '/app/webrtc/media/toggle';
-    this.pub(dest, {
+    // 미디어 토글도 webrtc 경로면 큐잉 대상이 되도록
+    this.pub('/app/webrtc/media/toggle', {
       roomId: toNumericId(this.roomId),
       mediaType,
       enabled,
@@ -340,5 +392,9 @@ export default class SignalingClient {
     this.client.deactivate();
     this._ready = false;
     this.activated = false;
+    // 상태 초기화
+    this.joinedOk = false;
+    this.joinedResolvers = [];
+    this.outbox = [];
   }
 }

@@ -35,7 +35,6 @@ export default function MediaControlBar({
         "flex items-center justify-center gap-2 px-2",
         className,
       ].join(" ")}
-      style={{ color: "var(--color-text-primary)" }}
       aria-label="미디어 컨트롤 바"
     >
       <IconButton
@@ -88,7 +87,7 @@ function IconButton({
       onClick={onClick}
       className={[
         "h-10 w-10 rounded-full grid place-items-center transition",
-        "hover:bg-black focus:outline-none focus:ring-2",
+        "hover cursor-pointer focus:outline-none",
       ].join(" ")}
       aria-pressed={active ? true : undefined}
       aria-label={label}

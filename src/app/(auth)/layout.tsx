@@ -1,5 +1,3 @@
-/* 페이지 가운데 정렬 레이아웃 */
-
 export default function AuthLayout({
   children,
 }: Readonly<{

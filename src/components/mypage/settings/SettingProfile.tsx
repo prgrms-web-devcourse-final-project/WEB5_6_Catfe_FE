@@ -5,10 +5,10 @@ import Button from '@/components/Button';
 import { useEffect, useMemo, useState } from 'react';
 import SettingAvatar from './SettingAvatar';
 import { useConfirm } from '@/hook/useConfirm';
-import { useProfileSetting } from '@/hook/useProfileSetting';
 import showToast from '@/utils/showToast';
 import Spinner from '@/components/Spinner';
 import { Info } from 'lucide-react';
+import { useUpdateUser, useUser } from '@/api/apiUsersMe';
 
 const MAX_BIO_LIMIT = 300;
 
@@ -16,7 +16,8 @@ const MAX_BIO_LIMIT = 300;
 
 function SettingProfile() {
   const confirm = useConfirm();
-  const { data: me, isLoading, saveProfile, saving } = useProfileSetting();
+  const { data: me, isLoading } = useUser();
+  const { mutateAsync: saveProfile, isPending: saving } = useUpdateUser();
 
   const initial = useMemo(() => {
     if (!me) return null;

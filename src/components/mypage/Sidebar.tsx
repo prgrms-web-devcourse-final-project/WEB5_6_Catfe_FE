@@ -81,29 +81,31 @@ function MyPageSidebar() {
             className="focus:outline-none focus:ring-2 focus:ring-secondary-400 bg-secondary-100"
           >
             {collapsed ? (
-              <Image
-                src="/image/logo-mypage.svg"
-                alt="Catfé Logo"
-                width={38}
-                height={30}
-                priority
-                className={[
-                  'transition-opacity duration-300 ease-out',
-                  collapsed ? 'opacity-100' : 'opacity-0',
-                ].join(' ')}
-              />
+              <div className="w-[38px] h-[30px] relative">
+                <Image
+                  src="/image/logo-mypage.svg"
+                  alt="Catfé Logo"
+                  fill
+                  priority
+                  className={[
+                    'transition-opacity duration-300 ease-out',
+                    collapsed ? 'opacity-100' : 'opacity-0',
+                  ].join(' ')}
+                />
+              </div>
             ) : (
-              <Image
-                src="/image/logo-light.svg"
-                alt="Catfé Logo"
-                width={145}
-                height={35}
-                priority
-                className={[
-                  'transition-opacity duration-300 ease-out',
-                  collapsed ? 'opacity-0' : 'opacity-100',
-                ].join(' ')}
-              />
+              <div className="w-[145px] h-[35px] relative">
+                <Image
+                  src="/image/logo-light.svg"
+                  alt="Catfé Logo"
+                  fill
+                  priority
+                  className={[
+                    'transition-opacity duration-300 ease-out',
+                    collapsed ? 'opacity-0' : 'opacity-100',
+                  ].join(' ')}
+                />
+              </div>
             )}
           </Link>
         </h1>
@@ -139,8 +141,8 @@ function MyPageSidebar() {
         >
           <div className="size-8 rounded-full border-2 border-gray-400 overflow-hidden relative">
             <Image
-              src={currentUser.profileImageUrl ?? '/image/cat-default.svg'}
-              alt={currentUser.nickname ?? '프로필 사진'}
+              src={currentUser.profileImageUrl || '/image/cat-default.svg'}
+              alt={currentUser.nickname || '프로필 사진'}
               fill
             />
           </div>

@@ -83,10 +83,8 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     // 이미 있으면 건너뜀
     if (signalingRef.current) return;
 
-    const userIdForWS = meUid.split("-")[1] ?? ""; // 'u-12' → '12'
+    const userIdForWS = meUid.split("-")[1] ?? ""; 
     const client = new SignalingClient(String(roomNum), userIdForWS, () => {
-      // onReady: 필요하면 상태 갱신/로그 추가
-      // console.log("[ws] connected");
     });
     signalingRef.current = client;
 

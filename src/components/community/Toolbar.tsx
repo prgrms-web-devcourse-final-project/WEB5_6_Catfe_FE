@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { HeadingLevel, useToolbarSnapshot } from '@/hook/useToolbarSnapshot';
 import { useCallback } from 'react';
 import fileToDataUrl from '@/utils/fileToDataUrl';
+import { MAX_FILE_SIZE } from '@/api/apiUploadFile';
+import showToast from '@/utils/showToast';
 
 const Seperator = () => <span className="mx-1 h-5 w-px bg-gray-400" />;
 
@@ -64,6 +66,19 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       if (!editor) return;
       const file = e.target.files?.[0];
       if (!file) return;
+      // 파일 크기 검증
+      if (file.size > MAX_FILE_SIZE) {
+        showToast('error', '파일 크기는 10MB 미만이어야 합니다.');
+        e.target.value = '';
+        return;
+      }
+      // 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        showToast('error', '이미지 파일만 업로드하실 수 있습니다.');
+        e.target.value = '';
+        return;
+      }
+
       const base64file = await fileToDataUrl(file);
       editor.chain().focus().setImage({ src: base64file, alt: file.name }).run();
       e.currentTarget.value = '';

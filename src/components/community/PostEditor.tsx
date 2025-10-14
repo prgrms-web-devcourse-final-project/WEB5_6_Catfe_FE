@@ -19,6 +19,8 @@ import { useConfirm } from '@/hook/useConfirm';
 import { useMutation } from '@tanstack/react-query';
 import { apiUploadFile } from '@/api/apiUploadFile';
 import fileToDataUrl from '@/utils/fileToDataUrl';
+import { useCategoryOptions } from '@/hook/community/useCategoryOptions';
+import { processCategories, processImagesAndContent } from '@/utils/editorHelpers';
 
 type EditorProps = {
   initialData?: InitialPost;
@@ -105,22 +107,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
     editorRef.current = editor;
   }, [editor]);
 
-  const categoryOptions = useMemo(() => {
-    const subject = categoryData.filter((c) => c.type === 'SUBJECT').map((c) => c.name);
-    const demographic = categoryData.filter((c) => c.type === 'DEMOGRAPHIC').map((c) => c.name);
-    const groupSize = categoryData.filter((c) => c.type === 'GROUP_SIZE').map((c) => c.name);
-
-    // Name -> ID 맵 (게시 시 사용)
-    const nameToId = categoryData.reduce(
-      (acc, cat) => {
-        acc[cat.name] = cat.id;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return { subject, demographic, groupSize, nameToId };
-  }, [categoryData]);
+  const categoryOptions = useCategoryOptions(categoryData);
 
   const {
     lastSavedAt,
@@ -138,7 +125,6 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
   // 초기 데이터 로드
   useEffect(() => {
     if (!editor || editor.options.content) return;
-
     let contentToLoad: JSONContent | string | null | undefined = initialData?.content;
 
     // draft 있으면 덮어쓰기
@@ -165,88 +151,44 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
 
     if (!editor || submitting) return;
     setSubmitting(true);
-    const selectedNames = [categories[0], categories[1], categories[2]].filter(Boolean) as string[];
-
-    let subjectId: number | null = null;
-    const subjectName = selectedNames[0];
-
-    if (subjectName) {
-      subjectId = categoryOptions.nameToId[subjectName] ?? null;
-
-      // 맵에 ID가 없고, Subject 필드라면 신규 등록 시도
-      if (!subjectId) {
-        showToast('info', `[${subjectName}]을 등록 중입니다.`);
-        const newId = await handleCategoryRegistration(subjectName);
-        if (newId) {
-          subjectId = newId;
-        } else {
-          showToast('error', `과목 등록에 실패했습니다. (${subjectName})`);
-          setSubmitting(false);
-          return;
-        }
-      }
-    }
-    // 나머지 카테고리 ID 수집 (Set을 사용하여 중복 자동 제거)
-    const collectedIds = new Set<number>();
-    if (subjectId) {
-      collectedIds.add(subjectId);
-    }
-    // Age (categories[1])와 Headcount (categories[2]) 처리
-    for (let i = 1; i < selectedNames.length; i++) {
-      const name = selectedNames[i];
-      const id = categoryOptions.nameToId[name];
-      if (id) {
-        collectedIds.add(id);
-      }
-    }
-    const finalCategoryIds = Array.from(collectedIds);
-
-    if (finalCategoryIds.length === 0) {
-      showToast('error', '과목, 연령대, 인원수 중 하나 이상 선택(입력)이 필요합니다.');
-      setSubmitting(false);
-      return;
-    }
-
-    let finalHtml = editor.getHTML();
-    const base64Regex = /data:image\/[^;]+;base64,([a-zA-Z0-9+/=]+)/g;
-    const base64Images = Array.from(finalHtml.matchAll(base64Regex));
-
-    if (base64Images.length > 0) {
-      const uploadPromises = base64Images.map(async (match) => {
-        const base64Src = match[0];
-
-        // Base64 Data URL을 Blob으로 변환 후 File 객체 생성
-        const blob = await fetch(base64Src).then((res) => res.blob());
-        const fileType = blob.type.split('/')[1] || 'png';
-        const file = new File([blob], `uploaded_image.${fileType}`, { type: blob.type });
-
-        // 파일 업로드 API 호출
-        const { url: newUrl } = await uploadMutation.mutateAsync(file);
-        return { oldSrc: base64Src, newSrc: newUrl };
-      });
-
-      try {
-        const results = await Promise.all(uploadPromises);
-
-        // 업로드된 새 URL로 HTML 내용 교체
-        results.forEach(({ oldSrc, newSrc }) => {
-          finalHtml = finalHtml.replace(new RegExp(oldSrc, 'g'), newSrc);
-        });
-      } catch (error) {
-        console.error('이미지 업로드 실패:', error);
-        setSubmitting(false);
-        return;
-      }
-    }
-
-    // Request Body 생성
-    const requestBody: CreatePostRequest = {
-      title: title,
-      content: finalHtml,
-      categoryIds: finalCategoryIds,
-    };
 
     try {
+      const selectedNames = [categories[0], categories[1], categories[2]].filter(
+        Boolean
+      ) as string[];
+      const { categoryIds, error: categoryError } = await processCategories(
+        selectedNames,
+        categoryOptions,
+        handleCategoryRegistration
+      );
+
+      if (categoryError) {
+        showToast('error', categoryError);
+        return;
+      }
+
+      const htmlContent = editor.getHTML();
+      const {
+        content: finalHtml,
+        thumbnailUrl,
+        imageIds,
+        error: imageError,
+      } = await processImagesAndContent(htmlContent, uploadMutation);
+
+      if (imageError) {
+        showToast('error', imageError);
+        return;
+      }
+      // Request Body 생성
+      const requestBody: CreatePostRequest = {
+        title: title,
+        content: finalHtml,
+        categoryIds,
+        thumbnailUrl,
+        imageIds,
+      };
+
+      // 최종 /posts api 호출
       if (onSubmitAction) {
         const res = await onSubmitAction(requestBody);
         if (res?.success) {
@@ -263,6 +205,9 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
           console.error(res?.message);
         }
       }
+    } catch (error) {
+      showToast('error', '게시글 처리 중 알 수 없는 오류가 발생했습니다.');
+      console.error('Submit Error:', error);
     } finally {
       setSubmitting(false);
     }
@@ -392,6 +337,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
         {/* 액션 버튼 */}
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 w-full sm:flex-row items-center justify-center sm:justify-end">
           <Button
+            type="submit"
             size="md"
             name="intent"
             value="publish"
@@ -401,6 +347,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
             {isEditMode ? '수정하기' : '게시하기'}
           </Button>
           <Button
+            type="button"
             size="md"
             borderType="outline"
             disabled={submitting}

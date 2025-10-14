@@ -1,6 +1,8 @@
 import { ApiResponse } from '@/@types/type';
 import api from '@/utils/api';
 
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 파일 용량 10MB 제한
+
 export interface UploadImageResponseData {
   attachmentId: number;
   publicURL: string;

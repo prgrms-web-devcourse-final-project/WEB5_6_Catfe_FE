@@ -6,6 +6,8 @@ import UnreadDivider from './UnreadDivider';
 import MessageBubble from './MessageBubble';
 import Button from '@/components/Button';
 import { ChatMsg } from '@/@types/websocket';
+import { formatHM, formatToYMD, isSameDayByTimestamp } from '@/lib/datetime';
+import DateDivider from './DateDivider';
 
 export type ChatRoomMode = 'docked' | 'floating';
 
@@ -204,6 +206,35 @@ function ChatWindow({
 
   if (!open) return;
 
+  const messageBubbles = ordered.map((m, i) => {
+    const prevMsg = ordered[i - 1];
+    // 첫 메시지이거나 이전 메시지와 날짜가 다를 경우 구분선 표시
+    const shouldShowDateDivider = i === 0 || !isSameDayByTimestamp(prevMsg.createdAt, m.createdAt);
+    const formattedTime = formatHM(m.createdAt);
+
+    return (
+      <Fragment key={m.id}>
+        {shouldShowDateDivider && <DateDivider dateString={formatToYMD(m.createdAt)} />}
+
+        {i === firstUnreadIdx && i >= 0 && (
+          <>
+            <div ref={unreadAnchorRef} data-anchor="unread">
+              <UnreadDivider />
+            </div>
+          </>
+        )}
+        <MessageBubble
+          mine={m.from === 'ME'}
+          nickname={m.nickname}
+          profileImageUrl={m.profileImageUrl}
+          timeString={formattedTime}
+        >
+          {m.content}
+        </MessageBubble>
+      </Fragment>
+    );
+  });
+
   return (
     <section
       role="dialog"
@@ -279,25 +310,8 @@ function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3">
-        {ordered.map((m, i) => (
-          <Fragment key={m.id}>
-            {i === firstUnreadIdx && i >= 0 && (
-              <>
-                <div ref={unreadAnchorRef} data-anchor="unread">
-                  <UnreadDivider />
-                </div>
-              </>
-            )}
-            <MessageBubble
-              mine={m.from === 'ME'}
-              nickname={m.nickname}
-              profileImageUrl={m.profileImageUrl}
-            >
-              {m.content}
-            </MessageBubble>
-          </Fragment>
-        ))}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4">
+        {messageBubbles}
         <div ref={endRef} />
       </div>
 

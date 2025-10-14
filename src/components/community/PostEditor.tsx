@@ -134,7 +134,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
   } = useEditorDraft(editor, DRAFT_KEY, initialData, {
     debounceMs: 10000,
   });
-  console.log(categories);
+
   // 초기 데이터 로드
   useEffect(() => {
     if (!editor || editor.options.content) return;
@@ -172,7 +172,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
 
     if (subjectName) {
       subjectId = categoryOptions.nameToId[subjectName] ?? null;
-      console.log(subjectId, subjectName);
+
       // 맵에 ID가 없고, Subject 필드라면 신규 등록 시도
       if (!subjectId) {
         showToast('info', `[${subjectName}]을 등록 중입니다.`);
@@ -245,7 +245,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
       content: finalHtml,
       categoryIds: finalCategoryIds,
     };
-    console.log(finalCategoryIds, requestBody);
+
     try {
       if (onSubmitAction) {
         const res = await onSubmitAction(requestBody);

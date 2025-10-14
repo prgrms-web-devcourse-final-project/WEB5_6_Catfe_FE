@@ -18,8 +18,6 @@ function MyHomeProfile() {
     },
   };
 
-  console.log(user);
-
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 bg-background-white rounded-2xl border-2 border-secondary-600 px-4 py-5 animate-pulse">

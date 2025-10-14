@@ -3,7 +3,7 @@
 import { MyPostListQuery } from '@/@types/community';
 import PostCard from '@/components/community/PostCard';
 import Pagination from '@/components/Pagination';
-import { PostListHookResult, useMyPosts } from '@/hook/useMyPostList';
+import { useMyPosts } from '@/hook/useMyPostList';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 function MyPostList() {
@@ -19,7 +19,7 @@ function MyPostList() {
   const { pageItems, totalPages, isFetching } = useMyPosts(query);
   const pageSize = query.size;
 
-  // 페이지 변경 핸들러: URL 업데이트 (tab, page, size, sort 모두 유지)
+  // 페이지 변경 핸들러: URL 업데이트 (tab, page, size, sort)
   const handlePageChange = (newPage: number) => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('page', String(newPage)); // page만 변경
@@ -38,7 +38,7 @@ function MyPostList() {
         {/* data가 없을 경우 */}
         {!isFetching && pageItems.length === 0 && (
           <div className="col-span-full text-center py-10 text-text-secondary">
-            검색 결과가 없습니다.
+            아직 작성하신 게시글이 없어요.
           </div>
         )}
       </div>
@@ -46,7 +46,7 @@ function MyPostList() {
         <Pagination
           defaultPage={query.page}
           totalPages={totalPages}
-          onPageChange={(p) => push({ page: p })}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>

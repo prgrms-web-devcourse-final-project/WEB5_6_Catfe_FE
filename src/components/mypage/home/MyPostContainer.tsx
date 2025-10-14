@@ -22,7 +22,7 @@ function MyPostContainer() {
   };
 
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col w-full h-full bg-background-white rounded-2xl border-2 border-secondary-600 shadow-md">
       {/* 탭 네비게이션 */}
       <div className="flex border-b border-gray-300 px-10 pt-4">
         {/* 내가 작성한 글 탭 */}

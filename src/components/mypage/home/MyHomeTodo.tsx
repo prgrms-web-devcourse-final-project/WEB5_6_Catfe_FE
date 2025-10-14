@@ -9,7 +9,7 @@ function MyHomeTodo() {
   const { todos, isLoading, isError, toggleTodoStatus } = useMyHomeTodo(ymd);
 
   return (
-    <div className="p-4 h-full  bg-background-white rounded-2xl border-2 border-secondary-600 shadow-md overflow-hidden flex flex-col gap-2">
+    <div className="p-4 h-full bg-background-white rounded-2xl border-2 border-secondary-600 shadow-md overflow-hidden flex flex-col gap-2">
       <h3 className="text-lg font-bold mb-4">{ymd} 공부 계획</h3>
       {/* 할 일 목록 */}
       <div className="flex-1 overflow-auto">

@@ -7,9 +7,12 @@ import * as UITypes from '@/@types/rooms';
 import { getRoomSnapshot } from '@/api/apiRooms';
 import MediaRoomClient from './MediaRoomClient';
 
-
 const getAccessToken = () => {
-  try { return localStorage.getItem('accessToken') ?? ''; } catch { return ''; }
+  try {
+    return localStorage.getItem('accessToken') ?? '';
+  } catch {
+    return '';
+  }
 };
 
 function decodeJWT(token: string): Record<string, unknown> | null {
@@ -20,7 +23,7 @@ function decodeJWT(token: string): Record<string, unknown> | null {
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
     return JSON.parse(jsonPayload);
@@ -58,8 +61,7 @@ const readUserSafely = () => {
 };
 
 type JsonLike = Record<string, unknown>;
-const isRecord = (v: unknown): v is JsonLike =>
-  !!v && typeof v === 'object' && !Array.isArray(v);
+const isRecord = (v: unknown): v is JsonLike => !!v && typeof v === 'object' && !Array.isArray(v);
 
 type JoinError = Error & { code?: string; payload?: unknown };
 
@@ -97,7 +99,9 @@ export default function RoomContent() {
   const roomId = useMemo(() => String(params.id), [params.id]);
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { userId: rawUserId } = useMemo(() => {
     if (!mounted) return { userId: null, username: null };
@@ -124,11 +128,7 @@ export default function RoomContent() {
     if (!roomId || !mounted || !userId) return;
     if (signalingRef.current) return;
 
-    const client = new SignalingClient(
-      roomId,
-      userId,
-      () => setWsReady(true)
-    );
+    const client = new SignalingClient(roomId, userId, () => setWsReady(true));
     signalingRef.current = client;
 
     return () => {
@@ -153,7 +153,9 @@ export default function RoomContent() {
         if (!canceled) setJoinError((e as Error).message || 'Failed to join the room.');
       }
     })();
-    return () => { canceled = true; };
+    return () => {
+      canceled = true;
+    };
   }, [wsReady, joined, roomId]);
 
   useEffect(() => {
@@ -166,7 +168,7 @@ export default function RoomContent() {
         const myUserIdNum = Number(userId);
         const fixed: UITypes.RoomSnapshotUI = {
           ...snap,
-          members: snap.members.map(m => ({ ...m, isMe: m.id === myUserIdNum })),
+          members: snap.members.map((m) => ({ ...m, isMe: m.id === myUserIdNum })),
         };
         if (alive) setRoomSnap(fixed);
       } catch (err) {
@@ -174,7 +176,9 @@ export default function RoomContent() {
       }
     })();
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [joined, roomId, userId]);
   if (mounted && !userId) {
     return (
@@ -184,20 +188,12 @@ export default function RoomContent() {
     );
   }
   if (joined && roomSnap && userId && signalingRef.current) {
-    return (
-      <MediaRoomClient
-        room={roomSnap}
-        meId={userId}
-        signalingClient={signalingRef.current}
-      />
-    );
+    return <MediaRoomClient room={roomSnap} meId={userId} signalingClient={signalingRef.current} />;
   }
   return (
     <div className="flex items-center justify-center min-h-[360px]">
       {joinError || snapError ? (
-        <p className="text-sm text-red-600">
-          {joinError ?? snapError}
-        </p>
+        <p className="text-sm text-red-600">{joinError ?? snapError}</p>
       ) : (
         <p className="text-neutral-400">미디어 세션 준비 중…</p>
       )}

@@ -13,7 +13,7 @@ const buildQueryString = (query: MyPostListQuery): string => {
 /* 로그인 사용자가 북마크한 게시글 목록 조회 (GET /users/me/bookmarks) */
 export async function apiGetMyBookmarks(query: MyPostListQuery): Promise<MyPostListPageResponse> {
   const queryString = buildQueryString(query);
-  const url = `/users/me/bookmarks?${queryString}`;
+  const url = `/api/users/me/bookmarks?${queryString}`;
   const { data: res } = await api.get<ApiResponse<MyPostListPageResponse>>(url);
 
   if (!res.success) throw new Error(res.message);
@@ -23,7 +23,7 @@ export async function apiGetMyBookmarks(query: MyPostListQuery): Promise<MyPostL
 /* 로그인 사용자가 작성한 게시글 목록 조회 (GET /users/me/posts) */
 export async function apiGetMyPosts(query: MyPostListQuery): Promise<MyPostListPageResponse> {
   const queryString = buildQueryString(query);
-  const url = `/users/me/posts?${queryString}`;
+  const url = `/api/users/me/posts?${queryString}`;
   const { data: res } = await api.get<ApiResponse<MyPostListPageResponse>>(url);
 
   if (!res.success) throw new Error(res.message);

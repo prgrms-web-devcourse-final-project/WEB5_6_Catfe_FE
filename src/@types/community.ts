@@ -22,8 +22,8 @@ export type PostListItem = {
   postId: number;
   author: UserSummary;
   title: string;
+  thumbnailUrl: string | null;
   categories: ApiCategory[];
-  content?: string;
 
   likeCount: number;
   bookmarkCount: number;
@@ -36,7 +36,7 @@ export type PostListItem = {
   updatedAt: string;
 };
 
-export type PostDetail = Omit<PostListItem, 'content'> & {
+export type PostDetail = PostListItem & {
   content: string;
 };
 

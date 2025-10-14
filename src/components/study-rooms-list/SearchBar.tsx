@@ -3,7 +3,7 @@ import React from "react";
 
 type Props = {
   search?: string;
-  sort?: "all" | "enter" | "popular";
+  sort?: "all" | "public" | "enter" | "popular";
 };
 
 export default function SearchBar({ search = "", sort = "all" }: Props) {

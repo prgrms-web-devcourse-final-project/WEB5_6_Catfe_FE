@@ -7,6 +7,7 @@ import type { RoomSnapshotUI } from '@/@types/rooms';
 import { DUMMY_ROOMS } from '@/mock/rooms';
 import HoverInfoBox from './HoverInfoBox';
 import MarqueeRow from './MarqueeRow';
+import HeroFlashlight from './HeroFlashlight';
 
 export default function GuestHome() {
   const router = useRouter();
@@ -17,11 +18,9 @@ export default function GuestHome() {
   };
 
   return (
-    <main className="w-full min-h-screen bg-background-base text-text-primary flex flex-col gap-16 items-center justify-center mb-5 ">
+    <main className="w-full min-h-screen bg-background-base text-text-primary flex flex-col gap-16 items-center justify-center mb-5">
       {/* hero section */}
-      <section className="w-full h-[60vh] bg-secondary-500 flex items-center justify-center">
-        <div className="text-3xl md:text-5xl font-semibold">hero section</div>
-      </section>
+      <HeroFlashlight />
 
       {/* logo */}
       <section className="w-full flex flex-col justify-center items-center gap-16 pb-10">
@@ -36,15 +35,15 @@ export default function GuestHome() {
       <HoverInfoBox></HoverInfoBox>
 
       {/* 환영 타이틀 */}
-      <section className="w-full max-w-6xl flex flex-col justify-center gap-10 md:pt-30 pt-20 pb-10">
+      <section className="w-full max-w-6xl flex flex-col justify-center gap-10 md:pt-30 pt-20 pb-10 px-[100px]">
         <h2 className="text-3xl md:text-4xl font-extrabold text-center">
-          catfé 에 방문하신 여러분 환영합니다!
+          Catfé 에 방문하신 여러분 환영합니다!
         </h2>
         <span className='text-center text-xl md:text-2xl font-semibold'>👀 가장 최근에 개설된 캣페를 구경하세요 👀</span>
       </section>
 
       {/* 스터디룸 카드 3개 */}
-      <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 px-4 pb-5 md:pb-6 justify-items-center">
+      <section className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 pb-5 md:pb-6 justify-items-center px-[100px]">
         {rooms.slice(0, 3).map((room) => (
           <StudyRoomCard
             key={room.info.id}

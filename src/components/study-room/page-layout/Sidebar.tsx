@@ -20,6 +20,9 @@ type Props = {
   onOpenChat?: () => void;
   onOpenPlanner?: () => void;
   onOpenProfile?: () => void;
+  onOpenUsers?: () => void;
+  onOpenInvite?: () => void;
+  unreadCount: number;
 };
 
 export default function Sidebar({
@@ -31,6 +34,7 @@ export default function Sidebar({
   onOpenChat,
   onOpenPlanner,
   onOpenProfile,
+  unreadCount,
 }: Props) {
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -138,11 +142,24 @@ export default function Sidebar({
           )}
         </div>
 
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="채팅" onClick={onOpenChat}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5 relative"
+          aria-label="채팅"
+          onClick={onOpenChat}
+        >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
+          {unreadCount > 0 && (
+            <span className="inline-flex bg-primary-700 text-white rounded-full min-w-5 h-5 items-center justify-center absolute -right-2 top-0">
+              {unreadCount}
+            </span>
+          )}
         </button>
 
-        <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="플래너" onClick={onOpenPlanner}>
+        <button
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          aria-label="플래너"
+          onClick={onOpenPlanner}
+        >
           <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
         </button>
 

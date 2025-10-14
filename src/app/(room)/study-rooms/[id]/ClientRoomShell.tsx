@@ -1,18 +1,22 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Sidebar from "@/components/study-room/page-layout/Sidebar";
-import Button from "@/components/Button";
-import Image from "next/image";
-import SettingsModal from "@/components/study-room/settings-modal/SettingsModal";
-import InviteShareModal from "@/components/study-room/InviteShareModal";
-import UsersModal from "@/components/study-room/online-users/UsersModal";
-import useEscapeKey from "@/hook/useEscapeKey";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Sidebar from '@/components/study-room/page-layout/Sidebar';
+import Button from '@/components/Button';
+import Image from 'next/image';
+import SettingsModal from '@/components/study-room/settings-modal/SettingsModal';
+import InviteShareModal from '@/components/study-room/InviteShareModal';
+import UsersModal from '@/components/study-room/online-users/UsersModal';
+import useEscapeKey from '@/hook/useEscapeKey';
 
 import { useRoomInfoQuery } from "@/hook/useRoomInfo";
 import { useRoomMembersQuery } from "@/hook/useRoomMembers";
 import { useUser } from "@/api/apiUsersMe";
 import type { Role, UsersListItem } from "@/@types/rooms";
+import ChatRoomContainer from './ChatRoomContainer';
+import { useChatRoom } from '@/hook/useChatRoom';
+import { ApiChatMsg } from '@/@types/websocket';
+import { ChatRoomMode } from '@/components/study-room/chatting/ChatWindow';
 
 type Props = {
   children: ReactNode;
@@ -23,11 +27,16 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMode, setChatMode] = useState<ChatRoomMode>('floating');
 
   const popRef = useRef<HTMLDivElement>(null);
   const usersRef = useRef<HTMLDivElement>(null);
+  const onChatRoomRef = useRef<((m: ApiChatMsg) => void) | null>(null);
 
+  /* ------------ Room Info & Memeber --------------- */
   const { data: infoDto, error: infoError, isLoading: infoLoading } = useRoomInfoQuery(roomId);
+
   const {
     data: membersDto,
     isLoading: membersLoading,
@@ -78,12 +87,12 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const canManage = myRole === "HOST" || myRole === "SUB_HOST";
 
   const roomUrl = useMemo(() => {
-    if (!infoDto) return "";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    if (!infoDto) return '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
     return `${origin}/study-rooms/${infoDto.roomId}`;
   }, [infoDto]);
 
-  const maskedPassword = infoDto?.private ? "****" : undefined;
+  const maskedPassword = infoDto?.private ? '****' : undefined;
 
   useEscapeKey(inviteOpen, () => setInviteOpen(false));
   useEscapeKey(usersOpen, () => setUsersOpen(false));
@@ -94,8 +103,8 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       const t = e.target as Node;
       if (popRef.current && !popRef.current.contains(t)) setInviteOpen(false);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [inviteOpen]);
 
   useEffect(() => {
@@ -104,24 +113,50 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       const t = e.target as Node;
       if (usersRef.current && !usersRef.current.contains(t)) setUsersOpen(false);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
   }, [usersOpen]);
 
-  const usersCount = membersLoading ? "?" : (membersDto?.length ?? 0);
+  const onOpenChat = () => setChatOpen(true);
+  const onCloseChat = () => setChatOpen(false);
+
+  const usersCount = membersLoading ? '?' : (membersDto?.length ?? 0);
+
+  /* ------------ Chatting --------------- */
+  const chatRoom = useChatRoom(roomId, {
+    isOpen: chatOpen,
+    onMessage: (m) => onChatRoomRef.current?.(m),
+  });
+
+  // 채팅창 열면 뱃지 초기화
+  useEffect(() => {
+    if (chatOpen) chatRoom.resetUnread();
+  }, [chatOpen, chatRoom]);
+
+  /* ------------ Layout --------------- */
+  const chatDockWidth = 'min(33dvw, 420px)';
+  const gridStyle: React.CSSProperties =
+    chatOpen && chatMode === 'docked'
+      ? { gridTemplateColumns: `56px ${chatDockWidth} 1fr` }
+      : { gridTemplateColumns: '56px 1fr' };
 
   return (
     <div className="min-h-screen w-full">
-      <div className="grid grid-cols-[56px_1fr]">
+      <div className="grid" style={gridStyle}>
+        {/* grid 1열: sidebar */}
         <Sidebar
           roomId={roomId}
           role={myRole}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenTimer={() => {}}
-          onOpenChat={() => {}}
           onOpenPlanner={() => {}}
+          onOpenChat={chatOpen ? onCloseChat : onOpenChat}
+          unreadCount={chatRoom.unread}
         />
 
+        {/* grid 2열: chatting (docked) */}
+        {chatOpen && chatMode === 'docked' && <div className="relative" />}
+        {/* grid 3열: contents */}
         <div className="relative">
           <header className="h-14 flex items-center justify-end px-6">
             <div className="flex items-center gap-2">
@@ -135,7 +170,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   aria-expanded={usersOpen}
                   aria-haspopup="dialog"
                   disabled={!!membersError}
-                  title={membersError ? "멤버 로드 실패" : undefined}
+                  title={membersError ? '멤버 로드 실패' : undefined}
                 >
                   <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
                   {usersCount}
@@ -161,7 +196,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   aria-expanded={inviteOpen}
                   aria-haspopup="dialog"
                   disabled={infoLoading || !infoDto || !!infoError}
-                  title={infoError ? "방 정보 로드 실패" : undefined}
+                  title={infoError ? '방 정보 로드 실패' : undefined}
                 >
                   초대하기
                 </Button>
@@ -183,8 +218,19 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           <main className="px-6">{children}</main>
         </div>
       </div>
-
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} defaultTab="general" roomId={roomId} />
+      <ChatRoomContainer
+        roomId={roomId}
+        open={chatOpen}
+        onOpen={() => chatRoom.resetUnread()}
+        onClose={() => setChatOpen(false)}
+        isConnected={chatRoom.isConnected}
+        sendChatMessage={chatRoom.sendChatMessage}
+        bindOnMessage={(fn) => {
+          onChatRoomRef.current = fn;
+        }}
+        onModeChange={setChatMode}
+      />
     </div>
   );
 }

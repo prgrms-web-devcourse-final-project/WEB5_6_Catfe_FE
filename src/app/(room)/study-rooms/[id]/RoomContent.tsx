@@ -78,7 +78,7 @@ function buildJoinError(status: number, data: unknown): JoinError {
 async function apiJoinRoom(roomId: string | number) {
   const token = getAccessToken();
   const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
-  const url = `${base}api/rooms/${roomId}/join`;
+  const url = `${base}/api/rooms/${roomId}/join`;
 
   console.log('[join] POST', url);
   const res = await fetch(url, {

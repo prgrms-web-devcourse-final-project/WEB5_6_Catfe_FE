@@ -337,7 +337,6 @@ export default class SignalingClient {
       roomId: roomIdNum,
       userId: userIdNum,
     });
-
     // 서버에서 별도 ACK가 없다면 소프트 딜레이 후 조인 완료 처리
     setTimeout(() => this.resolveJoined(), 500);
   }

@@ -72,24 +72,6 @@ export function usePostsQuery(
   const result = useQuery<PostsResponse, Error>({
     queryKey,
     queryFn: async () => {
-      // const apiParams: {
-      //   page: number;
-      //   size: number;
-      //   sort?: PostSort;
-      //   keyword?: string;
-      //   searchType?: string;
-      //   category?: string;
-      // } = {
-      //   page: page - 1,
-      //   size,
-      //   sort,
-      // };
-
-      // if (q) {
-      //   apiParams.keyword = q.normalize('NFC').toLowerCase().trim();
-      //   apiParams.searchType = 'title';
-      // }
-
       const filterNames: string[] = [];
 
       if (subjects.length > 0) filterNames.push(...subjects);

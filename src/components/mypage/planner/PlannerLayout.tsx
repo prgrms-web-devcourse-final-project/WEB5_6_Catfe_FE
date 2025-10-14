@@ -28,25 +28,25 @@ function PlannerLayout() {
   const gridHeight = hourHeight * 24;
 
   return (
-    <div className="relative p-6 rounded-xl border border-secondary-900 overflow-auto bg-background-white pt-0 h-full min-h-0">
+    <div className="relative p-6 rounded-xl border border-secondary-900 overflow-auto bg-background-white pt-0 h-full min-h-0 shadow-md">
       <div className="sticky top-0 z-40 flex items-center justify-between p-2 pt-6 bg-background-base">
         <h3 className="text-lg font-bold">TimeLine</h3>
       </div>
 
-      <div className="relative" style={{ height: gridHeight }}>
+      <div className="relative border border-secondary-900" style={{ height: gridHeight }}>
         <div className="absolute inset-0 -z-0">
-          {Array.from({ length: 25 }).map((_, i) => (
+          {Array.from({ length: 23 }).map((_, i) => (
             <div
               key={`plan-line-${i}`}
               className="absolute left-0 right-0 border-t border-secondary-900"
-              style={{ top: i * hourHeight }}
+              style={{ top: (i + 1) * hourHeight }}
             />
           ))}
         </div>
 
         <div className="flex relative h-full">
           {/* Time Label */}
-          <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border border-b-0 border-secondary-900 sticky left-0 z-20 bg-background-white">
+          <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border-r border-secondary-900 sticky left-0 z-20 bg-background-white">
             {HOURS.map((hour) => (
               <div
                 key={hour}

@@ -2,13 +2,13 @@ import { ApiResponse } from '@/@types/type';
 import api from '@/utils/api';
 
 export interface UploadImageResponseData {
-  imageUrl: string;
+  attachmentId: number;
+  publicURL: string;
 }
 
-export async function apiUploadFile(file: File): Promise<string> {
+export async function apiUploadFile(file: File): Promise<{ url: string; attachmentId: number }> {
   const formData = new FormData();
   formData.append('multipartFile', file);
-  formData.append('entityType', 'POST');
   const { data: res } = await api.post<ApiResponse<UploadImageResponseData>>(
     '/api/file/upload',
     formData,
@@ -19,8 +19,8 @@ export async function apiUploadFile(file: File): Promise<string> {
     }
   );
 
-  if (!res.success || !res.data.imageUrl) {
+  if (!res.success || !res.data.publicURL) {
     throw new Error(res.message || '파일 업로드에 실패했습니다.');
   }
-  return res.data.imageUrl;
+  return { url: res.data.publicURL, attachmentId: res.data.attachmentId };
 }

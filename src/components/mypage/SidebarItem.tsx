@@ -25,7 +25,9 @@ function SidebarItem({ href, label, icon, activeIcon, active, collapsed }: NavIt
         collapsed ? 'rounded-full justify-center mx-3' : 'rounded-xl mx-2',
       ].join(' ')}
     >
-      <Image src={iconSrc} alt="" width={20} height={20} aria-hidden />
+      <div className="size-5 relative">
+        <Image src={iconSrc} alt="" fill aria-hidden />
+      </div>
       <span className={collapsed ? 'sr-only' : 'text-sm font-medium'}>{label}</span>
     </Link>
   );

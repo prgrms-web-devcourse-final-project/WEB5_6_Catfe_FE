@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 function MyPage() {
   return (
-    <div>
+    <div className="max-w-[1200px] mx-auto">
       <MyPageClient />
     </div>
   );

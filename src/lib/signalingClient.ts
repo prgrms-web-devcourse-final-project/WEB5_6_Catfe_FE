@@ -3,7 +3,6 @@ import SockJS from 'sockjs-client';
 import { getAccessToken } from '@/utils/authToken';
 import type { WebRTCSignal } from '@/lib/types';
 
-/* ----------------------------- 서버 페이로드 타입 ----------------------------- */
 type ServerOfferAnswer = {
   type: 'OFFER' | 'ANSWER';
   fromUserId: number | string;
@@ -60,9 +59,17 @@ function isOfferAnswer(p: ServerSignal): p is ServerOfferAnswer {
 function isIce(p: ServerSignal): p is ServerIce {
   return p.type === 'ICE_CANDIDATE' && 'candidate' in p;
 }
+
 function isMediaState(p: ServerSignal): p is ServerMediaState {
-  return p.type === 'MEDIA_STATE_CHANGE';
+  const anyp = p as unknown as Record<string, unknown>;
+  const hasEssentials =
+    ('mediaType' in anyp) &&
+    (anyp['mediaType'] === 'AUDIO' || anyp['mediaType'] === 'VIDEO' || anyp['mediaType'] === 'SCREEN') &&
+    (typeof anyp['enabled'] === 'boolean') &&
+    (('userId' in anyp) || ('fromUserId' in anyp));
+  return (anyp['type'] === 'MEDIA_STATE_CHANGE') || hasEssentials;
 }
+
 function isServerError(p: ServerSignal): p is ServerError {
   return p.type === 'ERROR';
 }
@@ -70,7 +77,6 @@ function isServerError(p: ServerSignal): p is ServerError {
 const DEBUG = process.env.NODE_ENV !== 'production';
 const dlog = (...a: unknown[]) => { if (DEBUG) console.log('[STOMP]', ...a); };
 
-/* ================================== Client ================================== */
 export default class SignalingClient {
   private client: Client;
   private _ready = false;
@@ -79,12 +85,12 @@ export default class SignalingClient {
   private stoppedByAuthError = false;
   private activated = false;
 
-  /** -------- STOMP join 가드 & 큐 -------- */
+// STOMP join 가드 & 큐
   private joinedOk = false;
   private joinedResolvers: Array<() => void> = [];
   /** webrtc 목적지로 가는 메시지 임시 큐 */
   private outbox: Array<{ dest: string; body: object }> = [];
-  private readonly OUTBOX_MAX = 50; // 안전한 상한
+  private readonly OUTBOX_MAX = 50; 
 
   get ready() { return this._ready; }
   get isReady() { return this._ready; }
@@ -175,7 +181,7 @@ export default class SignalingClient {
     this.activate();
   }
 
-  /** ===== 리스너 등록/해제 ===== */
+// 리스너 등록 해제
   addSignalListener(listener: (s: WebRTCSignal) => void) { this.signalListeners.add(listener); }
   removeSignalListener(listener: (s: WebRTCSignal) => void) { this.signalListeners.delete(listener); }
   addMediaStateListener(listener: (userId: string, state: ServerMediaState) => void) { this.mediaStateListeners.add(listener); }
@@ -198,7 +204,7 @@ export default class SignalingClient {
     this.onAuthError?.(reason);
   }
 
-  /* -------------------- STOMP-조인 완료 관리 -------------------- */
+  //STOMP-조인 완료 관리 
   private resolveJoined() {
     if (this.joinedOk) return;
     this.joinedOk = true;
@@ -233,7 +239,6 @@ export default class SignalingClient {
     for (const it of items) this._publish(it.dest, it.body);
   }
 
-  /* ----------------------------- 수신 처리부 ----------------------------- */
   private handleFrame(frame: IMessage, src: 'errorQ' | 'room-webrtc' | 'room-media') {
     const payload = safeJsonParse<ServerSignal>(frame.body);
     if (!payload) {
@@ -249,7 +254,6 @@ export default class SignalingClient {
 
       // ROOM_009: 서버 입장에선 아직 방-세션 참가자가 아님 → 조금 더 기다렸다가 전송하도록
       if (code === 'ROOM_009') {
-        // 조인 준비 중일 가능성이 높으니, 아주 짧게 지연 후 joined resolve
         setTimeout(() => this.resolveJoined(), 300);
       }
 
@@ -263,6 +267,7 @@ export default class SignalingClient {
         ? String(payload.targetUserId)
         : undefined;
 
+    // webrtc 토픽은 타겟 필터
     if (src === 'room-webrtc') {
       const myNumericId = toNumericId(this.userId);
       const targetNumericId = to ? toNumericId(to) : null;
@@ -272,7 +277,6 @@ export default class SignalingClient {
     }
 
     if (isOfferAnswer(payload)) {
-      // 조인 완료 신호로 취급 가능한 브로드캐스트가 있다면 여기서 resolveJoined() 호출 가능
       const lowerType = (payload.sdpType?.toString().toLowerCase() as 'offer' | 'answer' | undefined)
         ?? (payload.type === 'OFFER' ? 'offer' : 'answer');
       const remoteSdp: RTCSessionDescriptionInit =
@@ -300,14 +304,22 @@ export default class SignalingClient {
     }
 
     if (isMediaState(payload)) {
-      this.mediaStateListeners.forEach(cb => cb(from, payload));
+      const anyp = payload as unknown as Record<string, unknown>;
+      const normalized: ServerMediaState = {
+        type: 'MEDIA_STATE_CHANGE',
+        userId: (('userId' in anyp) ? (anyp['userId'] as number | string) : from),
+        username: (typeof anyp['username'] === 'string' ? (anyp['username'] as string) : ''),
+        mediaType: (anyp['mediaType'] as 'AUDIO' | 'VIDEO' | 'SCREEN'),
+        enabled: Boolean(anyp['enabled']),
+        timestamp: (typeof anyp['timestamp'] === 'string' ? (anyp['timestamp'] as string) : undefined),
+      };
+      this.mediaStateListeners.forEach(cb => cb(from, normalized));
       return;
     }
 
     console.warn('[STOMP] unknown payload', payload);
   }
 
-  /* ------------------------------ 발신 유틸 ------------------------------ */
   private _publish<T extends object>(dest: string, body: T) {
     if (!this.client.active) {
       dlog('Cannot publish. Client not active.', dest, body);
@@ -318,7 +330,6 @@ export default class SignalingClient {
   }
 
   private pub<T extends object>(dest: string, body: T) {
-    // webrtc 목적지는 조인 완료까지 큐잉
     if (dest.startsWith('/app/webrtc')) this.enqueue(dest, body);
     else this._publish(dest, body);
   }
@@ -328,7 +339,6 @@ export default class SignalingClient {
     const userIdNum = toNumericId(this.userId);
     dlog('JOIN room', roomIdNum, 'user', userIdNum);
 
-    // STOMP-조인 전 상태로 초기화
     this.joinedOk = false;
     this.joinedResolvers = [];
     this.outbox = [];
@@ -337,12 +347,11 @@ export default class SignalingClient {
       roomId: roomIdNum,
       userId: userIdNum,
     });
-    // 서버에서 별도 ACK가 없다면 소프트 딜레이 후 조인 완료 처리
+
     setTimeout(() => this.resolveJoined(), 500);
   }
 
   async sendSignal(signal: WebRTCSignal) {
-    // 안전: 조인 완료 전에는 대기
     await this.waitUntilJoined();
 
     const roomIdNum = toNumericId(this.roomId);
@@ -377,7 +386,6 @@ export default class SignalingClient {
   }
 
   sendMediaToggle(mediaType: TogglingMediaType, enabled: boolean) {
-    // 미디어 토글도 webrtc 경로면 큐잉 대상이 되도록
     this.pub('/app/webrtc/media/toggle', {
       roomId: toNumericId(this.roomId),
       mediaType,
@@ -392,7 +400,7 @@ export default class SignalingClient {
     this.client.deactivate();
     this._ready = false;
     this.activated = false;
-    // 상태 초기화
+
     this.joinedOk = false;
     this.joinedResolvers = [];
     this.outbox = [];

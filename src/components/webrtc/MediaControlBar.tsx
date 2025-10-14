@@ -15,23 +15,16 @@ type Props = {
 };
 
 export default function MediaControlBar({
-  micOn,
-  camOn,
-  shareOn,
-  onToggleMic,
-  onToggleCam,
-  onToggleShare,
+  micOn, camOn, shareOn,
+  onToggleMic, onToggleCam, onToggleShare,
   className = "",
 }: Props) {
   return (
     <div
       className={[
-        // 위치/컨테이너
         "fixed left-1/2 -translate-x-1/2 bottom-6 z-40",
         "h-10 min-w-[200px]",
-        // 외형
         "rounded-full border border-[color:var(--color-text-primary)] bg-transparent",
-        // 내용
         "flex items-center justify-center gap-2 px-2",
         className,
       ].join(" ")}
@@ -42,43 +35,31 @@ export default function MediaControlBar({
         label={micOn ? "마이크 끄기" : "마이크 켜기"}
         onClick={onToggleMic}
         iconOn={<IoIosMic size={20} />}
-        iconOff={
-          <IoIosMicOff size={20} color="var(--color-error-500)" />
-        }
+        iconOff={<IoIosMicOff size={20} color="var(--color-error-500)" />}
       />
       <IconButton
         active={camOn}
         label={camOn ? "카메라 끄기" : "카메라 켜기"}
         onClick={onToggleCam}
         iconOn={<IoVideocamOutline size={20} />}
-        iconOff={
-          <IoVideocamOffOutline size={20} color="var(--color-error-500)" />
-        }
+        iconOff={<IoVideocamOffOutline size={20} color="var(--color-error-500)" />}
       />
       <IconButton
         active={shareOn}
         label={shareOn ? "화면공유 중지" : "화면공유 시작"}
         onClick={onToggleShare}
         iconOn={<LuScreenShare size={20} />}
-        iconOff={
-          <LuScreenShareOff size={20} color="var(--color-error-500)" />
-        }
+        iconOff={<LuScreenShareOff size={20} color="var(--color-error-500)" />}
       />
     </div>
   );
 }
 
 function IconButton({
-  active,
-  label,
-  iconOn,
-  iconOff,
-  onClick,
+  active, label, iconOn, iconOff, onClick,
 }: {
-  active: boolean;
-  label: string;
-  iconOn: React.ReactNode;
-  iconOff: React.ReactNode;
+  active: boolean; label: string;
+  iconOn: React.ReactNode; iconOff: React.ReactNode;
   onClick: () => void;
 }) {
   return (
@@ -87,9 +68,9 @@ function IconButton({
       onClick={onClick}
       className={[
         "h-10 w-10 rounded-full grid place-items-center transition",
-        "hover cursor-pointer focus:outline-none",
+        "cursor-pointer focus:outline-none",
       ].join(" ")}
-      aria-pressed={active ? true : undefined}
+      aria-pressed={active}      
       aria-label={label}
       title={label}
     >

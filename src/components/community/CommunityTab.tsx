@@ -43,15 +43,16 @@ function CommunityTab() {
           href="/community/editor"
           className="inline-flex gap-4 w-full items-center justify-center"
         >
-          <Image
-            src={isList ? '/icon/community/plus-white.svg' : '/icon/community/plus-black.svg'}
-            alt=""
-            width={16}
-            height={16}
-            className="w-4 h-auto"
-            unoptimized
-            priority={false}
-          />
+          <div className="size-4 relative">
+            <Image
+              src={isList ? '/icon/community/plus-white.svg' : '/icon/community/plus-black.svg'}
+              alt=""
+              fill
+              className="w-4 h-auto"
+              unoptimized
+              priority={false}
+            />
+          </div>
           <span className="block text-xs sm:text-base">신규 그룹 모집</span>
         </Link>
       </div>

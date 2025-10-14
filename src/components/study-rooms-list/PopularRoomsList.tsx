@@ -7,6 +7,7 @@ import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
 import Pagination from "@/components/Pagination";
 import { getPopularRooms } from "@/api/apiRooms";
 import type { AllRoomsList } from "@/@types/rooms";
+import useRequireLogin from "@/hook/useRequireLogin";
 
 const UI_PAGE_SIZE = 12;
 const SERVER_PAGE_SIZE = 60;
@@ -14,6 +15,7 @@ const SERVER_PAGE_SIZE = 60;
 export default function PopularRoomsList() {
   const router = useRouter();
   const params = useSearchParams();
+  const requireLogin = useRequireLogin();
 
   const urlPage = useMemo(() => Math.max(1, Number(params.get("page") ?? 1)), [params]);
   const keyword = useMemo(() => (params.get("search") ?? "").trim(), [params]);
@@ -104,7 +106,9 @@ export default function PopularRoomsList() {
     return filteredRows;
   }, [keyword, filteredRows, currentPageOneBase]);
 
-  const enterRoom = (room: AllRoomsList) => {
+  const enterRoom = (room: AllRoomsList) => { 
+    const next = `/study-rooms/${room.roomId}`;
+    if (!requireLogin(next)) return;
     if (room.isPrivate) {
       setPending(room);
       setPwOpen(true);
@@ -149,7 +153,7 @@ export default function PopularRoomsList() {
               key={room.roomId}
               title={room.title}
               description={room.description}
-              coverSrc={null}
+              coverSrc={room.thumbnailUrl ?? null}
               isPrivate={room.isPrivate}
               clickable
               onClick={() => enterRoom(room)}

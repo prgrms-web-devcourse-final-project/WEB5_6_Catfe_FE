@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
         hostname: 'avatars.githubusercontent.com', // GitHub 프로필 이미지 도메인
         pathname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 'team5-s3-1.s3.ap-northeast-2.amazonaws.com',
+      },
     ],
   },
 };

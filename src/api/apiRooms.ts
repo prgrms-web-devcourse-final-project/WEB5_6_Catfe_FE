@@ -98,13 +98,12 @@ export const getPopularRooms = (page: number, size: number) =>
 export const getEnterRooms = (page: number, size: number) =>
   fetchRooms<AllRoomsList>("/api/rooms", page, size, "입장 가능한 공개 스터디룸 목록을 불러오지 못했어요.");
 
+export const getPublicRooms = (page: number, size: number) =>
+  fetchRooms<AllRoomsList>("/api/rooms/public", page, size, "공개 스터디룸 목록을 불러오지 못했어요.");
+
 export async function createRoom(dto: CreateRoomDto): Promise<CreateRoomRes> {
-  try {
-    const res = await api.post<ApiEnvelope<CreateRoomRes>>("/api/rooms", dto);
-    return res.data.data;
-  } catch (err: unknown) {
-    throw new Error(safeErrorMessage(err, "스터디룸 생성에 실패했어요."));
-  }
+  const res = await api.post<ApiEnvelope<CreateRoomRes>>("/api/rooms", dto);
+  return res.data.data;
 }
 
 export type RoomMemberDTO = {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import cat1 from "@/assets/cats/cat-5.svg";
 import cat2 from "@/assets/cats/cat-15.svg";
 
-type SortKey = "all" | "enter" | "popular";
+type SortKey = "all" | "public" | "enter" | "popular";
 
 type Props = {
   search?: string;
@@ -20,6 +20,7 @@ function buildQS(base: { sort: SortKey; page: number }) {
 export default function FilterTabs({ sort = "all" }: Props) {
   const tabs: { key: SortKey; label: string }[] = [
     { key: "all", label: "전체" },
+    { key: "public", label: "공개 캣페" },
     { key: "popular", label: "인기순" },
     { key: "enter", label: "입장 가능" },
   ];

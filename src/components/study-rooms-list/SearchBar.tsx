@@ -8,7 +8,7 @@ type Props = {
 
 export default function SearchBar({ search = "", sort = "all" }: Props) {
   return (
-    <form method="get" className="mx-auto mt-10 mb-[200px] flex max-w-lg justify-center items-center gap-2">
+    <form method="get" className="mx-auto mt-10 mb-20 flex max-w-lg justify-center items-center gap-2">
       <div className="w-full h-auto max-w-[480px] px-4 py-2 flex justify-between rounded-2xl border-2 border-text-secondary focus-within:border-secondary-600">
         <input
           name="search"

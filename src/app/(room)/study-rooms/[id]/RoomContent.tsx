@@ -117,10 +117,8 @@ export default function RoomContent() {
   const [wsReady, setWsReady] = useState(false);
   const [joined, setJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
-
   const [roomSnap, setRoomSnap] = useState<UITypes.RoomSnapshotUI | null>(null);
   const [snapError, setSnapError] = useState<string | null>(null);
-
   const signalingRef = useRef<SignalingClient | null>(null);
 
   // WS 연결

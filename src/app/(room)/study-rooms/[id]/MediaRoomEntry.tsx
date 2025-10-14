@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import MediaRoomClient from "./MediaRoomClient";
 import { useRoomInfoQuery } from "@/hook/useRoomInfo";
 import { useRoomMembersQuery } from "@/hook/useRoomMembers";
-import type { RoomSnapshotUI, UsersListItem, RoomInfo } from "@/@types/rooms";
+import type { RoomSnapshotUI, UsersListItem, RoomInfo, ApiRoomMemberDto } from "@/@types/rooms";
+import SignalingClient from "@/lib/signalingClient";
 
+/** 로컬 스토리지 → 'u-<num>' 형태 meUid */
 function getMeUid(): string | null {
   try {
     const raw = localStorage.getItem("user");
@@ -14,7 +16,9 @@ function getMeUid(): string | null {
     const id = u?.userId ?? u?.userid ?? u?.id ?? null;
     const n = typeof id === "string" ? Number(id) : id;
     return Number.isFinite(n) ? `u-${Number(n)}` : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
@@ -26,8 +30,10 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     staleTime: 0,
   });
 
+  // 브라우저에서만 meUid를 읽음
   const meUid = typeof window !== "undefined" ? getMeUid() : null;
 
+  /** RoomSnapshotUI 구성 */
   const roomUi: RoomSnapshotUI | null = useMemo(() => {
     if (!infoDto) return null;
 
@@ -46,18 +52,19 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
       mediaEnabled: true,
     };
 
-    const members: UsersListItem[] = membersDto.map((m) => ({
-      id: m.userId,
+    const members: UsersListItem[] = (membersDto as ApiRoomMemberDto[]).map((m) => ({
+      id: typeof m.userId === "string" ? Number(m.userId) : m.userId,
       name: m.nickname,
-      role: m.role,
-      email: "",
+      role: m.role ?? "MEMBER",
+      email: m.email ?? "",
       avatarUrl: m.profileImageUrl ?? null,
-      isMe: meUid === `u-${m.userId}`,
+      isMe: meUid === `u-${Number(m.userId)}`,
       media: { camOn: true, screenOn: false },
-      joinedAt: m.joinedAt ?? null,
+      joinedAt: null,
     }));
 
-    if (!members.some((x) => x.isMe) && meUid) {
+    // 혹시 내 정보가 목록에 없을 때 보정
+    if (meUid && !members.some((x) => x.isMe)) {
       const n = Number(meUid.split("-")[1]);
       const i = members.findIndex((x) => x.id === n);
       if (i >= 0) members[i] = { ...members[i], isMe: true };
@@ -66,6 +73,38 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     return { info, members };
   }, [infoDto, membersDto, meUid]);
 
-  if (!roomUi) return null;
-  return <MediaRoomClient room={roomUi} />;
+  /** ---- SignalingClient 생성/해제 ---- */
+  const signalingRef = useRef<SignalingClient | null>(null);
+
+  useEffect(() => {
+    // roomUi랑 meUid가 준비된 뒤에 생성
+    if (!roomUi || !meUid) return;
+
+    // 이미 있으면 건너뜀
+    if (signalingRef.current) return;
+
+    const userIdForWS = meUid.split("-")[1] ?? ""; // 'u-12' → '12'
+    const client = new SignalingClient(String(roomNum), userIdForWS, () => {
+      // onReady: 필요하면 상태 갱신/로그 추가
+      // console.log("[ws] connected");
+    });
+    signalingRef.current = client;
+
+    return () => {
+      // 언마운트/room 변경 시 해제
+      try { signalingRef.current?.disconnect(); } finally {
+        signalingRef.current = null;
+      }
+    };
+  }, [roomUi, meUid, roomNum]);
+
+  if (!roomUi || !meUid || !signalingRef.current) return null;
+
+  return (
+    <MediaRoomClient
+      room={roomUi}
+      meId={meUid}                         
+      signalingClient={signalingRef.current} 
+    />
+  );
 }

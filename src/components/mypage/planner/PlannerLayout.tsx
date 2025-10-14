@@ -3,7 +3,6 @@
 import { HOURS } from '@/lib/datetime';
 import { useEffect, useMemo, useState } from 'react';
 import PlanDataContainer from './PlanDataContainer';
-import RecordDataContainer from './RecordDataContainer';
 import { useSelectedDate } from '@/hook/useSelectedDate';
 import dayjs from '@/lib/dayjs';
 
@@ -31,8 +30,7 @@ function PlannerLayout() {
   return (
     <div className="relative p-6 rounded-xl border border-secondary-900 overflow-auto bg-background-white pt-0 h-full min-h-0">
       <div className="sticky top-0 z-40 flex items-center justify-between p-2 pt-6 bg-background-base">
-        <span className="font-semibold whitespace-nowrap w-1/2 text-left">PLAN</span>
-        <span className="font-semibold whitespace-nowrap w-1/2 text-right">RECORD</span>
+        <h3 className="text-lg font-bold">TimeLine</h3>
       </div>
 
       <div className="relative" style={{ height: gridHeight }}>
@@ -47,14 +45,8 @@ function PlannerLayout() {
         </div>
 
         <div className="flex relative h-full">
-          {/* Plan */}
-          <div className="flex-1 relative">
-            <div className="relative" style={{ height: gridHeight }}>
-              <PlanDataContainer hourHeight={hourHeight} />
-            </div>
-          </div>
           {/* Time Label */}
-          <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border border-secondary-900 sticky left-1/2 -translate-x-1/2 z-20 bg-background-white">
+          <div className="w-12 flex-shrink-0 flex flex-col pointer-events-none select-none border border-b-0 border-secondary-900 sticky left-0 z-20 bg-background-white">
             {HOURS.map((hour) => (
               <div
                 key={hour}
@@ -65,16 +57,20 @@ function PlannerLayout() {
               </div>
             ))}
           </div>
-
-          {/* Record */}
-          <div className="flex-1 relative overflow-auto">
-            <RecordDataContainer hourHeight={hourHeight} />
+          {/* Plan */}
+          <div className="flex-1 relative">
+            <div className="relative" style={{ height: gridHeight }}>
+              <PlanDataContainer hourHeight={hourHeight} />
+            </div>
           </div>
         </div>
 
         {/* 현재 시간 indicator */}
         {isToday && nowTop >= 0 && nowTop <= gridHeight && (
-          <div className="pointer-events-none absolute left-0 right-0 z-30" style={{ top: nowTop }}>
+          <div
+            className="pointer-events-none absolute left-14 right-0 z-30"
+            style={{ top: nowTop }}
+          >
             <div className="h-0 border-t-2 border-primary-700" />
             <div className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-primary-700" />
           </div>

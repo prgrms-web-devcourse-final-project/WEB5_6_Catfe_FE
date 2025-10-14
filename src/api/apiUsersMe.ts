@@ -18,6 +18,12 @@ export async function apiPatchMe(payload: UpdateUserBody): Promise<User> {
   return res.data;
 }
 
+export async function apiDeleteMe(): Promise<void> {
+  const { data: res } = await api.delete<ApiResponse<void>>('/api/users/me');
+  if (!res.success) throw new Error(`DELETE /api/users/me/ failed: ${res.message}`);
+  return res.data;
+}
+
 export function useUser() {
   return useQuery<User, Error>({
     queryKey: userQueryKey.me(),

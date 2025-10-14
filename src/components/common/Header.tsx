@@ -88,9 +88,11 @@ function Header() {
             <Link href="/community" className="hover:font-semibold">
               Community
             </Link>
-            <Link href="/mypage" className="hover:font-semibold">
-              My Page
-            </Link>
+            {user && (
+              <Link href="/mypage" className="hover:font-semibold">
+                My Page
+              </Link>
+            )}
           </nav>
           {user ? (
             <div className="relative" ref={dropdownRef}>

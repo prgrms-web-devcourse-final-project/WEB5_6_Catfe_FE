@@ -1,6 +1,7 @@
 import React from "react";
 import clsx from "clsx";
 import Image from "next/image";
+import { useState } from "react";
 
 type Props = {
   title: string;
@@ -21,6 +22,9 @@ export default function StudyRoomCard({
   onClick,
   className,
 }: Props) {
+  const [imgError, setImgError] = useState(false);
+  const hasThumb = !!coverSrc && !imgError;
+
   return (
     <article
       className={clsx(
@@ -31,16 +35,18 @@ export default function StudyRoomCard({
       onClick={clickable ? onClick : undefined}
       aria-label={title}
     >
-      {/* 상단: 썸네일 영역 */}
       <div className="relative">
         <div className="relative min-h-40 w-full flex justify-center items-center bg-secondary-500">
-          {coverSrc ? (
+          {hasThumb ? (
             <Image
-              src={coverSrc}
-              alt="썸네일 이미지"
+              src={coverSrc as string}
+              alt={`${title} 썸네일`}
               fill
               className="object-cover"
-              sizes="object-cover"
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+              onError={() => setImgError(true)}
+              priority={false}
+              draggable={false}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
@@ -57,7 +63,6 @@ export default function StudyRoomCard({
         <div className="h-[2px] w-full bg-text-secondary" />
       </div>
 
-      {/* 하단 정보 */}
       <div className="p-3 flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-text-primary leading-tight line-clamp-1 text-xs">

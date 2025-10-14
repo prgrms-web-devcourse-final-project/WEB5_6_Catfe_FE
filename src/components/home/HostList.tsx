@@ -130,7 +130,7 @@ export default function HostList({ search = '' }: { search?: string }) {
               key={room.roomId}
               title={room.title}
               description={room.description}
-              coverSrc={null}
+              coverSrc={room.thumbnailUrl ?? null}
               isPrivate={room.isPrivate}
               clickable
               onClick={() => enterRoom(room)}

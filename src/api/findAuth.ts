@@ -30,7 +30,7 @@ export function mapFindPwError(code?: string): string {
     case "COMMON_400":
       return "잘못된 요청입니다. 입력 값을 확인해주세요.";
     case "TOKEN_003":
-      return "유효하지 않은(또는 만료된) 토큰입니다. 다시 요청해주세요.";
+      return "유효하지 이메일입니다. 확인 후 다시 시도해주세요.";
     case "USER_005":
       return "비밀번호는 최소 8자 이상, 숫자/특수문자를 포함해야 합니다.";
     default:

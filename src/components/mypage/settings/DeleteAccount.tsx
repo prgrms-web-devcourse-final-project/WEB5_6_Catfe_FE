@@ -5,8 +5,10 @@ import { useDeleteUser } from '@/hook/useAuthActions';
 import { useConfirm } from '@/hook/useConfirm';
 import showToast from '@/utils/showToast';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 function DeleteAccount() {
+  const router = useRouter();
   const confirm = useConfirm();
   const { mutateAsync: deleteUser, isPending: isDeleting } = useDeleteUser();
 
@@ -35,7 +37,7 @@ function DeleteAccount() {
       await deleteUser();
       showToast('success', 'Catfé를 떠나셨습니다. 언젠가 다시 만나요!👋');
       setTimeout(() => {
-        window.location.href = '/';
+        router.push('/');
       }, 3000);
     } catch (error) {
       console.error('회원 탈퇴 오류:', error);

@@ -23,7 +23,7 @@ function Footer() {
               target="_blank"
               className="flex items-center gap-1 hover:text-primary-500"
             >
-              <Image src="/socialIcon/git.svg" alt="깃헙 아이콘" width={20} height={20} />
+              <Image src="/socialIcon/github.svg" alt="깃헙 아이콘" width={20} height={20} />
               FE GitHub
             </Link>
             <Link
@@ -31,7 +31,7 @@ function Footer() {
               target="_blank"
               className="flex items-center gap-1 hover:text-primary-500"
             >
-              <Image src="/socialIcon/git.svg" alt="깃헙 아이콘" width={20} height={20} />
+              <Image src="/socialIcon/github.svg" alt="깃헙 아이콘" width={20} height={20} />
               BE GitHub
             </Link>
           </div>

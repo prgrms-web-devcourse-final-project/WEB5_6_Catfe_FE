@@ -18,303 +18,223 @@ const idNum = (id: string | number) => {
   return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
 };
 
-type GetDisplayMedia = (c?: DisplayMediaStreamConstraints) => Promise<MediaStream>;
 function getDisplayStream(constraints: DisplayMediaStreamConstraints): Promise<MediaStream> {
-  const md = navigator.mediaDevices;
-  const fn = (md.getDisplayMedia as GetDisplayMedia | undefined)
-          ?? (navigator.getDisplayMedia as GetDisplayMedia | undefined);
-  if (!fn) return Promise.reject(new Error('getDisplayMedia is not supported by this browser'));
-  return fn(constraints);
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    return Promise.reject(new Error('getDisplayMedia is not supported by this browser'));
+  }
+  // "Illegal invocation" 오류를 방지하기 위해 항상 navigator.mediaDevices를 통해 호출합니다.
+  return navigator.mediaDevices.getDisplayMedia(constraints);
 }
 
 /** ---------- types ---------- */
 type PeerConnections = Record<string, RTCPeerConnection>;
-type RemoteStreams  = Record<string, MediaStream>;
-type Senders        = { audio?: RTCRtpSender; video?: RTCRtpSender };
+type RemoteStreams = Record<string, MediaStream>;
 
 export function useWebRTC(params: {
   roomId: string;
   meId: string;
   localStream: MediaStream | null;
   rtcConfig: RTCConfiguration;
-  onShareToggle?: (shareOn: boolean) => void;
-  onMediaState?: (s: { micOn?: boolean; camOn?: boolean; shareOn?: boolean }) => void;
+  signalingClient: SignalingClient | null;
+  peerIds: string[];
 }) {
-  const { roomId, meId, localStream, rtcConfig, onShareToggle, onMediaState } = params;
-
-  const [peers, setPeers]                   = useState<PeerConnections>({});
-  const [remoteStreams, setRemoteStreams]   = useState<RemoteStreams>({});
-  const [signalingReady, setSignalingReady] = useState(false);
+  const { meId, localStream, rtcConfig, signalingClient, peerIds } = params;
 
   const peersRef = useRef<PeerConnections>({});
-  useEffect(() => { peersRef.current = peers; }, [peers]);
+  const [remoteStreams, setRemoteStreams] = useState<RemoteStreams>({});
+  const [signalingReady, setSignalingReady] = useState(false);
+  const rtcConfigRef = useRef(rtcConfig);
 
-  const sendersRef       = useRef<Record<string, Senders>>({});
-  const pendingIceMap    = useRef<Record<string, RTCIceCandidateInit[]>>({});
-  const signalingRef     = useRef<SignalingClient | null>(null);
-  const hasOfferedRef    = useRef<Record<string, boolean>>({});
-  const disconnectTimers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  useEffect(() => { rtcConfigRef.current = rtcConfig; }, [rtcConfig]);
 
-  // 로컬 상태
-  const [micOn, setMicOn]         = useState(true);
-  const [camOn, setCamOn]         = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
-
+  
   const shareStreamRef = useRef<MediaStream | null>(null);
   const [localPreviewStream, setLocalPreviewStream] = useState<MediaStream | null>(null);
+  const [activeVideoTrack, setActiveVideoTrack] = useState<MediaStreamTrack | null>(null);
 
-  const audioTrackId = useMemo(() => localStream?.getAudioTracks?.()[0]?.id ?? '', [localStream]);
-  const videoTrackId = useMemo(() => localStream?.getVideoTracks?.()[0]?.id ?? '', [localStream]);
-
-  /** 단일 피어 정리 */
   const cleanupPeer = useCallback((key: string) => {
-    setPeers(prev => { const n = { ...prev }; delete n[key]; return n; });
-    setRemoteStreams(prev => { const n = { ...prev }; delete n[displayKey(key)]; return n; });
-    try { sendersRef.current[key]?.audio?.replaceTrack(null); } catch {}
-    try { sendersRef.current[key]?.video?.replaceTrack(null); } catch {}
-    delete sendersRef.current[key];
-    delete pendingIceMap.current[key];
-    delete hasOfferedRef.current[key];
-    const t = disconnectTimers.current[key]; if (t) clearTimeout(t);
-    delete disconnectTimers.current[key];
+    dlog(`[cleanup] peer: ${key}`);
+    const pc = peersRef.current[key];
+    if (pc) {
+      pc.ontrack = null; pc.onicecandidate = null; pc.onconnectionstatechange = null; pc.onnegotiationneeded = null;
+      try { pc.close(); } catch {}
+      delete peersRef.current[key];
+    }
+    setRemoteStreams(prev => {
+      const newState = { ...prev };
+      delete newState[displayKey(key)];
+      return newState;
+    });
   }, []);
 
-  /** RTCPeerConnection 생성 */
-  const createPeerConnection = useCallback((key: string): RTCPeerConnection => {
-    const exist = peersRef.current[key]; if (exist) return exist;
+  const createPeerConnection = useCallback((key: string) => {
+    if (peersRef.current[key]) return peersRef.current[key];
+    dlog(`[pc] Creating new peer connection for ${key}`);
+    const pc = new RTCPeerConnection(rtcConfigRef.current);
+    peersRef.current[key] = pc;
 
-    const pc = new RTCPeerConnection(rtcConfig);
-    const aTrans = pc.addTransceiver('audio', { direction: 'sendrecv' });
-    const vTrans = pc.addTransceiver('video', { direction: 'sendrecv' });
-    sendersRef.current[key] = { audio: aTrans.sender, video: vTrans.sender };
+    const audioTrack = localStream?.getAudioTracks()[0];
+    if (audioTrack) pc.addTrack(audioTrack, localStream!);
+    if (activeVideoTrack) pc.addTrack(activeVideoTrack, localStream!);
 
-    // 초기 트랙 부착
-    const s = sendersRef.current[key];
-    const a = localStream?.getAudioTracks?.()[0] ?? null;
-    const v = (isSharing
-      ? shareStreamRef.current?.getVideoTracks?.()[0]
-      : localStream?.getVideoTracks?.()[0]) ?? null;
-
-    if (a) { a.enabled = micOn; void s.audio?.replaceTrack(a); }
-    if (v) { v.enabled = camOn || isSharing; void s.video?.replaceTrack(v); }
-
+    pc.onnegotiationneeded = async () => {
+      dlog(`[negotiation] needed for ${key}`);
+      try {
+        if (idNum(meId) < idNum(key)) {
+          dlog(`[negotiation] I am impolite, creating offer for ${key}`);
+          await pc.setLocalDescription(await pc.createOffer());
+          if (pc.localDescription) {
+            signalingClient?.sendSignal({ type: 'offer', fromUserId: meId, toUserId: key, sdp: pc.localDescription.toJSON() });
+          }
+        }
+      } catch (err) { console.error(`[negotiation] createOffer failed for ${key}:`, err); }
+    };
     pc.ontrack = (e: RTCTrackEvent) => {
-      const stream = e.streams[0]; if (!stream) return;
-      setRemoteStreams(prev => ({ ...prev, [displayKey(key)]: stream }));
+      dlog(`[track] received from ${key}`, e.streams[0]);
+      setRemoteStreams(prev => ({ ...prev, [displayKey(key)]: e.streams[0] }));
     };
     pc.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
-      if (!e.candidate) return;
-      signalingRef.current?.sendSignal({
-        type: 'ice',
-        fromUserId: meId,
-        toUserId: key,
-        candidate: e.candidate.toJSON(),
-      });
+      if (e.candidate) {
+        signalingClient?.sendSignal({ type: 'ice', fromUserId: meId, toUserId: key, candidate: e.candidate.toJSON() });
+      }
     };
     pc.onconnectionstatechange = () => {
-      const st = pc.connectionState;
-      if (st === 'disconnected') {
-        const prev = disconnectTimers.current[key]; if (prev) clearTimeout(prev);
-        disconnectTimers.current[key] = setTimeout(() => {
-          if (pc.connectionState === 'disconnected') { try { pc.close(); } catch {} cleanupPeer(key); }
-        }, 3000);
-      } else if (st === 'failed' || st === 'closed') {
-        const t = disconnectTimers.current[key]; if (t) clearTimeout(t);
-        try { pc.close(); } catch {} cleanupPeer(key);
+      dlog(`[state] for ${key} is now ${pc.connectionState}`);
+      if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
+        cleanupPeer(key);
       }
     };
-
-    setPeers(prev => ({ ...prev, [key]: pc }));
     return pc;
-  }, [rtcConfig, localStream, meId, cleanupPeer, isSharing, micOn, camOn]);
+  }, [meId, localStream, signalingClient, cleanupPeer, activeVideoTrack]);
 
-  /** 시그널 처리 */
-  const onSignalRef = useRef<(s: WebRTCSignal) => void>(() => {});
-  onSignalRef.current = async (signal: WebRTCSignal) => {
-    const { type, fromUserId, sdp, candidate } = signal;
-    const k = sigKey(fromUserId);
-    let pc = peersRef.current[k]; if (!pc) pc = createPeerConnection(k);
-
-    if (type === 'offer' && sdp) {
-      const polite = idNum(meId) > idNum(k);
-      const glare  = pc.signalingState !== 'stable';
+  useEffect(() => {
+    if (!signalingClient) return;
+    setSignalingReady(signalingClient.isReady);
+    const handleSignal = async (signal: WebRTCSignal) => {
+      const { type, fromUserId, sdp, candidate } = signal;
+      if (!fromUserId) return;
+      const k = sigKey(fromUserId);
+      const pc = peersRef.current[k] || createPeerConnection(k);
       try {
-        if (glare) {
-          if (!polite) return;
-          await pc.setLocalDescription({ type: 'rollback' } as RTCLocalSessionDescriptionInit);
+        if (type === 'offer' && sdp) {
+          const isPolite = idNum(meId) > idNum(k);
+          const glare = pc.signalingState !== 'stable';
+          if (glare && !isPolite) return;
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          await pc.setLocalDescription(await pc.createAnswer());
+          if (pc.localDescription) {
+            signalingClient.sendSignal({ type: 'answer', fromUserId: meId, toUserId: String(fromUserId), sdp: pc.localDescription.toJSON() });
+          }
+        } else if (type === 'answer' && sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        } else if (type === 'ice' && candidate) {
+          await pc.addIceCandidate(candidate);
         }
-        await pc.setRemoteDescription(sdp);
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        signalingRef.current?.sendSignal({ type: 'answer', fromUserId: meId, toUserId: String(fromUserId), sdp: answer });
-        for (const c of (pendingIceMap.current[k] || [])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
-        pendingIceMap.current[k] = [];
-      } catch (e) { console.warn('[rtc] handle OFFER error', e); }
-    } else if (type === 'answer' && sdp) {
-      try {
-        await pc.setRemoteDescription(sdp);
-        for (const c of (pendingIceMap.current[k] || [])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
-        pendingIceMap.current[k] = [];
-      } catch (e) { console.warn('[rtc] handle ANSWER error', e); }
-    } else if (type === 'ice' && candidate) {
-      if (pc.remoteDescription) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.warn(e); }
-      } else {
-        (pendingIceMap.current[k] ||= []).push(candidate);
-      }
-    }
-  };
-
-  /** 시그널링 lifecycle */
-  useEffect(() => {
-    const client = new SignalingClient(
-      roomId,
-      meId,
-      (s) => onSignalRef.current(s),
-      () => setSignalingReady(true),
-      (uid, state) => dlog('media-state <=', uid, state),
-    );
-    signalingRef.current = client;
-
-    return () => {
-      setSignalingReady(false);
-      client.disconnect();
-      signalingRef.current = null;
-
-      setPeers(prev => { Object.values(prev).forEach(pc => { try { pc.close(); } catch {} }); return {}; });
-      setRemoteStreams({});
-      pendingIceMap.current = {};
-      sendersRef.current = {};
-      hasOfferedRef.current = {};
-      Object.values(disconnectTimers.current).forEach(t => t && clearTimeout(t));
-      disconnectTimers.current = {};
-      dlog('unmount');
+      } catch (e) { console.error(`[signal] Error handling ${type} from ${k}:`, e); }
     };
-  }, [roomId, meId]);
+    signalingClient.addSignalListener(handleSignal);
+    return () => {
+      signalingClient.removeSignalListener(handleSignal);
+      Object.keys(peersRef.current).forEach(cleanupPeer);
+    };
+  }, [signalingClient, meId, createPeerConnection, cleanupPeer]);
 
-  /** 로컬 기본 트랙 -> 모든 sender 반영 + 프리뷰 구성 */
   useEffect(() => {
-    if (!localStream) { setLocalPreviewStream(null); return; }
-
-    const a = localStream.getAudioTracks?.()[0] ?? null;
-    const v = localStream.getVideoTracks?.()[0] ?? null;
-    if (a) setMicOn(a.enabled);
-    if (v && !isSharing) setCamOn(v.enabled);
-
-    if (!isSharing) {
-      setLocalPreviewStream(new MediaStream([...(a ? [a] : []), ...(v ? [v] : [])]));
+    if (!activeVideoTrack) return;
+    for (const peer of Object.values(peersRef.current)) {
+      const sender = peer.getSenders().find(s => s.track?.kind === 'video');
+      sender?.replaceTrack(activeVideoTrack);
     }
+  }, [activeVideoTrack]);
 
-    Object.values(sendersRef.current).forEach((s) => {
-      try {
-        if (a) { a.enabled = micOn; void s.audio?.replaceTrack(a); }
-        if (!isSharing && v) { v.enabled = camOn; void s.video?.replaceTrack(v); }
-      } catch (e) { console.warn('[rtc] replaceTrack failed:', e); }
-    });
-  }, [localStream, audioTrackId, videoTrackId, isSharing]);
+  useEffect(() => {
+    if (localStream && !activeVideoTrack) {
+      setActiveVideoTrack(localStream.getVideoTracks()[0] ?? null);
+    }
+  }, [localStream, activeVideoTrack]);
 
-  /** 화면 공유 시작/종료 */
+  useEffect(() => {
+    const audioTrack = localStream?.getAudioTracks()[0];
+    const tracks = [];
+    if (audioTrack) {
+      audioTrack.enabled = micOn;
+      tracks.push(audioTrack);
+    }
+    if (activeVideoTrack) {
+      activeVideoTrack.enabled = isSharing ? true : camOn;
+      tracks.push(activeVideoTrack);
+    }
+    setLocalPreviewStream(new MediaStream(tracks));
+  }, [localStream, activeVideoTrack, micOn, camOn, isSharing]);
+
+  useEffect(() => {
+    if (!localStream || !signalingReady) return;
+    const currentPeerKeys = new Set(Object.keys(peersRef.current));
+    const newPeerKeys = new Set(peerIds.filter(id => sigKey(id) !== meId).map(sigKey));
+    for (const key of newPeerKeys) if (!currentPeerKeys.has(key)) createPeerConnection(key);
+    for (const key of currentPeerKeys) if (!newPeerKeys.has(key)) cleanupPeer(key);
+  }, [peerIds, localStream, meId, signalingReady, createPeerConnection, cleanupPeer]);
+
+  const stopScreenShare = useCallback(() => {
+    if (!isSharing) return;
+    const cameraTrack = localStream?.getVideoTracks()[0] ?? null;
+    setActiveVideoTrack(cameraTrack);
+    shareStreamRef.current?.getTracks().forEach(track => track.stop());
+    shareStreamRef.current = null;
+    setIsSharing(false);
+    setCamOn(true);
+    signalingClient?.sendMediaToggle('SCREEN', false);
+  }, [isSharing, localStream, signalingClient]);
+
   const startScreenShare = useCallback(async () => {
     if (isSharing) return;
     try {
-      const display = await getDisplayStream({ video: true, audio: false });
-      shareStreamRef.current = display;
-      const v = display.getVideoTracks?.()[0];
-      if (!v) throw new Error('no display video track');
-
-      for (const s of Object.values(sendersRef.current)) {
-        try { await s.video?.replaceTrack(v); } catch (e) { console.warn('[rtc] replaceTrack(display) failed:', e); }
+      const displayStream = await getDisplayStream({ video: true });
+      const screenTrack = displayStream.getVideoTracks()[0];
+      if (screenTrack) {
+        shareStreamRef.current = displayStream;
+        setActiveVideoTrack(screenTrack);
+        setIsSharing(true);
+        signalingClient?.sendMediaToggle('SCREEN', true);
+        screenTrack.onended = () => stopScreenShare();
       }
-
-      const a = localStream?.getAudioTracks?.()[0] ?? null;
-      setLocalPreviewStream(new MediaStream([...(a ? [a] : []), v]));
-
-      setIsSharing(true);
-      onShareToggle?.(true);
-      onMediaState?.({ shareOn: true });
-
-      v.addEventListener('ended', () => { void stopScreenShare(); });
-    } catch (e) {
-      console.warn('[rtc] startScreenShare error:', e);
+    } catch (err) {
+      console.error("Screen share failed:", err);
+      stopScreenShare();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSharing, localStream]);
+  }, [isSharing, signalingClient, stopScreenShare]);
 
-  const stopScreenShare = useCallback(async () => {
-    if (!isSharing) return;
-    const disp = shareStreamRef.current;
-    shareStreamRef.current = null;
-
-    const v = localStream?.getVideoTracks?.()[0] ?? null;
-    for (const s of Object.values(sendersRef.current)) {
-      try { await s.video?.replaceTrack(v ?? null); } catch (e) { console.warn('[rtc] replaceTrack(camera) failed:', e); }
-    }
-
-    const a = localStream?.getAudioTracks?.()[0] ?? null;
-    setLocalPreviewStream(new MediaStream([...(a ? [a] : []), ...(v ? [v] : [])]));
-
-    try { disp?.getTracks?.().forEach(t => t.stop()); } catch {}
-
-    setIsSharing(false);
-    onShareToggle?.(false);
-    onMediaState?.({ shareOn: false });
-  }, [isSharing, localStream, onShareToggle, onMediaState]);
-
-  /** 마이크/카메라 토글 */
   const toggleMic = useCallback(() => {
-    const a = localStream?.getAudioTracks?.()[0] ?? null;
-    if (!a) return;
-    a.enabled = !a.enabled;
-    setMicOn(a.enabled);
-    onMediaState?.({ micOn: a.enabled });
-  }, [localStream, onMediaState]);
+    const enabled = !micOn;
+    const audioTrack = localStream?.getAudioTracks()[0];
+    if (audioTrack) audioTrack.enabled = enabled;
+    signalingClient?.sendMediaToggle('AUDIO', enabled);
+    setMicOn(enabled);
+    dlog('Mic toggled to', enabled);
+  }, [micOn, localStream, signalingClient]);
 
-  const toggleCam = useCallback(async () => {
+  const toggleCam = useCallback(() => {
     if (isSharing) return;
-    const v = localStream?.getVideoTracks?.()[0] ?? null;
-    if (!v) return;
-    v.enabled = !v.enabled;
-    setCamOn(v.enabled);
-    onMediaState?.({ camOn: v.enabled });
-    for (const s of Object.values(sendersRef.current)) {
-      try { await s.video?.replaceTrack(v); } catch {}
-    }
-  }, [localStream, isSharing, onMediaState]);
+    const enabled = !camOn;
+    const videoTrack = localStream?.getVideoTracks()[0];
+    if (videoTrack) videoTrack.enabled = enabled;
+    signalingClient?.sendMediaToggle('VIDEO', enabled);
+    setCamOn(enabled);
+    dlog('Cam toggled to', enabled);
+  }, [camOn, isSharing, localStream, signalingClient]);
 
-  /** 수동 OFFER 발신 */
-  const callUser = useCallback(async (targetUserId: string) => {
-    if (!targetUserId) return;
-    const k = sigKey(targetUserId);
-    if (!signalingReady || hasOfferedRef.current[k]) return;
-
-    const pc = createPeerConnection(k);
-
-    const s = sendersRef.current[k];
-    const a = localStream?.getAudioTracks?.()[0] ?? null;
-    const v = (isSharing
-      ? shareStreamRef.current?.getVideoTracks?.()[0]
-      : localStream?.getVideoTracks?.()[0]) ?? null;
-
-    if (a && !s?.audio?.track) { a.enabled = micOn; await s?.audio?.replaceTrack(a); }
-    if (v && !s?.video?.track) { v.enabled = camOn || isSharing; await s?.video?.replaceTrack(v); }
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    hasOfferedRef.current[k] = true;
-
-    signalingRef.current?.sendSignal({ type: 'offer', fromUserId: meId, toUserId: targetUserId, sdp: offer });
-  }, [createPeerConnection, meId, localStream, signalingReady, isSharing, micOn, camOn]);
+  const callUser = useCallback((targetUserId: string) => {
+    if (!targetUserId || !signalingReady) return;
+    createPeerConnection(sigKey(targetUserId));
+  }, [createPeerConnection, signalingReady]);
 
   return {
-    peers,
-    remoteStreams,
-    signalingReady,
-    callUser,
-
+    peers: peersRef.current, remoteStreams, signalingReady, callUser,
     micOn, camOn, isSharing,
-    toggleMic, toggleCam,
-    startScreenShare, stopScreenShare,
-
+    toggleMic, toggleCam, startScreenShare, stopScreenShare,
     localPreviewStream,
   };
 }

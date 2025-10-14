@@ -1,12 +1,15 @@
 'use client';
 
 import Button from '@/components/Button';
+import { useConfirm } from '@/hook/useConfirm';
 import { useTodoList } from '@/hook/useTodoList';
+import showToast from '@/utils/showToast';
 import Image from 'next/image';
 import { useState } from 'react';
 
 function TodoList() {
   const [newTodoText, setNewTodoText] = useState('');
+  const confirm = useConfirm();
 
   const {
     todos,
@@ -27,6 +30,25 @@ function TodoList() {
     if (trimmedText) {
       createTodo(trimmedText);
       setNewTodoText('');
+    }
+  };
+
+  const handleDeleteTodo = async (todoId: number) => {
+    const confirmOk = await confirm({
+      title: '할일을 삭제하시겠습니까?',
+      description: <>삭제된 할일은 복원할 수 없습니다.</>,
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+
+    try {
+      deleteTodo(todoId);
+      showToast('success', '댓글이 삭제되었습니다.');
+    } catch (error) {
+      console.error('할일 삭제 실패:', error);
+      showToast('error', '할일 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -77,7 +99,7 @@ function TodoList() {
                   </span>
                   {/* 삭제 버튼 */}
                   <button
-                    onClick={() => deleteTodo(todo.id)}
+                    onClick={() => handleDeleteTodo(todo.id)}
                     aria-label="댓글 삭제"
                     className="cursor-pointer"
                     disabled={deletingId === todo.id}

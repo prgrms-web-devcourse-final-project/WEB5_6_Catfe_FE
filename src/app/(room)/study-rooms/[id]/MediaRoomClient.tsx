@@ -8,188 +8,155 @@ import { useWebRTC } from '@/hook/useWebRTC';
 import { useMediaStream } from '@/hook/useMediaStream';
 import { useRoomMembersQuery } from '@/hook/useRoomMembers';
 import type { RoomSnapshotUI, StreamsByUser, UsersListItem } from '@/@types/rooms';
+import * as UITypes from '@/@types/rooms';
+import SignalingClient from '@/lib/signalingClient';
 
 const DEBUG = false;
-
-/** 'u-12' → 12 */
-function idNumLike(id: string) {
-  const p = id.split('-')[1] ?? id;
-  const n = Number(p);
-  return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
-}
-function shouldInitiate(meId: string, peerId: string) {
-  return idNumLike(meId) < idNumLike(peerId);
-}
 
 /** STUN fallback */
 const DEFAULT_RTC: RTCConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-/** localStorage → 'u-<num>' 정규화 */
-function getMyUidFromLocal(): string | null {
-  try {
-    const raw = localStorage.getItem('user');
-    if (!raw) return null;
-    const u = JSON.parse(raw);
-    const id = u?.userId ?? u?.userid ?? u?.UserId ?? u?.id ?? u?.user_id ?? u?.ID ?? null;
-    const n = typeof id === 'string' ? Number(id) : id;
-    return Number.isFinite(n) ? `u-${Number(n)}` : null;
-  } catch {
-    return null;
-  }
-}
+/** ── id helpers ───────────────────────────────────────────────────────────── */
+const toUid = (id: number | string) => `u-${Number(id) || 0}`;
+const fromUid = (uid: string) => Number(String(uid).replace(/^u-/, '')) || 0;
+/** ─────────────────────────────────────────────────────────────────────────── */
 
-function uid(v: string | number | null | undefined): string | null {
-  if (v == null) return null;
-  const s = String(v);
-  return s.startsWith('u-') ? s : `u-${s}`;
-}
-function uidNum(v: string | number | null | undefined): number {
-  const s = uid(v);
-  return s ? Number(s.split('-')[1]) || 0 : 0;
-}
+type Props = {
+  room: RoomSnapshotUI;
+  meId: string; // '12' 또는 'u-12' 둘 다 허용 (안에서 정규화)
+  signalingClient: SignalingClient;
+};
 
-export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
-  /** 0) 나의 uid */
-  const myUid = useMemo(
-    () =>
-      (typeof window !== 'undefined' ? getMyUidFromLocal() : null) ??
-      (room.members.find((m) => m.isMe)?.id != null ? uid(room.members.find((m) => m.isMe)!.id) : null),
-    [room.members]
-  );
+export default function MediaRoomClient({ room, meId: meIdProp, signalingClient }: Props) {
+  /** 내 uid를 'u-<숫자>'로 정규화 */
+  const myUid = useMemo(() => toUid(meIdProp), [meIdProp]);
 
-  /** room-2 → 2 */
-  const roomId = String(room.info.id);
-  const roomNum = useMemo(() => (typeof room.info.id === 'number' ? room.info.id : Number(roomId.split('-')[1] ?? roomId) || 0), [roomId, room.info.id]);
+  /** roomId: 타입 정의상 number */
+  const roomId = room.info.id;
+  const roomNum = roomId; // 이미 number
 
-  if (DEBUG) console.log('[room] id=%s(%d) myUid=%s', roomId, roomNum, myUid);
+  if (DEBUG) console.log('[room] id=%s myUid=%s', roomId, myUid);
 
-  /** 1) 실시간 멤버 폴링 */
+  /** 서버 멤버 목록 폴링 */
   const { data: membersDto = [] } = useRoomMembersQuery(roomNum, {
-    refetchInterval: 8000,
+    refetchInterval: 5000,
     refetchIntervalInBackground: true,
-    refetchOnWindowFocus: false,
-    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    staleTime: 4000,
   });
 
-  /** DTO → UI 모델 + me 보정 */
+  /** 실시간 멤버 → UsersListItem으로 매핑( id:number ) */
   const liveMembers: UsersListItem[] = useMemo(() => {
-    const arr: UsersListItem[] = membersDto.map((m) => ({
-      id: m.userId,
+    const myNum = fromUid(myUid);
+    const arr: UsersListItem[] = membersDto.map((m: any) => ({
+      id: Number(m.userId), // number 고정
       name: m.nickname,
-      role: m.role,
+      role: (m.role as UITypes.Role) ?? 'MEMBER',
       email: '',
       avatarUrl: m.profileImageUrl ?? null,
-      isMe: myUid ? m.userId === Number(myUid.split('-')[1]) : false,
+      isMe: myNum > 0 ? Number(m.userId) === myNum : false,
       media: { camOn: true, screenOn: false },
     }));
 
-    if (myUid && !arr.some((x) => uid(x.id) === myUid)) {
+    // 내 정보가 없으면 fallback
+    if (myNum && !arr.some((x) => x.id === myNum)) {
       const fallback =
-        room.members.find((x) => uid(x.id) === myUid) ??
+        room.members.find((x) => x.id === myNum) ??
         ({
-          id: Number(myUid.split('-')[1]),
+          id: myNum,
           name: 'me',
           role: 'MEMBER',
           email: '',
           avatarUrl: null,
           isMe: true,
           media: { camOn: true, screenOn: false },
-        } as unknown as UsersListItem);
+        } as UsersListItem);
       arr.push({ ...fallback, isMe: true });
     }
-    if (DEBUG) console.log('[ui] liveMembers:', arr.map((m) => `${uid(m.id)}${m.isMe ? '(me)' : ''}`));
     return arr;
   }, [membersDto, myUid, room.members]);
 
-  /** 스냅샷 + 라이브 합집합 */
+  /** 방 스냅샷 멤버와 실시간 멤버를 id 기준으로 병합 */
   const unionMembers: UsersListItem[] = useMemo(() => {
     const map = new Map<string, UsersListItem>();
-    for (const m of room.members) map.set(uid(m.id)!, m);
-    for (const m of liveMembers) map.set(uid(m.id)!, m);
-    const merged = Array.from(map.values());
-    if (DEBUG) console.log('[ui] unionMembers:', merged.map((m) => `${uid(m.id)}${m.isMe ? '(me)' : ''}`));
-    return merged;
+    for (const m of room.members) map.set(String(m.id), m);
+    for (const m of liveMembers) map.set(String(m.id), m);
+    return Array.from(map.values());
   }, [room.members, liveMembers]);
 
-  /** me 식별자 */
-  const me = useMemo(
-    () => room.members.find((m) => m.isMe) ?? liveMembers.find((m) => m.isMe) ?? null,
-    [room.members, liveMembers]
-  );
-  const meId = uid(me?.id) ?? myUid ?? null;
+  /** 내 정보(num/string 동시 보유) */
+  const me = useMemo(() => unionMembers.find((m) => m.isMe) ?? null, [unionMembers]);
+  const meNum = me?.id ?? fromUid(myUid); // number
+  const meId = toUid(meNum);              // 'u-<num>' string
 
-  /** 2) 로컬 미디어 */
+  /** 로컬 미디어 준비 */
   const { localStream, initMedia } = useMediaStream();
-  useEffect(() => { initMedia(); }, [initMedia]);
+  useEffect(() => {
+    initMedia();
+  }, [initMedia]);
 
-  /** 3) ICE 서버 설정 */
+  /** RTC 설정 가져오기 (숫자만 서버로 전달) */
   const [rtcConfig, setRtcConfig] = useState<RTCConfiguration>(DEFAULT_RTC);
   useEffect(() => {
     (async () => {
-      if (!meId) return;
+      if (!meNum) return;
       try {
-        const meNum = uidNum(meId);
         const cfg = await makeRtcConfig({ userId: meNum, roomId: roomNum });
         setRtcConfig(cfg?.iceServers?.length ? cfg : DEFAULT_RTC);
-        if (DEBUG) console.log('[rtc] config:', (cfg?.iceServers ?? DEFAULT_RTC.iceServers));
       } catch (e) {
         setRtcConfig(DEFAULT_RTC);
         console.warn('[rtc] config fetch failed → fallback STUN only', e);
       }
     })();
-  }, [meId, roomNum]);
+  }, [meNum, roomNum]);
 
-  /** 4) WebRTC 훅 */
+  /** WebRTC 대상 피어 id는 문자열 uid 배열 */
+  const peerIds = useMemo(() => unionMembers.map((m) => toUid(m.id)), [unionMembers]);
+
+  /** WebRTC 훅 (문자열만 넘김) */
   const {
     remoteStreams,
     callUser,
     signalingReady,
-
-    micOn, camOn, isSharing,
-    toggleMic, toggleCam,
-    startScreenShare, stopScreenShare,
-
+    micOn,
+    camOn,
+    isSharing,
+    toggleMic,
+    toggleCam,
+    startScreenShare,
+    stopScreenShare,
     localPreviewStream,
   } = useWebRTC({
-    roomId,
-    meId: meId ?? '__unknown__',
+    roomId: String(roomId), // string
+    meId,                   // 'u-<num>'
     localStream,
     rtcConfig,
+    signalingClient,
+    peerIds,                // 'u-<num>'[]
   });
 
-  /** 5) OFFER 트리거 */
-  const startedRef = useRef<Set<string>>(new Set());
+  /** 피어 목록 변경 감지 → offer 트리거 */
   const lastPeerIdsRef = useRef<string>('');
   useEffect(() => {
     if (!localStream || !meId || !signalingReady) return;
 
     const candidates = unionMembers
-      .filter((m) => !m.isMe && uid(m.id) !== meId)
-      .map((m) => uid(m.id)!)
+      .filter((m) => !m.isMe && toUid(m.id) !== meId)
+      .map((m) => toUid(m.id))
       .sort();
 
-    const peerIds = candidates.join(',');
-    if (peerIds !== lastPeerIdsRef.current) {
-      lastPeerIdsRef.current = peerIds;
-      const currentSet = new Set(candidates);
-      for (const pid of Array.from(startedRef.current)) {
-        if (!currentSet.has(pid)) startedRef.current.delete(pid);
-      }
-    }
+    const peerIdsKey = candidates.join(',');
+    if (peerIdsKey === lastPeerIdsRef.current) return;
+    lastPeerIdsRef.current = peerIdsKey;
 
-    for (const pid of candidates) {
-      if (startedRef.current.has(pid)) continue;
-      if (!shouldInitiate(meId, pid)) continue;
-      startedRef.current.add(pid);
-      setTimeout(() => { void callUser(pid); }, 200);
-    }
+    if (DEBUG) console.log('[offer-trigger] calling peers:', candidates);
+    for (const pid of candidates) callUser(pid);
   }, [unionMembers, meId, localStream, callUser, signalingReady]);
 
-  /** 6) 렌더 스트림 (내 타일은 preview) */
+  /** 렌더용 스트림 맵 (키 = uid 문자열) */
   const streamsByUser: StreamsByUser = useMemo(() => {
     const m: StreamsByUser = { ...remoteStreams };
     if (meId) m[meId] = localPreviewStream ?? localStream ?? null;
-    if (DEBUG) console.log('[render] members=', Object.keys(m).sort());
     return m;
   }, [remoteStreams, localPreviewStream, localStream, meId]);
 
@@ -198,13 +165,11 @@ export default function MediaRoomClient({ room }: { room: RoomSnapshotUI }) {
       <RoomStage
         room={{
           ...room,
-          members: liveMembers,
+          members: unionMembers,               
           info: { ...room.info, mediaEnabled: true },
         }}
         streamsByUser={streamsByUser}
       />
-
-      {/* 하단 중앙 컨트롤 바 */}
       <MediaControlBar
         className=""
         micOn={!!micOn}

@@ -16,8 +16,7 @@ export default function FindModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50" onClick={handleOverlayClick}>
-      <div className="bg-background-base w-[800px] h-[600px] sm:rounded-lg relative p-6 sm:p-10 flex flex-col
-                max-w-[90%] max-h-[90%]">
+      <div className="bg-background-base w-[580px] h-[550px] sm:rounded-lg relative p-6 sm:p-10 flex flex-col max-w-[90%] max-h-[90%] border border-yellow-400">
         <button
           onClick={onClose}
           className="absolute top-4 right-4"
@@ -25,7 +24,7 @@ export default function FindModal({ onClose }: { onClose: () => void }) {
         >
           <Image src="/icon/xbtn.svg" alt="닫기" width={15} height={15} />
         </button>
-        <div className="flex gap-12 justify-center mt-16">
+        <div className="flex gap-12 justify-center mt-10">
           <button
             onClick={() => setMode("id")}
             className="flex items-center gap-2"
@@ -67,7 +66,7 @@ export default function FindModal({ onClose }: { onClose: () => void }) {
             </span>
           </button>
         </div>
-        <hr className="w-full max-w-[500px] mx-auto border-t border-black mt-12 mb-14" />
+        <hr className="w-full max-w-[500px] mx-auto border-t border-black mt-12 mb-10" />
         <div className="flex items-center justify-center">
           {mode === "id" ? (
             <FindIdForm onSuccess={onClose} />

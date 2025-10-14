@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
 
     try {
       await resetPasswordWithToken({ token, newPassword: password });
-      showToast("success", "비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.");
+      showToast("success", "비밀번호가 성공적으로 변경되었습니다.");
       router.replace("/login");
     } catch (err: unknown) {
       setError(isApiError(err) ? mapFindPwError(err.code) : "비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -96,7 +96,6 @@ export default function ResetPasswordPage() {
             <Image src={showPw ? "/icon/blind.svg" : "/icon/closed.svg"} alt="비밀번호 보기" width={20} height={20}/>
           </button>
         </div>
-
         <div className="relative w-full h-[64px]">
           <label htmlFor="confirm" className="sr-only">비밀번호 확인</label>
           <input

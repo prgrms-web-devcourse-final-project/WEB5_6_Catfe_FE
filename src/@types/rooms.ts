@@ -24,6 +24,17 @@ export type RoomMember = {
   email?: string;
 };
 
+export type RoomMemberDTO = {
+  userId: number;
+  nickname: string;
+  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+  joinedAt: string | null;
+  promotedAt: string | null;
+  profileImageUrl?: string | null;
+  avatarId?: number | null;
+  avatarImageUrl?: string | null;
+};
+
 export type RoomSnapshot = {
   info: RoomInfo;
   members: RoomMember[];
@@ -43,6 +54,7 @@ export type MediaState = {
 };
 
 export type UsersListItem = RoomMember & {
+  avatarId?: number | null;
   avatarUrl?: string | null;
   voice?: VoiceState;
   presence?: Presence;

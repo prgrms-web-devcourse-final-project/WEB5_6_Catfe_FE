@@ -169,3 +169,14 @@ export async function getRoomSnapshot(roomId: string): Promise<RoomSnapshotUI> {
   if (!data.success) throw new Error(data.message || "room detail 실패");
   return toUIFromDetail(data.data);
 }
+
+export async function leaveRoom(roomId: number): Promise<void> {
+  try {
+    const res = await api.post<ApiEnvelope<null>>(`/api/rooms/${roomId}/leave`);
+    if (!res.data?.success) {
+      throw new Error(res.data?.message || "방 퇴장에 실패했어요.");
+    }
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "방 퇴장에 실패했어요."));
+  }
+}

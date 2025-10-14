@@ -1,12 +1,13 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import type { UsersListItem } from '@/@types/rooms';
 import UsersHeader from './UserHeader';
 import UsersSearchBar from './UserSearchBar';
 import UsersSection from './UserSection';
 import UserRow from './UserRow';
 import clsx from 'clsx';
+import { debounce } from '@/utils/debounce';
 
 type Props = {
   users: UsersListItem[];
@@ -27,16 +28,26 @@ export default function UsersModal({
 }: Props) {
   const titleId = useId();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
   const [adminCollapsed, setAdminCollapsed] = useState(false);
   const [memberCollapsed, setMemberCollapsed] = useState(false);
+
+  const debouncedSetSearch = useMemo(
+    () => debounce((value: string) => setSearch(value), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearch(query);
+  }, [query, debouncedSetSearch]);
 
   const { admins, members } = useMemo(() => {
     const term = search.trim().toLowerCase();
     const filtered = term ? users.filter((u) => u.name.toLowerCase().includes(term)) : users;
     return {
       admins: filtered.filter((u) => u.role === 'HOST' || u.role === 'SUB_HOST'),
-      members: filtered.filter((u) => u.role === 'MEMBER'),
+      members: filtered.filter((u) => u.role === 'MEMBER' || u.role === 'VISITOR'),
     };
   }, [users, search]);
 
@@ -58,7 +69,14 @@ export default function UsersModal({
       />
 
       {searchOpen && (
-        <UsersSearchBar value={search} onChange={setSearch} onClear={() => setSearch('')} />
+        <UsersSearchBar
+          value={query}
+          onChange={setQuery}
+          onClear={() => {
+            setQuery('');
+            setSearch('');
+          }}
+        />
       )}
 
       <div className="overflow-y-auto" style={{ maxHeight: maxBodyHeight }}>

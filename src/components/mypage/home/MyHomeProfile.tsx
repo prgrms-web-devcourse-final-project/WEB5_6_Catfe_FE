@@ -37,7 +37,7 @@ function MyHomeProfile() {
   }
 
   return (
-    <div className="flex flex-col gap-4 bg-background-white rounded-2xl border-2 border-secondary-600 px-4 py-5 w-[250px]">
+    <div className="flex flex-col gap-4 bg-background-white rounded-2xl border-2 border-secondary-600 px-4 py-5 w-full md:w-[250px] shadow-md">
       <div className="size-28 rounded-full border-2 border-secondary-600 overflow-hidden relative">
         <Image
           src={currentUser.profile?.profileImageUrl || '/image/cat-default.svg'}

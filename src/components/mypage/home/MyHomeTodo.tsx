@@ -2,11 +2,16 @@
 
 import { HomeTodoItem, useMyHomeTodo } from '@/hook/useMyHomeTodo';
 import { formatToYMD } from '@/lib/datetime';
+import { cleanupOldPlanTodoStatus } from '@/utils/storeTodo';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 function MyHomeTodo() {
   const ymd = formatToYMD(Date.now());
   const { todos, isLoading, isError, toggleTodoStatus } = useMyHomeTodo(ymd);
+  useEffect(() => {
+    cleanupOldPlanTodoStatus(ymd);
+  }, [ymd]);
 
   return (
     <div className="p-4 h-full bg-background-white rounded-2xl border-2 border-secondary-600 shadow-md overflow-hidden flex flex-col gap-2">

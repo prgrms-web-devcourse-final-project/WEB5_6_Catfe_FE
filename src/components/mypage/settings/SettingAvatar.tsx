@@ -1,5 +1,6 @@
 'use client';
 
+import { MAX_FILE_SIZE } from '@/api/apiUploadFile';
 import showToast from '@/utils/showToast';
 import Image from 'next/image';
 
@@ -9,15 +10,13 @@ interface SettingAvatarProps {
   disabled?: boolean;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 파일 용량 10MB 제한
-
 function SettingAvatar({ avatarUrl, onChange, disabled = false }: SettingAvatarProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     // 파일 크기 검증
     if (file.size > MAX_FILE_SIZE) {
-      showToast('error', '파일 크기가 10MB를 초과합니다.');
+      showToast('error', '파일 크기는 10MB 미만이어야 합니다.');
       e.target.value = '';
       return;
     }

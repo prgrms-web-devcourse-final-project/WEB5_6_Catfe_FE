@@ -101,13 +101,14 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
 
                 {tab === 'security' && value && (
                   <SettingsSecurity
+                    roomId={Number(roomId)}
                     defaultValue={{ isPrivate: value.isPrivate, password: value.password ?? '' }}
                     onSave={async () => {}}
                     onDelete={async () => {}}
                   />
                 )}
 
-                {tab === 'roles' && <SettingsRoles defaultUsers={roleUsers} />}
+                {tab === 'roles' && <SettingsRoles roomId={Number(roomId)} defaultUsers={roleUsers} />}
               </div>
             </section>
           </div>

@@ -7,10 +7,7 @@ import parse, {
   HTMLReactParserOptions,
   Text,
 } from 'html-react-parser';
-// import { TIPTAP_EXTENSIONS } from '@/lib/tiptapExtensions';
 import { safeSanitizeHtml } from '@/utils/safeSanitizeHtml';
-
-// const extensions = TIPTAP_EXTENSIONS;
 
 function formatAlignToClass(style?: string | null) {
   if (!style) return '';
@@ -134,12 +131,7 @@ interface RendererProps {
 }
 
 function TiptapRenderer({ content, className, allowDataImage = false }: RendererProps) {
-  // Tiptap JSON to HTML
   const rawHtml = useMemo(() => {
-    // if (!content) return '';
-    // const json: JSONContent =
-    //   typeof content === 'string' ? (JSON.parse(content) as JSONContent) : content;
-    // return generateHTML(json, extensions);
     return content || '';
   }, [content]);
 

@@ -10,14 +10,15 @@ import Image from 'next/image';
 import BigModal from '@/components/study-room/BigModalLayout';
 import { createRoom } from '@/api/apiRooms';
 import type { CreateRoomDto } from '@/@types/rooms';
+import { apiUploadFile } from '@/api/apiUploadFile';
 import { useRouter } from 'next/navigation';
+import { isAxiosError } from 'axios';
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
 
-// 컨트롤드 초기값 상수
 const INITIAL_INFO: RoomInfoValue = {
   title: '',
   description: '',
@@ -37,7 +38,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 모달 열릴 때마다 상태 리셋
   useEffect(() => {
     if (!open) return;
     setInfo(INITIAL_INFO);
@@ -47,14 +47,12 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     setErrorMsg(null);
   }, [open]);
 
-  // 하위 컴포넌트 onChange 핸들러
   const handleInfoChange = useCallback((v: RoomInfoValue) => setInfo(v), []);
   const handlePrivacyChange = useCallback(
     (v: { enabled: boolean; password: string }) => setPrivacy(v),
     []
   );
 
-  // 버튼 활성화 조건
   const canCreate = useMemo(() => {
     const hasTitle = info.title.trim().length > 0;
     const needPwd = privacy.enabled ? privacy.password.trim().length > 0 : true;
@@ -63,31 +61,30 @@ export default function CreateRoomModal({ open, onClose }: Props) {
 
   const titleId = 'create-room-title';
 
-  // 생성 (POST /api/rooms)
   const onCreate = async () => {
     setErrorMsg(null);
 
-    // Data Transfer Object
-    const base = {
+    const maxP = mediaEnabled ? Math.min(info.maxParticipants ?? 4, 4) : info.maxParticipants;
+
+    const base: CreateRoomDto = {
       title: info.title.trim(),
       description: info.description.trim(),
       isPrivate: privacy.enabled,
-      maxParticipants: info.maxParticipants,
+      maxParticipants: maxP,
       useWebRTC: mediaEnabled,
-      password: '',
     };
 
-    // 비공개/공개방에 따른 dto
-    const dto: CreateRoomDto = privacy.enabled
-      ? { ...base, password: privacy.password }
-      : { ...base };
+    if (privacy.enabled) {
+      base.password = privacy.password;
+    } else {
+      delete base.password;
+    }
 
-    // 프론트 유효성
-    if (!dto.title) {
+    if (!base.title) {
       setErrorMsg('스터디룸 이름을 입력해주세요.');
       return;
     }
-    if (dto.isPrivate && !dto.password) {
+    if (base.isPrivate && !base.password) {
       setErrorMsg('비공개 스터디룸의 비밀번호를 입력해주세요.');
       return;
     }
@@ -95,18 +92,19 @@ export default function CreateRoomModal({ open, onClose }: Props) {
     try {
       setSubmitting(true);
 
-      const res = await createRoom(dto);
-      const id = res?.data?.roomId;
+      if (info.coverUploadFile) {
+        const { attachmentId } = await apiUploadFile(info.coverUploadFile);
+        base.thumbnailAttachmentId = attachmentId;
+      }
+
+      const res = await createRoom(base);
+      const id = res?.roomId;
       onClose();
       if (id) router.push(`/study-rooms/${id}`);
     } catch (err) {
       const msg =
-        (typeof err === 'object' &&
-          err &&
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          (err.response?.data?.message as string | undefined)) ||
-        (err as Error)?.message ||
+        (isAxiosError(err) && (err.response?.data as { message?: string } | undefined)?.message) ||
+        (err instanceof Error && err.message) ||
         '방 생성 중 오류가 발생했습니다.';
       setErrorMsg(msg);
     } finally {
@@ -129,7 +127,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
         </p>
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-          {/* 좌측 */}
           <div className="flex flex-col gap-5">
             <div>
               <div className="mb-1 flex items-start justify-between">
@@ -155,7 +152,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
             />
           </div>
 
-          {/* 우측: 미리보기 */}
           <div className="md:sticky md:top-4">
             <div className="mb-2 text-xs font-semibold text-text-primary">미리보기</div>
             <StudyRoomCard
@@ -168,7 +164,6 @@ export default function CreateRoomModal({ open, onClose }: Props) {
           </div>
         </div>
 
-        {/* 에러 메시지 */}
         {errorMsg ? (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
             {errorMsg}

@@ -289,7 +289,13 @@ function ChatWindow({
                 </div>
               </>
             )}
-            <MessageBubble mine={m.from === 'ME'}>{m.content}</MessageBubble>
+            <MessageBubble
+              mine={m.from === 'ME'}
+              nickname={m.nickname}
+              profileImageUrl={m.profileImageUrl}
+            >
+              {m.content}
+            </MessageBubble>
           </Fragment>
         ))}
         <div ref={endRef} />

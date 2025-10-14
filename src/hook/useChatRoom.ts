@@ -10,6 +10,9 @@ export const mapApiToChatMsg = (apiMsg: ApiChatMsg, currentUserId: number): Chat
     from: apiMsg.userId === currentUserId ? 'ME' : 'OTHER',
     content: apiMsg.content,
     createdAt: new Date(apiMsg.createdAt).getTime(),
+    userId: apiMsg.userId,
+    nickname: apiMsg.nickname,
+    profileImageUrl: apiMsg.profileImageUrl,
   };
 };
 

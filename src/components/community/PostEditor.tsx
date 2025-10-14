@@ -17,7 +17,7 @@ import { useCategoryRegisterMutation } from '@/hook/community/useCommunityPost';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/hook/useConfirm';
 import { useMutation } from '@tanstack/react-query';
-import { apiUploadFile } from '@/api/apiFile';
+import { apiUploadFile } from '@/api/apiUploadFile';
 import fileToDataUrl from '@/utils/fileToDataUrl';
 
 type EditorProps = {
@@ -221,7 +221,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
         const file = new File([blob], `uploaded_image.${fileType}`, { type: blob.type });
 
         // 파일 업로드 API 호출
-        const newUrl = await uploadMutation.mutateAsync(file);
+        const { url: newUrl } = await uploadMutation.mutateAsync(file);
         return { oldSrc: base64Src, newSrc: newUrl };
       });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { User, UserProfile } from '@/@types/type';
+import { ApiResponse, User, UserProfile } from '@/@types/type';
 import Button from '@/components/Button';
 import { useEffect, useMemo, useState } from 'react';
 import SettingAvatar from './SettingAvatar';
@@ -9,6 +9,7 @@ import showToast from '@/utils/showToast';
 import Spinner from '@/components/Spinner';
 import { Info } from 'lucide-react';
 import { useUpdateUser, useUser } from '@/api/apiUsersMe';
+import { apiUploadFile } from '@/api/apiUploadFile';
 
 const MAX_BIO_LIMIT = 300;
 
@@ -34,9 +35,11 @@ function SettingProfile() {
   }, [me]);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string>('');
   const [bio, setBio] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
+
   const maxLength = MAX_BIO_LIMIT;
 
   useEffect(() => {
@@ -55,6 +58,22 @@ function SettingProfile() {
     );
   }, [initial, nickname, bio, avatarUrl]);
 
+  const handleAvatarUpload = async (file: File) => {
+    setIsUploading(true);
+    showToast('info', '이미지 업로드 중...');
+    try {
+      const { url } = await apiUploadFile(file);
+      setAvatarUrl(url);
+      setIsEditing(true);
+      showToast('success', '이미지가 업로드 되었습니다.');
+    } catch (err) {
+      const msg = (err as { message?: string }).message || '이미지 업로드에 실패했습니다.';
+      showToast('error', msg);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       await saveProfile({
@@ -65,11 +84,10 @@ function SettingProfile() {
       });
       showToast('success', '프로필이 저장되었습니다.');
       setIsEditing(false);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err) {
       const msg =
-        err?.message ||
-        err?.response?.data?.message ||
+        (err as { message?: string })?.message ||
+        (err as ApiResponse<User>)?.message ||
         '프로필 저장에 실패했습니다. 잠시 후 다시 시도해주세요.';
       showToast('error', msg);
     }
@@ -157,10 +175,8 @@ function SettingProfile() {
         <div className="w-1/3">
           <SettingAvatar
             avatarUrl={avatarUrl}
-            onChange={(v) => {
-              setAvatarUrl(v);
-              setIsEditing(true);
-            }}
+            onChange={handleAvatarUpload}
+            disabled={isUploading}
           />
         </div>
       </div>
@@ -168,9 +184,9 @@ function SettingProfile() {
         size="md"
         className="rounded-full mx-auto"
         onClick={handleSave}
-        disabled={!isEditing || !hasChanged || saving}
+        disabled={!isEditing || !hasChanged || saving || isUploading}
       >
-        {saving ? '저장 중...' : '변경사항 저장'}
+        {saving ? '저장 중...' : isUploading ? '업로드 중...' : '변경사항 저장'}
       </Button>
       {isEditing && (
         <Button

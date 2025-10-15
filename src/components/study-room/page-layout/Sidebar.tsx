@@ -10,6 +10,8 @@ import TimerPanel from '@/components/study-room/timer/TimerPanel';
 import { leaveRoom } from '@/api/apiRooms';
 import showToast from '@/utils/showToast';
 import type { Role } from '@/@types/rooms';
+import { toAvatarId, type AvatarId } from '@/utils/avatar';
+import AvatarImage from '@/components/AvatarImage';
 
 type Props = {
   roomId: number;
@@ -40,7 +42,8 @@ export default function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [avatarId, setAvatarId] = useState<number>(1);
+  const [avatarId, setAvatarId] = useState<AvatarId>(1);
+
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -171,7 +174,7 @@ export default function Sidebar({
             aria-expanded={profileOpen}
             onClick={toggleProfile}
           >
-            <Image src={`/image/cat-${avatarId}.svg`} alt="내 프로필" width={28} height={28} />
+            <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
           </button>
 
           {profileOpen && (
@@ -179,7 +182,7 @@ export default function Sidebar({
               <UserProfileModal
                 roomId={roomId}
                 initialAvatarId={avatarId}
-                onAvatarChange={(id: number) => setAvatarId(id)}
+                onAvatarChange={(id) => setAvatarId(toAvatarId(id))}
               />
             </div>
           )}

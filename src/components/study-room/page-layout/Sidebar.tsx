@@ -40,7 +40,7 @@ export default function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
-
+  const [avatarId, setAvatarId] = useState<number>(1);
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -171,12 +171,16 @@ export default function Sidebar({
             aria-expanded={profileOpen}
             onClick={toggleProfile}
           >
-            <Image src="/image/cat.png" alt="내 프로필" width={28} height={28} />
+            <Image src={`/image/cat-${avatarId}.svg`} alt="내 프로필" width={28} height={28} />
           </button>
 
           {profileOpen && (
             <div className="absolute left-full ml-8 bottom-0 z-50">
-              <UserProfileModal />
+              <UserProfileModal
+                roomId={roomId}
+                initialAvatarId={avatarId}
+                onAvatarChange={(id: number) => setAvatarId(id)}
+              />
             </div>
           )}
         </div>

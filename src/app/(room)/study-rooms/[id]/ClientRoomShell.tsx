@@ -8,13 +8,10 @@ import SettingsModal from '@/components/study-room/settings-modal/SettingsModal'
 import InviteShareModal from '@/components/study-room/InviteShareModal';
 import UsersModal from '@/components/study-room/online-users/UsersModal';
 import useEscapeKey from '@/hook/useEscapeKey';
-import showToast from "@/utils/showToast";
-import { getMyInvite, type InviteMeData } from "@/api/apiRooms";
-
-import { useRoomInfoQuery } from "@/hook/useRoomInfo";
-import { useRoomMembersQuery } from "@/hook/useRoomMembers";
-import { useUser } from "@/api/apiUsersMe";
-import type { Role, UsersListItem } from "@/@types/rooms";
+import { useRoomInfoQuery } from '@/hook/useRoomInfo';
+import { useRoomMembersQuery } from '@/hook/useRoomMembers';
+import { useUser } from '@/api/apiUsersMe';
+import type { Role, UsersListItem } from '@/@types/rooms';
 import ChatRoomContainer from './ChatRoomContainer';
 import { useChatRoom } from '@/hook/useChatRoom';
 import { ApiChatMsg } from '@/@types/websocket';
@@ -31,8 +28,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const [usersOpen, setUsersOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMode, setChatMode] = useState<ChatRoomMode>('floating');
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteData, setInviteData] = useState<InviteMeData | null>(null);
 
   const popRef = useRef<HTMLDivElement>(null);
   const usersRef = useRef<HTMLDivElement>(null);
@@ -91,20 +86,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
 
   useEscapeKey(inviteOpen, () => setInviteOpen(false));
   useEscapeKey(usersOpen, () => setUsersOpen(false));
-
-  const onClickInvite = async () => {
-    if (!infoDto) return;
-    try {
-      setInviteLoading(true);
-      const data = await getMyInvite(infoDto.roomId);
-      setInviteData(data);
-      setInviteOpen(true);
-    } catch (e) {
-      showToast("error", (e as Error)?.message || "초대 코드 발급에 실패했어요.");
-    } finally {
-      setInviteLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (!inviteOpen) return;
@@ -188,36 +169,29 @@ export default function ClientRoomShell({ children, roomId }: Props) {
               </div>
 
               <div className="relative inline-block" ref={popRef}>
-                
                 <Button
                   size="sm"
                   borderType="solid"
                   color="primary"
-                  onClick={onClickInvite}
+                  onClick={() => setInviteOpen((v) => !v)}
                   aria-expanded={inviteOpen}
                   aria-haspopup="dialog"
-                  disabled={infoLoading || !infoDto || !!infoError || inviteLoading}
-                  title={
-                    infoError
-                      ? "방 정보 로드 실패"
-                      : inviteLoading
-                      ? "초대코드를 발급 중입니다..."
-                      : undefined
-                  }
+                  disabled={infoLoading || !infoDto || !!infoError}
+                  title={infoError ? '방 정보 로드 실패' : undefined}
                 >
-                  {inviteLoading ? "발급 중..." : "초대하기"}
+                  초대하기
                 </Button>
 
-                {inviteOpen && inviteData && (
-                  <div className="absolute right-0 top-full mt-2 z-50">
+                {inviteOpen && infoDto && (
+                  <div className="absolute right-0 top-full z-50 mt-2">
                     <InviteShareModal
-                      inviteCode={inviteData.inviteCode}
-                      inviteLink={inviteData.inviteLink}
+                      roomUrl={roomUrl}
+                      password={maskedPassword}
+                      defaultSharePassword={!!maskedPassword}
                       onClose={() => setInviteOpen(false)}
                     />
                   </div>
                 )}
-
               </div>
             </div>
           </header>

@@ -16,7 +16,7 @@ export function ToastProvider() {
     <DynamicToastContainer
       position="top-right"
       theme="colored"
-      autoClose={3000}
+      autoClose={1000}
       hideProgressBar={false}
       newestOnTop
       closeOnClick

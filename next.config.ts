@@ -27,20 +27,14 @@ const nextConfig: NextConfig = {
       // 3. t1.kakaocdn.net (기본 프로필 등에 사용됨)
       { protocol: 'http', hostname: 't1.kakaocdn.net', pathname: '/**' },
       { protocol: 'https', hostname: 't1.kakaocdn.net', pathname: '/**' },
-
-      {
-        protocol: 'http',
-        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
-        pathname: '**',
-      },
       {
         protocol: 'https',
         hostname: 'phinf.pstatic.net', // 네이버 프로필 이미지 도메인
         pathname: '**',
       },
       {
-        protocol: 'http',
-        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com', // GitHub 프로필 이미지 도메인
         pathname: '**',
       },
     ],

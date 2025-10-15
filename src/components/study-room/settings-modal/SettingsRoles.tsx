@@ -9,7 +9,7 @@ import HostBadge from '../HostBadge';
 import { useBatchRoleSave } from '@/hook/useBatchRoleSave';
 import showToast from '@/utils/showToast';
 
-type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER' | "VISITOR">;
+type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER' | 'VISITOR'>;
 type RoleSelectValue = RoleEditable | 'VISITOR' | 'DELETE';
 type Filter = 'all' | RoleEditable;
 
@@ -65,14 +65,13 @@ function computePatch(base: User[], current: User[]): RolesPatch {
     if (!prev) {
       added.push(u);
     } else if (prev.role !== u.role) {
-      // HOST는 제외, 나머지 3개 편집 가능
-      if (u.role === "SUB_HOST" || u.role === "MEMBER" || u.role === "VISITOR") {
+      if (u.role === 'SUB_HOST' || u.role === 'MEMBER' || u.role === 'VISITOR') {
         updated.push({ id: u.id, role: u.role });
       }
     }
   }
   for (const u of base) {
-    if (!curMap.has(u.id)) removed.push(u.id); // 추방(DELETE)을 여기서 잡지만, 이번 저장 로직에서는 사용 안 함
+    if (!curMap.has(u.id)) removed.push(u.id);
   }
   return { added, removed, updated };
 }
@@ -83,8 +82,6 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
   const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
   const [saving, setSaving] = useState(false);
   const { save: saveBatch, saving: savingBatch } = useBatchRoleSave(roomId);
-
-  
 
   useEffect(() => {
     const next = defaultUsers ?? [];
@@ -111,34 +108,28 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
   const handleSave = async () => {
     if (!isDirty || saving || savingBatch) return;
 
-    // 1) UI에서 계산된 patch.updated → API용 업데이트 배열로 변환
     const updates = patch.updated.map((u) => ({
       userId: Number(u.id),
-      newRole: u.role, // "SUB_HOST" | "MEMBER" | "VISITOR"
+      newRole: u.role,
     }));
 
     try {
       setSaving(true);
-
-      // 2) 배치 저장
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { succeeded, failed } = await saveBatch(updates);
-
-      // (선택) 외부 콜백 호출
       await onSave?.(patch, users);
 
-      // 3) 성공한 경우 base 동기화
       if (failed.length === 0) {
         setBase(users);
-        showToast("success", "권한이 저장되었어요.");
+        showToast('success', '권한이 저장되었어요.');
       } else {
-        // 부분 실패 처리
-        showToast("error", `일부 실패: ${failed.length}명 - ${failed[0].error}`);
+        showToast('error', `일부 실패: ${failed.length}명 - ${failed[0].error}`);
       }
     } finally {
       setSaving(false);
     }
   };
-  
+
   return (
     <section className={clsx('w-full flex flex-col h-full', className)}>
       <div className="flex-1">
@@ -157,10 +148,9 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
           />
         </div>
 
-        {/* 사용자 리스트 */}
         {visibleUsers.length === 0 ? (
           <div className="mt-8 text-center text-xs text-text-secondary">
-            아직 멤버가 없어요. 상단에서 이메일로 멤버를 초대해보세요!
+            온라인인 사용자가 없어요.😢 다른 이들과 함께일 때 다시 시도해주세요.
           </div>
         ) : (
           <ul className="flex flex-col gap-4 justify-center">
@@ -189,7 +179,6 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
         )}
       </div>
 
-      {/* 하단 저장 */}
       <div className="mt-4 flex justify-end">
         <Button
           size="md"
@@ -198,7 +187,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
           disabled={!isDirty || saving || savingBatch}
           onClick={handleSave}
         >
-          {saving || savingBatch ? "저장 중..." : isDirty ? "저장하기" : "변경 사항 없음"}
+          {saving || savingBatch ? '저장 중...' : isDirty ? '저장하기' : '변경 사항 없음'}
         </Button>
       </div>
     </section>

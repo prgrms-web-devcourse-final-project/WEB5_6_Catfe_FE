@@ -27,7 +27,7 @@ export default async function StudyRoomsPage({
   const sort: SortKey = (sp.sort as SortKey) ?? 'all';
 
   return (
-    <section className="mx-auto w-full max-w-[1200px] sm:px-[100px] py-6">
+    <section className="mx-auto w-full max-w-[1200px] min-h-dvh sm:px-[100px] py-6">
       <SearchBar search={search} sort={sort} />
       <div className="flex justify-end mb-8">
         <InviteEnterButton></InviteEnterButton>

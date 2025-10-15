@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import Image from "next/image";
 import { ReactNode, useMemo } from "react";
-import type { AvatarId } from "./AvatarSelect";
+import type { AvatarId } from "@/utils/avatar";
 
 import cat1 from "@/assets/cats/cat-1.svg";
 import cat2 from "@/assets/cats/cat-2.svg";

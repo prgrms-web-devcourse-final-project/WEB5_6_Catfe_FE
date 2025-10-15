@@ -156,7 +156,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           role={myRole}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenTimer={() => {}}
-          onOpenPlanner={() => {}}
           onOpenChat={chatOpen ? onCloseChat : onOpenChat}
           unreadCount={chatRoom.unread}
         />

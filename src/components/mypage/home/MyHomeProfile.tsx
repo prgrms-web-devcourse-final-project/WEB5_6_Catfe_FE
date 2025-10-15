@@ -37,17 +37,19 @@ function MyHomeProfile() {
   }
 
   return (
-    <div className="flex flex-col gap-4 bg-background-white rounded-2xl border-2 border-secondary-600 px-4 py-5 w-full md:w-[250px] shadow-md">
-      <div className="size-28 rounded-full border-2 border-secondary-600 overflow-hidden relative">
+    <div className="flex flex-col gap-4 bg-background-white rounded-2xl border-2 border-secondary-600 px-4 py-5 w-full md:w-[250px] shadow-md overflow-hidden">
+      <div className="size-20 sm:size-28 rounded-full border-2 border-secondary-600 overflow-hidden relative">
         <Image
           src={currentUser.profile?.profileImageUrl || '/image/cat-default.svg'}
           alt={currentUser.profile?.nickname || '프로필 사진'}
           fill
         />
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 w-full">
         <span className="text-lg">{currentUser.profile?.nickname}</span>
-        <span className="text-sm font-light underline">{currentUser.email}</span>
+        <span className="text-sm font-light underline block overflow-hidden text-ellipsis whitespace-nowrap">
+          {currentUser.email}
+        </span>
       </div>
       {currentUser.profile?.bio ? (
         <div className="relative">
@@ -62,9 +64,8 @@ function MyHomeProfile() {
         </p>
       )}
       <Button
-        size="md"
         hasIcon
-        className="mx-auto rounded-full"
+        className="mx-auto rounded-full w-full sm:w-3/4"
         onClick={() => router.push('/mypage/settings')}
       >
         <div className="size-5 relative">

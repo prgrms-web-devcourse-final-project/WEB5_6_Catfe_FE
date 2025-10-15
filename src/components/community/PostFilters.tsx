@@ -86,7 +86,7 @@ function PostFilters({ value, onChange, categoryData }: PostFilterProps) {
             id="search-title"
             type="search"
             placeholder="스터디 모집 글 제목 검색"
-            className="w-11/12 outline-none"
+            className="flex-1 outline-none"
             value={draft}
             onChange={handleChange}
             onCompositionStart={handleCompositionStart}

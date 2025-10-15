@@ -70,7 +70,7 @@ export async function processImagesInContent(
 ): Promise<ImageProcessResult> {
   let finalHtml = htmlContent;
 
-  const allImagesInOrder: ImageMap[] | null = [];
+  const allImagesInOrder: ImageMap[] = [];
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, 'text/html');
   const images = doc.querySelectorAll('img');
@@ -114,17 +114,19 @@ export async function processImagesInContent(
         if (index !== -1) {
           allImagesInOrder[index] = { url: newUrl, attachmentId: newId };
         }
-        Array.from(images).forEach((img) => {
-          const src = img.getAttribute('src');
-          if (src === oldSrc) {
-            img.setAttribute('src', newUrl);
-            img.setAttribute('data-id', newId!.toString());
-          }
-        });
       });
       showToast('success', '이미지 업로드 완료.');
 
       finalHtml = doc.body.innerHTML;
+      results.forEach(({ oldSrc, newUrl, newId }) => {
+        const oldSrcEscaped = oldSrc.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        finalHtml = finalHtml.replace(
+          new RegExp(`(<img[^>]*src="${oldSrcEscaped}")([^>]*)>`, 'g'),
+          (match, p1, p2) => {
+            return `${p1.replace(oldSrc, newUrl)} data-id="${newId}"${p2}`;
+          }
+        );
+      });
     } catch (error) {
       console.error('이미지 업로드 실패:', error);
       return {
@@ -135,6 +137,7 @@ export async function processImagesInContent(
       };
     }
   }
+  console.log(allImagesInOrder);
   const finalImageIds = allImagesInOrder.map((img) => img.attachmentId).filter((id) => id !== null);
   const finalThumbnailUrl = allImagesInOrder.length > 0 ? allImagesInOrder[0].url : null;
   return {

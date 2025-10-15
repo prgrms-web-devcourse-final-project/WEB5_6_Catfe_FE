@@ -60,15 +60,35 @@ export const usePlannerForm = (initial: PlannerFormInitial = {}) => {
       : formatWeekday(selectedDate)
   );
 
+  // !! 임시.. 땜빵... (날짜 넘어가면 BE에서 조회 & 반복 처리를 못함... 임시 수정이니 나중에 리팩토링할 때 바꿀 것...)
   const startDate = combineYmdHM(ymd, startHM);
-  const endDate = combineYmdHM(ymd, endHM);
-  const timeInvalid = !dayjs(endDate).isAfter(startDate);
+  const potentialEndDate = combineYmdHM(ymd, endHM);
+  // validation 1 : 끝나는 시간이 시작시간보다 앞서는가? (같은 날짜 기준)
+  const isEndBeforeStart = !dayjs(potentialEndDate).isAfter(startDate);
+  // validation 2 : 끝나는 시간이 시작시간보다 빠를 경우, 익일 자정을 초과하는가?
+  let finalEndDate = potentialEndDate;
+  const isExceedingMidnightLimit = isEndBeforeStart && endHM !== '00:00';
+
+  const timeInvalid = isExceedingMidnightLimit || (isEndBeforeStart && endHM !== '00:00');
+  if (!timeInvalid) {
+    if (isEndBeforeStart && endHM === '00:00') {
+      // 23:xx ~ 00:00 (자정을 넘기는 경우, 00:00으로 끝나는 경우) 23:59:59로 보냄
+
+      finalEndDate = dayjs(potentialEndDate)
+        .set('hour', 23)
+        .set('minute', 59)
+        .set('second', 59)
+        .format('YYYY-MM-DDTHH:mm:ss');
+    } else {
+      finalEndDate = potentialEndDate;
+    }
+  }
   const disabled = subject.trim() === '' || timeInvalid;
 
   const getPayload = (): CreatePlanRequestBody => ({
     subject: subject.trim(),
     startDate,
-    endDate,
+    endDate: finalEndDate,
     color,
     repeatRule:
       frequency === 'NONE'

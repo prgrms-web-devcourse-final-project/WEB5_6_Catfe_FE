@@ -3,10 +3,10 @@ import { Orbitron } from 'next/font/google';
 import localFont from 'next/font/local';
 import '@/styles/style.css';
 import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer } from 'react-toastify';
 import QueryProvider from '@/provider/QueryProvider';
 import InitAuth from './InitAuth';
 import { ConfirmHost } from '@/components/ConfirmModal';
+import { ToastProvider } from './ToastProvider';
 
 const orbitron = Orbitron({
   variable: '--font-orbitron',
@@ -40,17 +40,7 @@ export default function RootLayout({
           <div>{children}</div>
         </QueryProvider>
         <ConfirmHost />
-        <ToastContainer
-          position="top-right"
-          theme="colored"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-        />
+        <ToastProvider />
       </body>
     </html>
   );

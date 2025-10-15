@@ -17,12 +17,13 @@ import {
   useTogglePostLikeMutation,
 } from '@/hook/community/useCommunityPost';
 import { useConfirm } from '@/hook/useConfirm';
+import useRequireLogin from '@/hook/useRequireLogin';
 
 function PostContents({ post }: { post: PostDetail }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
-
+  const requireLogin = useRequireLogin();
   const { data: user } = useUser();
 
   const {
@@ -58,6 +59,7 @@ function PostContents({ post }: { post: PostDetail }) {
   const { mutate: togglePostBookmarkMutate } = useTogglePostBookmarkMutation();
 
   const toggleLike = () => {
+    if (!requireLogin(`/community/${postId}`)) return;
     const nextLiked = !liked;
     const nextLikeCount = likeCount + (nextLiked ? 1 : -1);
     // Optimistic Update
@@ -80,6 +82,8 @@ function PostContents({ post }: { post: PostDetail }) {
   };
 
   const handleToggleBookmark = () => {
+    if (!requireLogin(`/community/${postId}`)) return;
+
     const nextBookmarked = !isBookmarked;
     // 1. Optimistic Update
     setIsBookmarked(nextBookmarked);
@@ -102,6 +106,7 @@ function PostContents({ post }: { post: PostDetail }) {
   };
 
   const handleEdit = () => {
+    if (!requireLogin(`/community/editor?id=${postId}`)) return;
     router.push(`/community/editor?id=${postId}`);
   };
 
@@ -122,6 +127,7 @@ function PostContents({ post }: { post: PostDetail }) {
   });
 
   const handleDelete = async () => {
+    if (!requireLogin(`/community/sId}`)) return;
     const confirmOk = await confirm({
       title: '게시글을 삭제하시겠습니까?',
       description: <>삭제된 글은 복원할 수 없습니다.</>,

@@ -181,7 +181,7 @@ function LoginPage() {
             ))}
           </div>
 
-          <p className="text-center text-sm text-secondary-800 mt-4">
+          <p className="text-center text-sm text-secondary-800 mt-4 mb-10 lg:mb-0">
             <button
               type="button"
               onClick={() => setIsFindOpen(true)}

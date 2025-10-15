@@ -61,7 +61,6 @@ export default function RoomList({ rooms }: { rooms: RoomSnapshot[] }) {
           roomId={roomId}
           open={pwOpen}
           onClose={closePw}
-          // expectedPassword={pending?.info.password ?? null} // ← 여기서 기대 비번 제공
           onSuccess={handleSuccess}
         />
       )}

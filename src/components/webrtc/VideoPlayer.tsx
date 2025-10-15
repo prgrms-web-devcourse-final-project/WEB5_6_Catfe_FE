@@ -20,7 +20,7 @@ export default function VideoPlayer({
       el.srcObject = stream ?? null;
     }
     return () => {
-      if (ref.current) ref.current.srcObject = null;
+      if (el) el.srcObject = null;
     };
   }, [stream]);
 

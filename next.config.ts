@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'team5-s3-1.s3.ap-northeast-2.amazonaws.com',
       },
+      {
+        protocol: 'http',
+        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
+        pathname: '**',
+      },
     ],
   },
 };

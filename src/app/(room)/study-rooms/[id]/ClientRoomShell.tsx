@@ -8,13 +8,13 @@ import SettingsModal from '@/components/study-room/settings-modal/SettingsModal'
 import InviteShareModal from '@/components/study-room/InviteShareModal';
 import UsersModal from '@/components/study-room/online-users/UsersModal';
 import useEscapeKey from '@/hook/useEscapeKey';
-import showToast from "@/utils/showToast";
-import { getMyInvite, type InviteMeData } from "@/api/apiRooms";
+import showToast from '@/utils/showToast';
+import { getMyInvite, type InviteMeData } from '@/api/apiRooms';
 
-import { useRoomInfoQuery } from "@/hook/useRoomInfo";
-import { useRoomMembersQuery } from "@/hook/useRoomMembers";
-import { useUser } from "@/api/apiUsersMe";
-import type { Role, UsersListItem } from "@/@types/rooms";
+import { useRoomInfoQuery } from '@/hook/useRoomInfo';
+import { useRoomMembersQuery } from '@/hook/useRoomMembers';
+import { useUser } from '@/api/apiUsersMe';
+import type { Role, UsersListItem } from '@/@types/rooms';
 import ChatRoomContainer from './ChatRoomContainer';
 import { useChatRoom } from '@/hook/useChatRoom';
 import { ApiChatMsg } from '@/@types/websocket';
@@ -100,7 +100,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       setInviteData(data);
       setInviteOpen(true);
     } catch (e) {
-      showToast("error", (e as Error)?.message || "초대 코드 발급에 실패했어요.");
+      showToast('error', (e as Error)?.message || '초대 코드 발급에 실패했어요.');
     } finally {
       setInviteLoading(false);
     }
@@ -176,19 +176,27 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   disabled={!!membersError}
                   title={membersError ? '멤버 로드 실패' : undefined}
                 >
-                  <Image src="/icon/study-room/user.svg" alt="사용자 아이콘" width={16} height={16} />
+                  <Image
+                    src="/icon/study-room/user.svg"
+                    alt="사용자 아이콘"
+                    width={16}
+                    height={16}
+                  />
                   {usersCount}
                 </Button>
 
                 {usersOpen && (
                   <div className="absolute right-0 top-full z-50 mt-2">
-                    <UsersModal users={users} canControl={canManage} onClose={() => setUsersOpen(false)} />
+                    <UsersModal
+                      users={users}
+                      canControl={canManage}
+                      onClose={() => setUsersOpen(false)}
+                    />
                   </div>
                 )}
               </div>
 
               <div className="relative inline-block" ref={popRef}>
-                
                 <Button
                   size="sm"
                   borderType="solid"
@@ -199,13 +207,13 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                   disabled={infoLoading || !infoDto || !!infoError || inviteLoading}
                   title={
                     infoError
-                      ? "방 정보 로드 실패"
+                      ? '방 정보 로드 실패'
                       : inviteLoading
-                      ? "초대코드를 발급 중입니다..."
-                      : undefined
+                        ? '초대코드를 발급 중입니다...'
+                        : undefined
                   }
                 >
-                  {inviteLoading ? "발급 중..." : "초대하기"}
+                  {inviteLoading ? '발급 중...' : '초대하기'}
                 </Button>
 
                 {inviteOpen && inviteData && (
@@ -217,7 +225,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                     />
                   </div>
                 )}
-
               </div>
             </div>
           </header>
@@ -225,11 +232,15 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           <main className="px-6">{children}</main>
         </div>
       </div>
-
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} defaultTab="general" roomId={roomId} />
-
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        defaultTab="general"
+        roomId={roomId}
+      />
       <ChatRoomContainer
         roomId={roomId}
+        currentUserRole={myRole}
         open={chatOpen}
         onOpen={() => chatRoom.resetUnread()}
         onClose={() => setChatOpen(false)}

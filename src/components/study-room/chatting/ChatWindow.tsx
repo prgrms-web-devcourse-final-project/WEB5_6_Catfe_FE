@@ -8,6 +8,8 @@ import Button from '@/components/Button';
 import { ChatMsg } from '@/@types/websocket';
 import { formatHM, formatToYMD, isSameDayByTimestamp } from '@/lib/datetime';
 import DateDivider from './DateDivider';
+import { Role } from '@/@types/rooms';
+import { useConfirm } from '@/hook/useConfirm';
 
 export type ChatRoomMode = 'docked' | 'floating';
 
@@ -19,6 +21,8 @@ interface ChatWindowProps {
   lastReadAt?: number;
   onMarkRead?: (payload: { lastReadAt: number; lastReadId: ChatMsg['id'] }) => void;
   onModeChange: (mode: ChatRoomMode) => void;
+  currentUserRole: Role;
+  onDeleteAll?: () => Promise<boolean>;
 }
 function ChatWindow({
   open,
@@ -28,7 +32,11 @@ function ChatWindow({
   lastReadAt,
   onMarkRead,
   onModeChange,
+  currentUserRole,
+  onDeleteAll,
 }: ChatWindowProps) {
+  const confirm = useConfirm();
+
   // container / anchor / bottom ref
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -188,6 +196,22 @@ function ChatWindow({
     onClose();
   };
 
+  // 메시지 전체 삭제
+  const handleDeleteAll = async () => {
+    const confirmOk = await confirm({
+      title: '채팅 기록 전체 삭제',
+      description: (
+        <>
+          정말로 모든 채팅을 삭제하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.
+        </>
+      ),
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+    onDeleteAll?.();
+  };
   // 패널 크기
   const panelStyle: React.CSSProperties =
     mode === 'floating'
@@ -263,6 +287,28 @@ function ChatWindow({
             mode === 'floating' && 'bg-background-white rounded-lg',
           ].join(' ')}
         >
+          {currentUserRole === 'HOST' && (
+            <>
+              {' '}
+              <button
+                type="button"
+                title="채팅 전체 삭제"
+                aria-label="채팅 전체 삭제"
+                onClick={handleDeleteAll}
+                className="cursor-pointer p-1 rounded hover:bg-zinc-100"
+              >
+                <Image
+                  src="/icon/study-room/trash-alert.svg"
+                  alt=""
+                  width={20}
+                  height={20}
+                  unoptimized
+                  priority={false}
+                />
+              </button>
+              <span className="text-zinc-400">|</span>
+            </>
+          )}
           <button
             type="button"
             title={mode === 'floating' ? '고정 패널로 전환' : '플로팅으로 전환'}

@@ -89,13 +89,13 @@ export default function Tile({
         >
           {showVideo ? (
             <VideoPlayer
-              stream={stream}
-              muted={member.isMe}
-              className={[
-                'z-0 h-full w-full object-contain object-center',
-                isFS ? 'object-cover' : '',
-              ].join(' ')}
-            />
+    stream={stream}
+    muted={member.isMe}
+    className={[
+      'z-0 h-full w-full',
+      isFS ? 'object-cover object-center' : 'object-contain',
+    ].join(' ')}
+  />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-white">
               <div className="flex flex-col items-center">
@@ -116,10 +116,8 @@ export default function Tile({
               </div>
             </div>
           )}
-
           {!member.isMe && !audioOn && <MicOffBadge />}
           {showVideo && <UserNameBadge name={name} />}
-
           {allowFullscreen && !isFS && (
             <div className="pointer-events-none absolute inset-x-0 bottom-2 mx-auto w-max rounded-md border border-white/30 bg-black/40 px-2 py-1 text-[11px] leading-none text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
               더블클릭으로 전체화면

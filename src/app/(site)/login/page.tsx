@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { userQueryKey } from '@/api/apiUsersMe';
 import api from '@/utils/api';
 import { AxiosError } from 'axios';
+import ClickCat from '@/components/ClickCat';
 
 type ApiErrorBody = {
   success?: boolean;
@@ -32,7 +33,7 @@ function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const handleSocialLogin = (provider: 'google' | 'naver' | 'kakao' | 'github') => {
+  const handleSocialLogin = (provider: 'google' | 'kakao' | 'github') => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
     window.location.href = url;
   };
@@ -52,7 +53,6 @@ function LoginPage() {
       const code = err.response?.data?.code;
       const message = err.response?.data?.message ?? '';
 
-      // 미인증 계정 (403 + USER_007)
       if (status === 403 && code === 'USER_007') {
         setIsPendingUser(true);
         showToast('error', message || '이메일 인증 후 로그인할 수 있습니다.');
@@ -100,7 +100,6 @@ function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-20 w-full max-w-6xl">
-        {/* 왼쪽 이미지 */}
         <div className="w-full max-w-[400px] lg:max-w-[600px] aspect-square relative">
           <Image
             src="/catmodum/catmakase_01.png"
@@ -167,8 +166,8 @@ function LoginPage() {
               </Button>
             </Link>
           </form>
-          <div className="flex justify-center gap-4 lg:gap-6 mt-2">
-            {(['google', 'naver', 'github', 'kakao'] as const).map((p) => (
+          <div className="flex justify-center gap-4 lg:gap-12 mt-2">
+            {(['google', 'github', 'kakao'] as const).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -179,6 +178,7 @@ function LoginPage() {
                 <Image src={`/socialIcon/${p}.svg`} alt={p} width={36} height={36} />
               </button>
             ))}
+            <ClickCat />
           </div>
 
           <p className="text-center text-sm text-secondary-800 mt-4 mb-10 lg:mb-0">

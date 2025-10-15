@@ -91,7 +91,27 @@ export function useCommentEditor({
     }
   };
 
-  const handleCancel = isEditMode ? onCancel : cancelCreation;
+  const cancelEditing = async () => {
+    if (trimmed === initialContent.trim()) {
+      onCancel?.();
+      return;
+    }
+    const confirmOk = await confirm({
+      title: '댓글 수정을 취소하시겠습니까?',
+      description: <>수정 중인 내용이 모두 사라집니다.</>,
+      confirmText: '취소하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+
+    if (confirmOk) {
+      setValue(initialContent);
+      onCancel?.();
+      requestAnimationFrame(resize);
+    }
+  };
+
+  const handleCancel = isEditMode ? cancelEditing : cancelCreation;
 
   // keyboard handler (shift+Enter 개행 / Enter or Cmd+Enter 시 submit / ESC 취소)
   const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (e) => {

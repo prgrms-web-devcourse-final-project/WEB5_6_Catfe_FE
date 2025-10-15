@@ -87,7 +87,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
     return mine?.role ?? 'MEMBER';
   }, [me, membersDto]);
 
-  const canManage = myRole === "HOST" || myRole === "SUB_HOST";
+  const canManage = myRole === 'HOST' || myRole === 'SUB_HOST';
 
   useEscapeKey(inviteOpen, () => setInviteOpen(false));
   useEscapeKey(usersOpen, () => setUsersOpen(false));

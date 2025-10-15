@@ -56,17 +56,6 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
   const { data, isLoading, isError, error } = useRoomInfoQuery(roomId, { enabled: open });
   const router = useRouter();
 
-  const roleUsers = useMemo(
-    () =>
-      (data?.members ?? []).map((m) => ({
-        id: String(m.userId),
-        name: m.nickname,
-        role: m.role,
-        isOwner: m.role === 'HOST',
-      })),
-    [data?.members]
-  );
-
   const value = useMemo(() => (data ? toRoomInfoValue(data) : null), [data]);
 
   if (!open) return null;
@@ -109,7 +98,9 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
                   />
                 )}
 
-                {tab === 'roles' && <SettingsRoles roomId={Number(roomId)} defaultUsers={roleUsers} />}
+                {tab === 'roles' && (
+                  <SettingsRoles roomId={Number(roomId)} />
+                )}
               </div>
             </section>
           </div>

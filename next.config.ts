@@ -8,9 +8,11 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      // 임시 테스트 더미 데이터용 -> 나중에 실제 서버 버킷 주소로 변경 필요
-      { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
-      { protocol: 'https', hostname: 'fastly.picsum.photos', pathname: '/**' },
+      {
+        protocol: 'https',
+        hostname: 'team5-s3-1.s3.ap-northeast-2.amazonaws.com',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com', // Google 프로필 이미지 도메인

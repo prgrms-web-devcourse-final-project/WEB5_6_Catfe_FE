@@ -1,26 +1,31 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import { PostListItem } from '@/@types/community';
-import DefaultImage from '@/assets/community-thumbnail.png';
-import Image from 'next/image';
 import Button from '../Button';
 import Link from 'next/link';
 
 function PostCard({ post }: { post: PostListItem }) {
   if (!post || post.title.trim().length === 0) return null;
-  const imgSrc = post.thumbnailUrl || DefaultImage;
+  const imgSrc = post.thumbnailUrl || '/image/community-thumbnail.png';
 
   return (
     <div className="flex flex-col rounded-lg border border-gray-400 max-w-[400px] max-h-[500px] overflow-hidden">
       {/* thumbnail */}
       <div className="w-full relative aspect-[2/1]">
-        <Image
-          src={imgSrc!}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 100vw, 400px"
+        <img
+          src={imgSrc as string}
+          alt="게시글 썸네일"
+          style={{
+            objectFit: 'cover',
+            height: '100%',
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
           className="h-full w-full object-cover"
-          priority={false}
         />
       </div>
       {/* contents */}

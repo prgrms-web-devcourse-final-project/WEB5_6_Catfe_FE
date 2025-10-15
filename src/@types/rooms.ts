@@ -24,6 +24,17 @@ export type RoomMember = {
   email?: string;
 };
 
+export type RoomMemberDTO = {
+  userId: number;
+  nickname: string;
+  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+  joinedAt: string | null;
+  promotedAt: string | null;
+  profileImageUrl?: string | null;
+  avatarId?: number | null;
+  avatarImageUrl?: string | null;
+};
+
 export type RoomSnapshot = {
   info: RoomInfo;
   members: RoomMember[];
@@ -43,6 +54,7 @@ export type MediaState = {
 };
 
 export type UsersListItem = RoomMember & {
+  avatarId?: number | null;
   avatarUrl?: string | null;
   voice?: VoiceState;
   presence?: Presence;
@@ -122,4 +134,22 @@ export type ApiRoomMemberDto = {
   role?: Role;
   profileImageUrl?: string | null;
   email?: string | null;
+};
+
+export type UpdateRoomDto = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  thumbnailAttachmentId?: number | null;
+};
+
+export type RoomInfoValue = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  isPrivate: boolean;
+  password?: string | null;
+  coverPreviewUrl: string | null;
+  coverUploadFile: File | null;
+  mediaEnabled?: boolean;
 };

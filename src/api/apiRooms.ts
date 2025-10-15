@@ -377,3 +377,19 @@ export async function applyRoleUpdatesBatch(
   }
   return { succeeded, failed };
 }
+
+export async function deleteRoomMember(roomId: number, userId: number): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) throw new Error("유효하지 않은 roomId 입니다.");
+  if (!Number.isFinite(userId) || userId <= 0) throw new Error("유효하지 않은 userId 입니다.");
+
+  try {
+    const { data } = await api.delete<ApiEnvelope<string>>(
+      `/api/rooms/${roomId}/members/${userId}`,
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!data?.success) throw new Error(data?.message || "사용자 추방에 실패했어요.");
+    return data.data || data.message || "사용자를 추방했어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "사용자 추방에 실패했어요."));
+  }
+}

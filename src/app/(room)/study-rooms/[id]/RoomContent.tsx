@@ -6,8 +6,8 @@ import SignalingClient, { RoomEvent } from '@/lib/signalingClient';
 import * as UITypes from '@/@types/rooms';
 import { getRoomSnapshot } from '@/api/apiRooms';
 import MediaRoomClient from './MediaRoomClient';
+import NonMediaRoomClient from './NonMediaRoomClient';
 
-/** 토큰/유저 읽기 */
 const getAccessToken = () => {
   try { return localStorage.getItem('accessToken') ?? ''; } catch { return ''; }
 };
@@ -39,19 +39,24 @@ const readUserSafely = () => {
   } catch { return { userId: null, username: null }; }
 };
 
-/** JOIN API 호출 */
 type JsonLike = Record<string, unknown>;
 const isRecord = (v: unknown): v is JsonLike => !!v && typeof v === 'object' && !Array.isArray(v);
 type JoinError = Error & { code?: string; payload?: unknown };
 function buildJoinError(status: number, data: unknown): JoinError {
   const msg = (isRecord(data) && typeof data.message === 'string' && data.message) || `join failed (${status})`;
-  const err: JoinError = new Error(msg); if (isRecord(data) && typeof data.code === 'string') err.code = data.code; err.payload = data; return err;
+  const err: JoinError = new Error(msg);
+  if (isRecord(data) && typeof data.code === 'string') err.code = data.code;
+  err.payload = data;
+  return err;
 }
 async function apiJoinRoom(roomId: string | number) {
   const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
   const res = await fetch(`${base}/api/rooms/${roomId}/join`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+    },
     credentials: 'include',
   });
   const data: unknown = await res.json().catch(() => ({}));
@@ -66,7 +71,10 @@ export default function RoomContent() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const { userId: rawUserId } = useMemo(() => (mounted ? readUserSafely() : { userId: null, username: null }), [mounted]);
+  const { userId: rawUserId } = useMemo(
+    () => (mounted ? readUserSafely() : { userId: null, username: null }),
+    [mounted]
+  );
   const userId = useMemo(() => {
     if (!rawUserId) return null;
     const n = typeof rawUserId === 'string' ? Number(rawUserId) : rawUserId;
@@ -80,7 +88,6 @@ export default function RoomContent() {
   const [snapError, setSnapError] = useState<string | null>(null);
   const signalingRef = useRef<SignalingClient | null>(null);
 
-  /** WS 연결 + 룸 이벤트 반영 */
   useEffect(() => {
     if (!roomId || !mounted || !userId) return;
     if (signalingRef.current) return;
@@ -93,8 +100,12 @@ export default function RoomContent() {
           const p = e.payload;
           if (prev.members.some(m => m.id === p.userId)) return prev;
           const newMember: UITypes.UsersListItem = {
-            id: p.userId, name: p.nickname, role: 'MEMBER', email: '',
-            avatarUrl: p.profileImageUrl, isMe: Number(userId) === p.userId,
+            id: p.userId,
+            name: p.nickname,
+            role: 'MEMBER',
+            email: '',
+            avatarUrl: p.profileImageUrl,
+            isMe: Number(userId) === p.userId,
             media: { camOn: true, screenOn: false },
           };
           return { ...prev, members: [...prev.members, newMember] };
@@ -117,7 +128,6 @@ export default function RoomContent() {
     };
   }, [mounted, roomId, userId]);
 
-  /** JOIN */
   useEffect(() => {
     if (!wsReady || joined) return;
     let canceled = false;
@@ -133,7 +143,6 @@ export default function RoomContent() {
     return () => { canceled = true; };
   }, [wsReady, joined, roomId]);
 
-  /** 스냅샷 초기 로드 */
   useEffect(() => {
     if (!joined || !userId) return;
     let alive = true;
@@ -141,7 +150,10 @@ export default function RoomContent() {
       try {
         const snap = await getRoomSnapshot(roomId);
         const myId = Number(userId);
-        const fixed: UITypes.RoomSnapshotUI = { ...snap, members: snap.members.map(m => ({ ...m, isMe: m.id === myId })) };
+        const fixed: UITypes.RoomSnapshotUI = {
+          ...snap,
+          members: snap.members.map(m => ({ ...m, isMe: m.id === myId })),
+        };
         if (alive) setRoomSnap(fixed);
       } catch (err) {
         if (alive) setSnapError(err instanceof Error ? err.message : 'snapshot load failed');
@@ -157,9 +169,21 @@ export default function RoomContent() {
       </div>
     );
   }
-  if (joined && roomSnap && userId && signalingRef.current) {
-    return <MediaRoomClient room={roomSnap} meId={userId} signalingClient={signalingRef.current} />;
+
+  if (joined && roomSnap && userId) {
+    const mediaEnabled = !!roomSnap.info.mediaEnabled;
+    if (mediaEnabled && signalingRef.current) {
+      return (
+        <MediaRoomClient
+          room={roomSnap}
+          meId={userId}
+          signalingClient={signalingRef.current}
+        />
+      );
+    }
+    return <NonMediaRoomClient room={roomSnap} meId={userId} />;
   }
+
   return (
     <div className="flex items-center justify-center min-h-[360px]">
       {joinError || snapError ? (

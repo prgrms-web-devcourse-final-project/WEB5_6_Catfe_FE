@@ -1,5 +1,6 @@
 'use client';
 
+import { Role } from '@/@types/rooms';
 import { ApiChatMsg, ChatMsg } from '@/@types/websocket';
 import ChatWindow, { ChatRoomMode } from '@/components/study-room/chatting/ChatWindow';
 import { mapApiToChatMsg } from '@/hook/useChatRoom';
@@ -10,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ChatRoomContainerProps {
   roomId: number;
+  currentUserRole: Role;
   open: boolean;
   onOpen: () => void;
   onClose: () => void;
@@ -21,6 +23,7 @@ interface ChatRoomContainerProps {
 
 function ChatRoomContainer({
   roomId,
+  currentUserRole,
   open,
   onOpen,
   onClose,
@@ -98,6 +101,28 @@ function ChatRoomContainer({
     setLastReadAt((prev) => (lastReadAt > prev ? lastReadAt : prev));
   };
 
+  const deleteAllMessages = useCallback(async () => {
+    const CONFIRM_MESSAGE = '모든 채팅을 삭제하겠습니다';
+    try {
+      const { data } = await api.delete(`api/rooms/${roomId}/messages`, {
+        data: {
+          confirmMessage: CONFIRM_MESSAGE,
+        },
+      });
+      if (data.success) {
+        showToast('success', '채팅이 모두 삭제되었습니다.');
+        setMessages([]);
+        seenMessages.current.clear();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('채팅 전체 삭제 실패:', err);
+      showToast('error', '채팅 삭제에 실패했습니다.');
+      return false;
+    }
+  }, [roomId]);
+
   return (
     <ChatWindow
       open={open}
@@ -107,6 +132,8 @@ function ChatRoomContainer({
       lastReadAt={lastReadAt}
       onMarkRead={handleMarkRead}
       onModeChange={onModeChange}
+      onDeleteAll={deleteAllMessages}
+      currentUserRole={currentUserRole}
     />
   );
 }

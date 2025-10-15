@@ -51,7 +51,11 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
 
       const dragStart = Math.min(startMin, finalCurMin);
       const dragEnd = Math.max(startMin, finalCurMin);
-      if (dragStart === dragEnd) return;
+      if (dragStart === dragEnd) {
+        const clickStart = dayStart.add(startMin, 'minute');
+        const clickEnd = clickStart.add(1, 'hour');
+        onSelectedRange(clickStart.toISOString(), clickEnd.toISOString());
+      }
 
       setTimeout(() => {
         const start = dayStart.add(dragStart, 'minute');
@@ -67,26 +71,12 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
     document.addEventListener('mouseup', onUp);
   };
 
-  const onGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-plan="1"]') || drag !== null) return;
-    if (!onSelectedRange) return;
-    const grid = gridRef.current!;
-    const rect = grid.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const startMin = yToMinutes(y);
-    const start = dayStart.add(startMin, 'minute');
-    const end = start.add(1, 'hour');
-    onSelectedRange(start.toISOString(), end.toISOString());
-  };
-
   return (
     <div
       ref={gridRef}
       className="relative h-full w-full bg-transparent"
       style={{ minHeight: gridHeight }}
       onMouseDown={onMouseDown}
-      onClick={onGridClick}
     >
       {/* Drag 범위 표시 */}
       {drag && (
@@ -114,6 +104,9 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
               data-plan="1"
               className="absolute left-0 right-0 px-3"
               style={{ top, height }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onPlanClick?.(plan);

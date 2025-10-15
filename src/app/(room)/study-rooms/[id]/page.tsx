@@ -1,6 +1,7 @@
-function StudyRoomPage() {
-  return (
-    <div>StudyRoomPage</div>
-  )
+
+import RoomContent from "./RoomContent";
+
+export default function StudyRoomPage() {
+
+  return <RoomContent />;
 }
-export default StudyRoomPage

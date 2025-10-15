@@ -21,7 +21,7 @@ export type User = {
 // 최초 회원가입 시 받는 정보(nickname)가 아니면 undefined? null??
 export type UserProfile = {
   nickname: string;
-  profileImageUrl?: string;
+  profileImageUrl: string | null;
   bio?: string;
   birthDate?: string | null;
   point?: number;
@@ -55,7 +55,7 @@ export type ApiListPaginationResponse<T> = {
 };
 
 export type ApiPaginationResponse<T> = {
-  content: T[];
+  items: T[];
   pageNumber: number;
   pageSize: number;
   totalElements: number;

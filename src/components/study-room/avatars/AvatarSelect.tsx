@@ -2,39 +2,16 @@
 
 import { useRef } from "react";
 import clsx from "clsx";
-
-import cat1 from "@/assets/cats/cat-1.svg";
-import cat2 from "@/assets/cats/cat-2.svg";
-import cat3 from "@/assets/cats/cat-3.svg";
-import cat4 from "@/assets/cats/cat-4.svg";
-import cat5 from "@/assets/cats/cat-5.svg";
-import cat6 from "@/assets/cats/cat-6.svg";
-import cat7 from "@/assets/cats/cat-7.svg";
-import cat8 from "@/assets/cats/cat-8.svg";
-import cat9 from "@/assets/cats/cat-9.svg";
-import cat10 from "@/assets/cats/cat-10.svg";
-import cat11 from "@/assets/cats/cat-11.svg";
-import cat12 from "@/assets/cats/cat-12.svg";
-import cat13 from "@/assets/cats/cat-13.svg";
-import cat14 from "@/assets/cats/cat-14.svg";
-import cat15 from "@/assets/cats/cat-15.svg";
-import cat16 from "@/assets/cats/cat-16.svg";
 import Image from "next/image";
-
-export type AvatarId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+import { AVATAR_SRC, toAvatarId, type AvatarId } from "@/utils/avatar";
 
 type Props = {
-  value: AvatarId;   // 현재 선택된 아바타 번호(1~16)
-  onChange: (id: AvatarId) => void; // 선택 변경
+  value: AvatarId;
+  onChange: (id: AvatarId) => void;
   onConfirm?: (id: AvatarId) => void;
   className?: string;
   ariaLabel?: string;
 };
-
-const IMAGES = [
-  cat1, cat2, cat3, cat4, cat5, cat6, cat7, cat8,
-  cat9, cat10, cat11, cat12, cat13, cat14, cat15, cat16,
-] as const;
 
 export default function AvatarSelect({
   value,
@@ -57,8 +34,8 @@ export default function AvatarSelect({
         className
       )}
     >
-      {IMAGES.map((src, i) => {
-        const id = (i + 1) as AvatarId;
+      {AVATAR_SRC.map((src, i) => {
+        const id = toAvatarId(i + 1);
         const selected = id === value;
 
         return (

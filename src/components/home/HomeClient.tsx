@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import GuestHome from './GuestHome';
 import UserHome from './UserHome';
 import { useUser } from '@/api/apiUsersMe';
+import LoadingPage from '@/app/loading';
 
 export default function HomeClient() {
   const { isHydrated, init } = useAuthStore();
@@ -15,7 +16,7 @@ export default function HomeClient() {
   }, [init]);
 
   if (!isHydrated || isLoadingUser) {
-    return <div>로딩중...</div>; // 추후 로딩페이지..?
+    return <LoadingPage />;
   }
 
   if (!user) {

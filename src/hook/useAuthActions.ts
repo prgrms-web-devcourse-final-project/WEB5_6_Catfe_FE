@@ -1,7 +1,7 @@
-import { userQueryKey } from '@/api/apiUsersMe';
+import { apiDeleteMe, userQueryKey } from '@/api/apiUsersMe';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useQueryClient } from '@tanstack/react-query';
-import { communityQueryKey } from './useCommunityPost';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { communityQueryKey } from './community/useCommunityPost';
 import { User } from '@/@types/type';
 
 export function useLogout() {
@@ -23,4 +23,23 @@ export function useLogout() {
   };
 
   return performLogout;
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  const authLogout = useAuthStore((state) => state.logout);
+
+  return useMutation({
+    mutationFn: apiDeleteMe,
+    onSuccess: async () => {
+      queryClient.setQueryData(userQueryKey.me(), undefined);
+      queryClient.removeQueries({ queryKey: userQueryKey.me() });
+      await authLogout();
+
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
+    },
+    onError: (error) => {
+      console.error('회원 탈퇴 처리 실패:', error);
+    },
+  });
 }

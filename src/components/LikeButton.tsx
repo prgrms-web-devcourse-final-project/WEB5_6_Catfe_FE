@@ -34,14 +34,14 @@ function LikeButton({
         className={[
           'inline-grid place-items-center',
           'animate-like-pop',
-          'motion-reduce:animate-none',
+          'motion-reduce:animate-none relative',
         ].join(' ')}
+        style={{ height: iconSize, width: iconSize }}
       >
         <Image
           src={liked ? '/icon/community/thumbs-up-on.svg' : '/icon/community/thumbs-up.svg'}
           alt={liked ? '좋아요 취소' : '좋아요'}
-          width={iconSize}
-          height={iconSize}
+          fill
           unoptimized
           priority={false}
         />

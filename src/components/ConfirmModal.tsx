@@ -197,7 +197,7 @@ function ConfirmModal({ open, onClose, options }: ConfirmModalProps) {
         <div className="p-6">
           <div className="flex items-center gap-3">
             {icon ? <div className="mt-3 shrink-0">{icon}</div> : null}
-            <div className="min-w-0">
+            <div className="min-w-0 w-full">
               <h2 id="confirm-title" className="text-lg font-semibold tracking-tight mb-2">
                 {title}
               </h2>

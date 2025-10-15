@@ -304,6 +304,12 @@
     }
   }
 
+  /* StudyRoom Progress */
+  .progressBar {
+    animation: progress 1s linear infinite;
+    transform-origin: left center;
+  }
+
   /* animation keyframes */
   @keyframes spinner-0 {
     0%,
@@ -432,6 +438,14 @@
     100% {
       transform: rotate(360deg) translate(var(--orbit, 30px)) rotate(-360deg);
       opacity: 0;
+    }
+  }
+  @keyframes progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(300%);
     }
   }
 }

@@ -5,41 +5,48 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import UnreadDivider from './UnreadDivider';
 import MessageBubble from './MessageBubble';
 import Button from '@/components/Button';
+import { ChatMsg } from '@/@types/websocket';
+import { formatHM, formatToYMD, isSameDayByTimestamp } from '@/lib/datetime';
+import DateDivider from './DateDivider';
+import { Role } from '@/@types/rooms';
+import { useConfirm } from '@/hook/useConfirm';
 
-type Mode = 'docked' | 'floating';
+export type ChatRoomMode = 'docked' | 'floating';
 
-export interface ChatMsg {
-  id: string | number;
-  from: 'me' | 'other'; // 이건 api 타입 보고 다시 설정
-  content: string;
-  createdAt?: number;
-}
 interface ChatWindowProps {
   open: boolean;
-  onToggleOpen: () => void;
+  onClose: () => void;
   messages: ChatMsg[];
   onSend?: (text: string) => void;
   lastReadAt?: number;
   onMarkRead?: (payload: { lastReadAt: number; lastReadId: ChatMsg['id'] }) => void;
+  onModeChange: (mode: ChatRoomMode) => void;
+  currentUserRole: Role;
+  onDeleteAll?: () => Promise<boolean>;
 }
 function ChatWindow({
   open,
-  onToggleOpen,
+  onClose,
   messages,
   onSend,
   lastReadAt,
   onMarkRead,
+  onModeChange,
+  currentUserRole,
+  onDeleteAll,
 }: ChatWindowProps) {
+  const confirm = useConfirm();
+
   // container / anchor / bottom ref
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const unreadAnchorRef = useRef<HTMLDivElement | null>(null);
 
   // 채팅창 모드
-  const [mode, setMode] = useState<Mode>(() => {
+  const [mode, setMode] = useState<ChatRoomMode>(() => {
     if (typeof window === 'undefined') return 'floating';
     try {
-      return (sessionStorage.getItem('chat:mode') as Mode) || 'floating';
+      return (sessionStorage.getItem('chat:mode') as ChatRoomMode) || 'floating';
     } catch {
       return 'floating';
     }
@@ -47,9 +54,10 @@ function ChatWindow({
 
   useEffect(() => {
     try {
+      onModeChange?.(mode);
       sessionStorage.setItem('chat:mode', mode);
     } catch {}
-  }, [mode]);
+  }, [mode, onModeChange]);
 
   //  입력값 state
   const [draft, setDraft] = useState<string>('');
@@ -81,6 +89,7 @@ function ChatWindow({
     const base = lastReadAt ?? 0;
     return ordered.findIndex((m) => (m.createdAt ?? 0) > base);
   }, [ordered, lastReadAt]);
+  const hasUnread = firstUnreadIdx >= 0;
 
   // 최신 메시지
   const latest = ordered.length ? ordered[ordered.length - 1] : undefined;
@@ -108,13 +117,13 @@ function ChatWindow({
 
   // 채팅방 열면 마지막 읽은 위치로 이동 (없으면 맨 아래)
   useEffect(() => {
-    if (!open) return;
+    if (!open || ordered.length === 0) return;
     const raf = requestAnimationFrame(() => {
       const hasUnread = scrollToUnreadAnchor('auto');
       if (!hasUnread) scrollToBottom('auto');
     });
     return () => cancelAnimationFrame(raf);
-  }, [open, firstUnreadIdx]);
+  }, [open, firstUnreadIdx, ordered.length]);
 
   // 스크롤 위치 추적 + 바닥이면 toast count 초기화
   useEffect(() => {
@@ -140,6 +149,8 @@ function ChatWindow({
       prevCountRef.current = ordered.length;
       return;
     }
+    if (ordered.length === 0) return;
+
     const prev = prevCountRef.current;
     const added = Math.max(0, ordered.length - prev);
     prevCountRef.current = ordered.length;
@@ -147,9 +158,9 @@ function ChatWindow({
     if (added === 0) return;
 
     // 내가 보낸 경우 count에서 제외
-    const isLatestMine = latest && latest.from === 'me';
+    const isLatestMine = latest && latest.from === 'ME';
 
-    if (isAtBottom || isLatestMine) {
+    if ((isAtBottom && !hasUnread) || isLatestMine) {
       scrollToBottom('smooth');
       if (latest && lastMarkedIdRef.current !== latest.id) {
         if ((lastReadAt ?? 0) < (latest.createdAt ?? 0)) {
@@ -160,7 +171,7 @@ function ChatWindow({
     } else {
       if (!isLatestMine) setPendingNewCount((n) => n + added);
     }
-  }, [ordered, open, isAtBottom, latest, lastReadAt, onMarkRead]);
+  }, [ordered, open, isAtBottom, latest, lastReadAt, onMarkRead, hasUnread]);
 
   // 메시지 전송
   const handleSend = () => {
@@ -178,23 +189,75 @@ function ChatWindow({
     setPendingNewCount(0);
   };
 
+  const handleClose = () => {
+    if (isAtBottom && latest) {
+      onMarkRead?.({ lastReadAt: latest.createdAt, lastReadId: latest.id });
+    }
+    onClose();
+  };
+
+  // 메시지 전체 삭제
+  const handleDeleteAll = async () => {
+    const confirmOk = await confirm({
+      title: '채팅 기록 전체 삭제',
+      description: (
+        <>
+          정말로 모든 채팅을 삭제하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.
+        </>
+      ),
+      confirmText: '삭제하기',
+      cancelText: '돌아가기',
+      tone: 'danger',
+    });
+    if (!confirmOk) return;
+    onDeleteAll?.();
+  };
   // 패널 크기
   const panelStyle: React.CSSProperties =
     mode === 'floating'
       ? {
-          left: 20,
+          left: 56 + 20, // sidebar 56px로 고정 + 8px정도 띄우기
           bottom: 20,
-          width: 'max(28dvw, 340px)',
+          width: '340px',
           height: 'min(50dvh, 560px)',
         }
       : {
           top: 0,
-          left: 0,
-          width: 'min(33dvw, 420px)',
+          left: 56,
+          width: 'min(33dvw, 340px)',
           height: '100dvh',
         };
 
   if (!open) return;
+
+  const messageBubbles = ordered.map((m, i) => {
+    const prevMsg = ordered[i - 1];
+    // 첫 메시지이거나 이전 메시지와 날짜가 다를 경우 구분선 표시
+    const shouldShowDateDivider = i === 0 || !isSameDayByTimestamp(prevMsg.createdAt, m.createdAt);
+    const formattedTime = formatHM(m.createdAt);
+
+    return (
+      <Fragment key={m.id}>
+        {shouldShowDateDivider && <DateDivider dateString={formatToYMD(m.createdAt)} />}
+
+        {i === firstUnreadIdx && i >= 0 && (
+          <>
+            <div ref={unreadAnchorRef} data-anchor="unread">
+              <UnreadDivider />
+            </div>
+          </>
+        )}
+        <MessageBubble
+          mine={m.from === 'ME'}
+          nickname={m.nickname}
+          profileImageUrl={m.profileImageUrl}
+          timeString={formattedTime}
+        >
+          {m.content}
+        </MessageBubble>
+      </Fragment>
+    );
+  });
 
   return (
     <section
@@ -202,10 +265,11 @@ function ChatWindow({
       aria-label="채팅"
       aria-modal={false}
       className={[
-        'fixed z-50 flex flex-col gap-3 px-3 py-2',
+        'fixed flex flex-col gap-3 px-3 py-2',
         mode === 'floating'
-          ? 'rounded-xl bg-black/40'
-          : 'bg-background-white border-r border-zinc-300',
+          ? 'z-50 rounded-xl bg-gray-800/40'
+          : 'z-30 bg-background-white border-x border-zinc-300',
+        !open && 'hidden',
       ].join(' ')}
       style={panelStyle}
     >
@@ -223,6 +287,28 @@ function ChatWindow({
             mode === 'floating' && 'bg-background-white rounded-lg',
           ].join(' ')}
         >
+          {currentUserRole === 'HOST' && (
+            <>
+              {' '}
+              <button
+                type="button"
+                title="채팅 전체 삭제"
+                aria-label="채팅 전체 삭제"
+                onClick={handleDeleteAll}
+                className="cursor-pointer p-1 rounded hover:bg-zinc-100"
+              >
+                <Image
+                  src="/icon/study-room/trash-alert.svg"
+                  alt=""
+                  width={20}
+                  height={20}
+                  unoptimized
+                  priority={false}
+                />
+              </button>
+              <span className="text-zinc-400">|</span>
+            </>
+          )}
           <button
             type="button"
             title={mode === 'floating' ? '고정 패널로 전환' : '플로팅으로 전환'}
@@ -254,7 +340,7 @@ function ChatWindow({
           <button
             type="button"
             aria-label="닫기"
-            onClick={onToggleOpen}
+            onClick={handleClose}
             className="cursor-pointer p-1 rounded hover:bg-zinc-100"
           >
             <Image
@@ -270,19 +356,8 @@ function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3">
-        {ordered.map((m, i) => (
-          <Fragment key={m.id}>
-            {i === firstUnreadIdx && i >= 0 && (
-              <>
-                <div ref={unreadAnchorRef} data-anchor="unread">
-                  <UnreadDivider />
-                </div>
-              </>
-            )}
-            <MessageBubble mine={m.from === 'me'}>{m.content}</MessageBubble>
-          </Fragment>
-        ))}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4">
+        {messageBubbles}
         <div ref={endRef} />
       </div>
 

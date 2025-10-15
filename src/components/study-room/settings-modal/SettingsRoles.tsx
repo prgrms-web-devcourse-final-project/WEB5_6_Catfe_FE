@@ -2,13 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
-import Image from 'next/image';
 import CustomSelect from '@/components/CustomSelect';
 import Button from '@/components/Button';
 import type { Role } from '@/@types/rooms';
+import HostBadge from '../HostBadge';
+import { useBatchRoleSave } from '@/hook/useBatchRoleSave';
+import showToast from '@/utils/showToast';
 
-type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER'>;
-type RoleSelectValue = RoleEditable | 'DELETE';
+type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER' | 'VISITOR'>;
+/** 추방 기능 비활성화: 'DELETE' 제거 */
+// type RoleSelectValue = RoleEditable | 'VISITOR' | 'DELETE';
+type RoleSelectValue = RoleEditable;
 type Filter = 'all' | RoleEditable;
 
 type User = {
@@ -21,11 +25,13 @@ type User = {
 
 type RolesPatch = {
   added: User[];
+  /** 추방 기능 비활성화: removed는 항상 빈 배열로 유지 */
   removed: string[];
   updated: Array<{ id: string; role: RoleEditable }>;
 };
 
 type Props = {
+  roomId: number;
   defaultUsers?: User[];
   className?: string;
   onSave?: (patch: RolesPatch, current: User[]) => Promise<void> | void;
@@ -40,7 +46,10 @@ const filterOptions = [
 const roleOptions = [
   { label: '스텝', value: 'SUB_HOST' as const },
   { label: '멤버', value: 'MEMBER' as const },
-  { label: '삭제', value: 'DELETE' as const, intent: 'danger' as const },
+  { label: '방문자', value: 'VISITOR' as const },
+  /** 추방 기능 비활성화
+  { label: '추방', value: 'DELETE' as const, intent: 'danger' as const },
+  */
 ] satisfies ReadonlyArray<{
   label: string;
   value: RoleSelectValue;
@@ -50,9 +59,10 @@ const roleOptions = [
 
 function computePatch(base: User[], current: User[]): RolesPatch {
   const baseMap = new Map(base.map((u) => [u.id, u]));
-  const curMap = new Map(current.map((u) => [u.id, u]));
+  // const curMap = new Map(current.map((u) => [u.id, u]));
 
   const added: User[] = [];
+  /** 🔒 추방 기능 비활성화: removed는 계산하지 않음 */
   const removed: string[] = [];
   const updated: Array<{ id: string; role: RoleEditable }> = [];
 
@@ -61,23 +71,27 @@ function computePatch(base: User[], current: User[]): RolesPatch {
     if (!prev) {
       added.push(u);
     } else if (prev.role !== u.role) {
-      if (u.role === 'SUB_HOST' || u.role === 'MEMBER') {
+      if (u.role === 'SUB_HOST' || u.role === 'MEMBER' || u.role === 'VISITOR') {
         updated.push({ id: u.id, role: u.role });
       }
     }
   }
+
+  /** 추방 기능 비활성화: cur에 없는 사용자를 제거하지 않음
   for (const u of base) {
     if (!curMap.has(u.id)) removed.push(u.id);
   }
+  */
+
   return { added, removed, updated };
 }
 
-export default function SettingsRoles({ defaultUsers, className, onSave }: Props) {
-  const [inviteEmail, setInviteEmail] = useState('');
+export default function SettingsRoles({ roomId, defaultUsers, className, onSave }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [base, setBase] = useState<User[]>(defaultUsers ?? []);
   const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
   const [saving, setSaving] = useState(false);
+  const { save: saveBatch, saving: savingBatch } = useBatchRoleSave(roomId);
 
   useEffect(() => {
     const next = defaultUsers ?? [];
@@ -91,38 +105,38 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
   }, [users, filter]);
 
   const updateRole = (userId: string, next: RoleSelectValue) => {
+    /** 추방 기능 비활성화
     if (next === 'DELETE') {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       return;
     }
+    */
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: next } : u)));
   };
 
-  const onInvite = (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = inviteEmail.trim();
-    if (!email) return;
-    setUsers((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        name: '[userName]',
-        email,
-        role: 'MEMBER',
-      },
-    ]);
-    setInviteEmail('');
-  };
-
   const patch = useMemo(() => computePatch(base, users), [base, users]);
-  const isDirty = patch.added.length + patch.removed.length + patch.updated.length > 0;
+  /** 추방 기능 비활성화: removed는 고려하지 않음 */
+  const isDirty = patch.added.length + patch.updated.length > 0;
 
   const handleSave = async () => {
-    if (!isDirty || saving) return;
+    if (!isDirty || saving || savingBatch) return;
+
+    const updates = patch.updated.map((u) => ({
+      userId: Number(u.id),
+      newRole: u.role,
+    }));
+
     try {
       setSaving(true);
+      const { failed } = await saveBatch(updates);
       await onSave?.(patch, users);
-      setBase(users);
+
+      if (failed.length === 0) {
+        setBase(users);
+        showToast('success', '권한이 저장되었어요.');
+      } else {
+        showToast('error', `일부 실패: ${failed.length}명 - ${failed[0].error}`);
+      }
     } finally {
       setSaving(false);
     }
@@ -131,28 +145,11 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
   return (
     <section className={clsx('w-full flex flex-col h-full', className)}>
       <div className="flex-1">
-        <p className="mb-2 text-xs font-semibold text-text-primary">사용자 초대</p>
-        <p className="mb-2 text-xs text-text-secondary">
-          사용자를 그룹 멤버로 초대하고 스터디룸 권한을 부여해보세요
+        <p className="mb-5 text-sm text-text-primary">
+          참여자를 캣페 멤버로 설정하고, 함께 공부를 즐겨보세요!
         </p>
 
-        {/* 초대 입력 */}
-        <form onSubmit={onInvite} className="mb-8">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="초대할 사용자의 메일 주소를 입력해 주세요"
-            className={clsx(
-              'w-full h-9 rounded-lg border px-3 text-[10px] outline-none',
-              'border-text-secondary/60 placeholder:text-text-secondary'
-            )}
-          />
-        </form>
-
-        <hr className="mb-4 border-text-secondary/60" />
-
-        <div className="mb-3 flex items-center justify-start">
+        <div className="mb-3 flex items-center justify-end">
           <CustomSelect<Filter>
             value={filter}
             onChange={(v) => setFilter(v)}
@@ -163,10 +160,9 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
           />
         </div>
 
-        {/* 사용자 리스트 */}
         {visibleUsers.length === 0 ? (
           <div className="mt-8 text-center text-xs text-text-secondary">
-            아직 멤버가 없어요. 상단에서 이메일로 멤버를 초대해보세요!
+            온라인인 사용자가 없어요.😢 다른 이들과 함께일 때 다시 시도해주세요.
           </div>
         ) : (
           <ul className="flex flex-col gap-4 justify-center">
@@ -178,15 +174,13 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
                 </div>
 
                 {u.role === 'HOST' ? (
-                  <OwnerBadge />
-                ) : u.role === 'VISITOR' ? (
-                  <span className="text-[11px] text-text-secondary">게스트</span>
+                  <HostBadge />
                 ) : (
                   <CustomSelect<RoleSelectValue>
                     value={u.role as RoleSelectValue}
                     onChange={(v) => updateRole(u.id, v)}
                     options={roleOptions}
-                    placeholder="멤버"
+                    placeholder={u.role}
                     size="sm"
                     menuWidth="trigger"
                   />
@@ -197,33 +191,17 @@ export default function SettingsRoles({ defaultUsers, className, onSave }: Props
         )}
       </div>
 
-      {/* 하단 저장 */}
       <div className="mt-4 flex justify-end">
         <Button
           size="md"
           borderType="solid"
           color="primary"
-          disabled={!isDirty || saving}
+          disabled={!isDirty || saving || savingBatch}
           onClick={handleSave}
         >
-          {saving ? '저장 중...' : isDirty ? '저장하기' : '변경 사항 없음'}
+          {saving || savingBatch ? '저장 중...' : isDirty ? '저장하기' : '변경 사항 없음'}
         </Button>
       </div>
     </section>
-  );
-}
-
-function OwnerBadge() {
-  return (
-    <div className="flex items-center gap-2 text-primary-500">
-      <Image
-        src="/icon/study-room/crown.svg"
-        alt="owner"
-        width={16}
-        height={16}
-        className="shrink-0"
-      />
-      <span className="text-sm font-semibold text-primary-500">소유자</span>
-    </div>
   );
 }

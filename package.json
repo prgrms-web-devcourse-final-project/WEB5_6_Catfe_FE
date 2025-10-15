@@ -6,10 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "fmt": "prettier . --write"
   },
   "dependencies": {
-    "@stomp/stompjs": "^7.2.0",
+    "@stomp/stompjs": "^7.2.1",
     "@tanstack/react-query": "^5.89.0",
     "@tiptap/extension-image": "^3.4.4",
     "@tiptap/extension-link": "^3.4.4",
@@ -28,6 +30,7 @@
     "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
     "react-toastify": "^11.0.5",
     "sanitize-html": "^2.17.0",
     "sockjs-client": "^1.6.1",

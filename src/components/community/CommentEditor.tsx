@@ -1,13 +1,28 @@
-import { CommentTarget, useCommentEditor } from '@/hook/useCommentEditor';
+import { CommentTarget, useCommentEditor } from '@/hook/community/useCommentEditor';
 import Button from '../Button';
 
 interface CommentEditorProps {
   target: CommentTarget;
-  onSubmit: (data: { postId: number; parentCommentId?: number; content: string }) => Promise<void>;
+  onSubmit: (data: {
+    postId: number;
+    parentCommentId?: number;
+    commentId?: number;
+    content: string;
+  }) => Promise<void>;
   className?: string;
+  initialContent?: string;
+  isEditMode?: boolean;
+  onCancel?: () => void;
 }
 
-function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
+function CommentEditor({
+  target,
+  onSubmit,
+  className,
+  initialContent,
+  isEditMode,
+  onCancel,
+}: CommentEditorProps) {
   const {
     isReply,
     editorId,
@@ -22,9 +37,10 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
     cancel,
     contentLength,
     limit,
-  } = useCommentEditor({ target, onSubmit });
+  } = useCommentEditor({ target, onSubmit, initialContent, isEditMode, onCancel });
 
-  const showCancelButton = value.length > 0 && !isSubmitting;
+  const showCancelButton = isEditMode || (value.length > 0 && !isSubmitting);
+  const submitButtonLabel = isEditMode ? '수정' : '등록';
 
   return (
     <div
@@ -34,7 +50,13 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
       ].join(' ')}
     >
       <label htmlFor={editorId} className="sr-only">
-        {isReply ? '대댓글 입력' : '댓글 입력'}
+        {isReply
+          ? isEditMode
+            ? '대댓글 수정'
+            : '대댓글 입력'
+          : isEditMode
+            ? '댓글 수정'
+            : '댓글 입력'}
       </label>
       <textarea
         id={editorId}
@@ -43,7 +65,13 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
         onChange={(e) => setValue(e.target.value)}
         onInput={resize}
         onKeyDown={handleKeyDown}
-        placeholder={isReply ? '답글을 입력하세요' : '댓글을 남겨보세요'}
+        placeholder={
+          isEditMode
+            ? '댓글 내용을 수정하세요'
+            : isReply
+              ? '답글을 입력하세요'
+              : '댓글을 남겨보세요'
+        }
         className="w-full resize-none outline-none text-sm leading-6 placeholder:text-text-secondary disabled:opacity-70 bg-background-white p-3 rounded-lg border border-secondary-800/40 focus:ring-2 focus:ring-secondary-400"
         rows={1}
         maxLength={limit + 1}
@@ -78,7 +106,7 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
             onClick={submitComment}
             aria-busy={isSubmitting}
           >
-            {isSubmitting ? '등록 중...' : '댓글 달기'}
+            {isSubmitting ? `${submitButtonLabel} 중...` : submitButtonLabel}
           </Button>
         </div>
       </div>

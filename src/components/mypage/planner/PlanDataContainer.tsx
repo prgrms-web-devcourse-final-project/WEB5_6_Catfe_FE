@@ -73,8 +73,8 @@ function PlanDataContainer({ hourHeight }: { hourHeight: number }) {
       createPlan.mutate(payload, { onSuccess });
     } else {
       // id가 있으면 수정
-      const { applyScope } = payload;
-      updatePlan.mutate({ id: modal.planId!, payload: payload, applyScope }, { onSuccess });
+      const { applyScope, ...updateData } = payload;
+      updatePlan.mutate({ id: modal.planId!, payload: updateData, applyScope }, { onSuccess });
     }
   };
 

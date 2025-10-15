@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { HeadingLevel, useToolbarSnapshot } from '@/hook/useToolbarSnapshot';
 import { useCallback } from 'react';
 import fileToDataUrl from '@/utils/fileToDataUrl';
+import { MAX_FILE_SIZE } from '@/api/apiUploadFile';
+import showToast from '@/utils/showToast';
 
 const Seperator = () => <span className="mx-1 h-5 w-px bg-gray-400" />;
 
@@ -48,22 +50,24 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     [editor]
   );
 
-  // Attachment
-  const onSetLink = useCallback(() => {
-    if (!editor) return;
-    const prev = editor.getAttributes('link').href as string | undefined;
-    /*--------------------- 이거 테스트용 prompt 나중에 팝업으로 바꿀것 ------------------*/
-    const url = window.prompt('URL 입력 for test', prev ?? '');
-    if (url === null) return;
-    if (url === '') editor.chain().focus().unsetLink().run();
-    else editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor]);
-
   const onAttachImage = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!editor) return;
       const file = e.target.files?.[0];
       if (!file) return;
+      // 파일 크기 검증
+      if (file.size > MAX_FILE_SIZE) {
+        showToast('error', '파일 크기는 10MB 미만이어야 합니다.');
+        e.target.value = '';
+        return;
+      }
+      // 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        showToast('error', '이미지 파일만 업로드하실 수 있습니다.');
+        e.target.value = '';
+        return;
+      }
+
       const base64file = await fileToDataUrl(file);
       editor.chain().focus().setImage({ src: base64file, alt: file.name }).run();
       e.currentTarget.value = '';
@@ -201,17 +205,6 @@ function Toolbar({ editor }: { editor: Editor | null }) {
 
       <Seperator />
 
-      {/* Attachment */}
-      <ToolButton onClick={onSetLink} active={snap.link} aria-label="링크">
-        <Image
-          src="/icon/community/link.svg"
-          alt=""
-          width={20}
-          height={20}
-          unoptimized
-          priority={false}
-        />
-      </ToolButton>
       <label
         htmlFor="insert-image"
         className={[

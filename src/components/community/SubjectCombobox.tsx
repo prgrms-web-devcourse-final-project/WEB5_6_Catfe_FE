@@ -1,4 +1,4 @@
-import { useComboboxLogic } from '@/hook/useComboboxLogic';
+import { useComboboxLogic } from '@/hook/community/useComboboxLogic';
 import tw from '@/utils/tw';
 import Image from 'next/image';
 import { useMemo } from 'react';
@@ -54,6 +54,20 @@ function SubjectCombobox({
     handleKeydown,
   } = useComboboxLogic({ value, onChange, config });
 
+  const handleOnBlur = () => {
+    setOpen(false);
+    // 커스텀 입력 허용 시, 입력값(inputValue)이 있고 기존 값과 다르면 선택 처리
+    if (allowCustom && inputValue && inputValue !== value) {
+      handleSelect(inputValue);
+      // 입력값이 없고 (빈 상태), 멀티 셀렉트 모드가 아닐 때
+    } else if (!inputValue && !allowMultiSelect) {
+      if (value) {
+        // value가 있지만 inputValue가 없다면, 단일 선택 모드에서 값을 지운 것으로 간주하고 초기화
+        handleSelect('');
+      }
+    }
+  };
+
   return (
     <div ref={ref} className={['relative', className].join(' ')}>
       <label htmlFor="subject-select" className="flex flex-col gap-2">
@@ -93,7 +107,7 @@ function SubjectCombobox({
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeydown}
-            onBlur={() => setOpen(false)}
+            onBlur={handleOnBlur}
             placeholder={placeholder}
             autoComplete="off"
             className="w-full rounded-md border border-gray-300 bg-background-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-secondary-400"

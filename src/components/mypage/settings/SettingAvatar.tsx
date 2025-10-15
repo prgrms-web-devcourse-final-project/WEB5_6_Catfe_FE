@@ -1,15 +1,36 @@
+'use client';
+
+import { MAX_FILE_SIZE } from '@/api/apiUploadFile';
+import showToast from '@/utils/showToast';
 import Image from 'next/image';
 
 interface SettingAvatarProps {
   avatarUrl: string;
-  onChange: (next: string) => void;
+  onChange: (file: File) => Promise<void>;
   disabled?: boolean;
 }
 
-// !! 임시 input - BE에서 이미지 파일 업로드 api 만들어지면 수정할 것
-// const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
 function SettingAvatar({ avatarUrl, onChange, disabled = false }: SettingAvatarProps) {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // 파일 크기 검증
+    if (file.size > MAX_FILE_SIZE) {
+      showToast('error', '파일 크기는 10MB 미만이어야 합니다.');
+      e.target.value = '';
+      return;
+    }
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      showToast('error', '이미지 파일만 업로드하실 수 있습니다.');
+      e.target.value = '';
+      return;
+    }
+
+    await onChange(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="relative flex justify-center">
       <div className="size-30 rounded-full border-2 border-gray-400 overflow-hidden relative">
@@ -17,13 +38,14 @@ function SettingAvatar({ avatarUrl, onChange, disabled = false }: SettingAvatarP
           src={avatarUrl === '' ? '/image/cat-default.svg' : avatarUrl}
           alt="프로필 이미지"
           fill
+          className="object-cover"
         />
       </div>
       <input
         type="file"
         id="user-avatar-setting"
         className="hidden"
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleFileChange}
         disabled={disabled}
       />
       <label

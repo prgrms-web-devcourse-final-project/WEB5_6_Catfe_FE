@@ -45,7 +45,7 @@ function RegisterForm() {
         password,
         nickname: name,
       });
-      showToast("success", "회원가입이 완료되었습니다. 로그인 해주세요.");
+      showToast("success", "회원가입 완료! 이메일 인증 메일을 확인해주세요.");
       router.replace('/login'); 
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;

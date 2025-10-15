@@ -8,6 +8,7 @@ import { getMyRooms } from '@/api/apiRooms';
 import { joinRoom, JoinRoomHttpError } from '@/api/apiJoinRoom';
 import { connectRoomSocket } from '@/lib/connectRoomSocket';
 import type { MyRoomsList } from '@/@types/rooms';
+import showToast from '@/utils/showToast';
 
 const PAGE_SIZE = 6;
 
@@ -99,9 +100,7 @@ export default function JoinList({ search = '' }: { search?: string }) {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter(
-      (r) =>
-        r.title.toLowerCase().includes(q) ||
-        (r.description ?? '').toLowerCase().includes(q)
+      (r) => r.title.toLowerCase().includes(q) || (r.description ?? '').toLowerCase().includes(q)
     );
   }, [rows, search]);
 
@@ -121,16 +120,16 @@ export default function JoinList({ search = '' }: { search?: string }) {
       } catch (e) {
         if (e instanceof JoinRoomHttpError) {
           if (e.status === 400 && e.data === 'FULL') {
-            alert('정원이 가득 찼어요.');
+            showToast('warn', '정원이 가득 찼어요.');
           } else if (e.status === 404) {
-            alert('존재하지 않는 방입니다.');
+            showToast('error', '존재하지 않는 방입니다.');
           } else if (e.status === 401) {
-            alert('로그인이 필요해요.');
+            showToast('warn', '로그인이 필요해요.');
           } else {
-            alert(e.message);
+            showToast('error', e.message);
           }
         } else {
-          alert('입장 중 오류가 발생했어요.');
+          showToast('error', '입장 중 오류가 발생했어요.');
         }
       }
     },
@@ -177,7 +176,7 @@ export default function JoinList({ search = '' }: { search?: string }) {
               key={room.roomId}
               title={room.title}
               description={room.description}
-              coverSrc={null}
+              coverSrc={room.thumbnailUrl ?? null}
               isPrivate={room.isPrivate}
               clickable
               onClick={() => enterRoom(room)}

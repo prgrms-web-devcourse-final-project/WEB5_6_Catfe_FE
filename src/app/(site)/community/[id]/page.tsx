@@ -3,7 +3,7 @@ import ContentsDetail from './ContentsDetail';
 import api from '@/utils/api';
 import { ApiResponse } from '@/@types/type';
 import { PostDetail } from '@/@types/community';
-import { communityQueryKey, getPostDetail } from '@/hook/useCommunityPost';
+import { communityQueryKey, getPostDetail } from '@/hook/community/useCommunityPost';
 
 async function getPostDetailForServer(id: number): Promise<{ title?: string } | null> {
   try {
@@ -33,7 +33,7 @@ async function Page({ params }: { params: Promise<{ id: string }> }) {
   const postId = Number(id);
   const qc = new QueryClient();
   await qc.prefetchQuery({
-    queryKey: communityQueryKey.post(postId),
+    queryKey: communityQueryKey.post(postId, 'anon'),
     queryFn: () => getPostDetail(postId),
   });
 

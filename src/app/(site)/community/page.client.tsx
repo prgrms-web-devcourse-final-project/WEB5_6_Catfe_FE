@@ -4,18 +4,12 @@ import PostFilters from '@/components/community/PostFilters';
 import CommunityTab from '@/components/community/CommunityTab';
 import PostCard from '@/components/community/PostCard';
 import Pagination from '@/components/Pagination';
-import { useCategoriesQuery, usePostsQuery } from '@/hook/useCommunityPost';
-import { PostSort, usePostSearchUrl } from '@/hook/usePostSearchUrl';
+import { useCategoriesQuery, usePostsQuery } from '@/hook/community/useCommunityPost';
+import { usePostSearchUrl } from '@/hook/usePostSearchUrl';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import Spinner from '@/components/Spinner';
-
-const SORT_OPTIONS: { label: string; value: PostSort }[] = [
-  { label: '최신순', value: 'createdAt,desc' },
-  { label: '오래된순', value: 'createdAt,asc' },
-  { label: '좋아요순', value: 'likeCount,desc' },
-  { label: '댓글순', value: 'commentCount,desc' },
-];
+import SortSelector, { POST_SORT_OPTIONS } from '@/components/community/SortSelector';
 
 function CommunityListClient() {
   const { query, push, replaceSort } = usePostSearchUrl();
@@ -67,21 +61,12 @@ function CommunityListClient() {
         onChange={(next) => push({ ...next, page: 1 })}
         categoryData={categoryData || []}
       />
-      <div className="w-full flex justify-end items-center gap-3">
-        <span className="text-sm text-text-secondary">정렬 : </span>
-        <select
-          id="community-sort"
-          value={query.sort}
-          onChange={(e) => replaceSort(e.target.value as PostSort)}
-          className="border border-zinc-300 rounded-md p-1 text-sm outline-none"
-        >
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SortSelector
+        id="post-sort"
+        currentSort={query.sort}
+        options={POST_SORT_OPTIONS}
+        onChange={replaceSort}
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 w-full">
         {/* loading skeleton */}
         {isFetching

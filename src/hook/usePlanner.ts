@@ -47,10 +47,10 @@ export function useUpdatePlan(ymd: string) {
     mutationFn: async ({ id, payload, applyScope }: UpdatePlanPayload) => {
       let url = `/api/plans/${id}`;
       const params = new URLSearchParams();
-      if (applyScope) {
-        params.append('applyScope', applyScope);
-        url += `?${params.toString()}`;
-      }
+
+      params.append('applyScope', applyScope || 'THIS_ONLY');
+      url += `?${params.toString()}`;
+
       const { data } = await api.put(url, payload);
       return data;
     },

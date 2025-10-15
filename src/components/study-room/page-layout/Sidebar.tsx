@@ -3,42 +3,53 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import clsx from 'clsx';
+import { useRouter } from 'next/navigation';
 import useEscapeKey from '@/hook/useEscapeKey';
 import UserProfileModal from '@/components/study-room/UserProfileModal';
 import TimerPanel from '@/components/study-room/timer/TimerPanel';
+import { leaveRoom } from '@/api/apiRooms';
+import showToast from '@/utils/showToast';
+import type { Role } from '@/@types/rooms';
+import { toAvatarId, type AvatarId } from '@/utils/avatar';
+import AvatarImage from '@/components/AvatarImage';
 
 type Props = {
+  roomId: number;
   className?: string;
+  role: Role;
   onOpenSettings?: () => void;
   onOpenTimer?: () => void;
-  onOpenNotice?: () => void;
   onOpenChat?: () => void;
   onOpenPlanner?: () => void;
   onOpenProfile?: () => void;
   onOpenUsers?: () => void;
   onOpenInvite?: () => void;
+  unreadCount: number;
 };
 
 export default function Sidebar({
+  roomId,
   className,
+  role,
   onOpenSettings,
   onOpenTimer,
-  // onOpenNotice,
   onOpenChat,
   onOpenPlanner,
   onOpenProfile,
+  unreadCount,
 }: Props) {
+  const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [avatarId, setAvatarId] = useState<AvatarId>(1);
 
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
 
-  // ESC로 닫기
   useEscapeKey(profileOpen, () => setProfileOpen(false));
   useEscapeKey(timerOpen, () => setTimerOpen(false));
 
-  // 프로필 바깥 클릭 닫기
   useEffect(() => {
     if (!profileOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -51,7 +62,6 @@ export default function Sidebar({
     return () => document.removeEventListener('mousedown', onDown);
   }, [profileOpen]);
 
-  // 타이머 바깥 클릭 닫기
   useEffect(() => {
     if (!timerOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -74,6 +84,23 @@ export default function Sidebar({
     onOpenTimer?.();
   };
 
+  const handleLeave = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      await leaveRoom(roomId);
+      showToast('success', '방 퇴장 완료');
+      router.back();
+    } catch (error) {
+      let message = '방 퇴장에 실패했어요.';
+      if (error instanceof Error && error.message) message = error.message;
+      showToast('error', message);
+      setLeaving(false);
+    }
+  };
+
+  const canManage = role === 'HOST';
+
   return (
     <aside
       ref={sidebarRef}
@@ -83,24 +110,23 @@ export default function Sidebar({
       )}
       aria-label="Room sidebar"
     >
-      {/* 상단 뒤로가기 아이콘 */}
       <button
-        className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+        className={clsx('rounded-full p-2 cursor-pointer hover:bg-black/5', leaving && 'opacity-60 cursor-not-allowed')}
         aria-label="뒤로가기"
-        onClick={() => history.back()}
+        onClick={handleLeave}
+        disabled={leaving}
+        aria-busy={leaving}
       >
         <Image src="/icon/study-room/exit.svg" alt="뒤로가기 아이콘" width={20} height={20} />
       </button>
 
-      {/* 하단 아이콘들 */}
       <div className="flex flex-col items-center justify-center gap-4">
-        <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
-          aria-label="설정"
-          onClick={onOpenSettings}
-        >
-          <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
-        </button>
+        {canManage && (
+          <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="설정" onClick={onOpenSettings}>
+            <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
+          </button>
+        )}
+
         <div className="relative">
           <button
             className="rounded-full p-2 cursor-pointer hover:bg-black/5"
@@ -119,17 +145,19 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* MVP 아닌 기능 : 게시판 */}
-        {/* <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="게시판" onClick={onOpenNotice}>
-          <Image src="/icon/study-room/notice.svg" alt="게시판 아이콘" width={20} height={20} />
-        </button> */}
         <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+          className="rounded-full p-2 cursor-pointer hover:bg-black/5 relative"
           aria-label="채팅"
           onClick={onOpenChat}
         >
           <Image src="/icon/study-room/chat.svg" alt="채팅 아이콘" width={20} height={20} />
+          {unreadCount > 0 && (
+            <span className="inline-flex bg-primary-700 text-white rounded-full min-w-5 h-5 items-center justify-center absolute -right-2 top-0">
+              {unreadCount}
+            </span>
+          )}
         </button>
+
         <button
           className="rounded-full p-2 cursor-pointer hover:bg-black/5"
           aria-label="플래너"
@@ -138,7 +166,6 @@ export default function Sidebar({
           <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
         </button>
 
-        {/* 프로필 + 팝오버 */}
         <div className="relative" ref={profileAnchorRef}>
           <button
             className="rounded-full cursor-pointer overflow-hidden w-7 h-7 ring-1 ring-text-secondary"
@@ -147,12 +174,16 @@ export default function Sidebar({
             aria-expanded={profileOpen}
             onClick={toggleProfile}
           >
-            <Image src="/image/cat.png" alt="내 프로필" width={28} height={28} />
+            <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
           </button>
 
           {profileOpen && (
             <div className="absolute left-full ml-8 bottom-0 z-50">
-              <UserProfileModal />
+              <UserProfileModal
+                roomId={roomId}
+                initialAvatarId={avatarId}
+                onAvatarChange={(id) => setAvatarId(toAvatarId(id))}
+              />
             </div>
           )}
         </div>

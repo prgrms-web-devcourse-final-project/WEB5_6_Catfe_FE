@@ -1,5 +1,5 @@
 import api from "@/utils/api";
-import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList, Role, RoomMemberDTO } from "@/@types/rooms";
+import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList, Role, RoomMemberDTO, UpdateRoomDto } from "@/@types/rooms";
 import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/rooms";
 
 export type PageResponse<T> = {
@@ -24,13 +24,6 @@ type RoomsPayload<T> = {
   totalPages: number;
   totalElements: number;
   hasNext: boolean;
-};
-
-export type UpdateRoomDto = {
-  title?: string;
-  description?: string;
-  maxParticipants?: number;
-  thumbnailAttachmentId?: number | null;
 };
 
 export type InviteMeData = {
@@ -145,6 +138,7 @@ export type RoomDetailDTO = {
   createdAt: string;
   private: boolean;
   members: RoomMemberDTO[];
+  thumbnailUrl?: string | null;
 };
 
 function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
@@ -156,7 +150,7 @@ function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
     description: d.description ?? "",
     maxParticipants: d.maxParticipants,
     isPrivate: !!d.private,
-    coverPreviewUrl: null,
+    coverPreviewUrl: d.thumbnailUrl ?? null,
     currentParticipants: d.currentParticipants ?? 0,
     status: d.status,
     allowCamera: !!d.allowCamera,
@@ -170,7 +164,6 @@ function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
     name: m.nickname ?? `u-${m.userId}`,
     role: m.role,
     email: "",
-    /** ✅ 아바타 정보 보존 */
     avatarId: m.avatarId ?? null,
     avatarUrl: m.avatarImageUrl ?? m.profileImageUrl ?? null,
     isMe: false,

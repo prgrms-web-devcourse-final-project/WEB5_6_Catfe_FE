@@ -96,7 +96,7 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
 
               <div className="flex-1 overflow-y-auto min-h-0 pr-2 -mr-2">
                 {tab === 'general' && value && (
-                  <SettingsGeneral defaultValue={value} onSave={async () => {}} />
+                  <SettingsGeneral roomId={Number(roomId)} defaultValue={value} onSave={async () => {}} />
                 )}
 
                 {tab === 'security' && value && (

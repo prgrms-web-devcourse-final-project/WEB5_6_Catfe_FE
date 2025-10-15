@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import RoomStage from '@/components/study-room/RoomStage';
-import MediaControlBar from '@/components/webrtc/MediaControlBar';
 import { makeRtcConfig } from '@/lib/webrtcApi';
 import { useWebRTC } from '@/hook/useWebRTC';
 import { useMediaStream } from '@/hook/useMediaStream';
@@ -10,6 +9,7 @@ import { useRoomMembersQuery } from '@/hook/useRoomMembers';
 import type { RoomSnapshotUI, StreamsByUser, UsersListItem, ApiRoomMemberDto } from '@/@types/rooms';
 import * as UITypes from '@/@types/rooms';
 import SignalingClient from '@/lib/signalingClient';
+import { useSetMediaControls } from '@/contexts/MediaControlsContext';
 
 const DEFAULT_RTC: RTCConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 const toUid = (id: number | string) => `u-${Number(id) || 0}`;
@@ -78,9 +78,7 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
   const meId = toUid(meNum);
 
   const { localStream, initMedia } = useMediaStream();
-  useEffect(() => {
-    initMedia();
-  }, [initMedia]);
+  useEffect(() => { initMedia(); }, [initMedia]);
 
   const [rtcConfig, setRtcConfig] = useState<RTCConfiguration>(DEFAULT_RTC);
   useEffect(() => {
@@ -151,6 +149,20 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
     return () => signalingClient.removeMediaStateListener(handler);
   }, [signalingClient]);
 
+  const setControls = useSetMediaControls();
+  useEffect(() => {
+    if (!setControls) return;
+    setControls({
+      micOn: !!micOn,
+      camOn: !!camOn,
+      shareOn: !!isSharing,
+      toggleMic,
+      toggleCam,
+      toggleShare: () => (isSharing ? stopScreenShare() : startScreenShare()),
+    });
+    return () => setControls(null);
+  }, [micOn, camOn, isSharing, toggleMic, toggleCam, startScreenShare, stopScreenShare, setControls]);
+
   const selfMedia: MediaFlags = { micOn, camOn, screenOn: isSharing };
 
   return (
@@ -160,14 +172,6 @@ export default function MediaRoomClient({ room, meId: meIdProp, signalingClient 
         streamsByUser={streamsByUser}
         mediaSelf={selfMedia}
         mediaRemote={remoteMedia}
-      />
-      <MediaControlBar
-        micOn={!!micOn}
-        camOn={!!camOn}
-        shareOn={!!isSharing}
-        onToggleMic={toggleMic}
-        onToggleCam={toggleCam}
-        onToggleShare={() => (isSharing ? stopScreenShare() : startScreenShare())}
       />
     </>
   );

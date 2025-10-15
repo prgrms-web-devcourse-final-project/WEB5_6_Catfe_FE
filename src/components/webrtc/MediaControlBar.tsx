@@ -14,39 +14,33 @@ type Props = {
   className?: string;
 };
 
-export default function VerticalMediaControlBar({
+export default function MediaControlBar({
   micOn, camOn, shareOn,
   onToggleMic, onToggleCam, onToggleShare,
   className = "",
 }: Props) {
   return (
-    <div
-      className={[
-        "flex flex-col items-center gap-4",
-        "h-full w-full justify-center",
-        className,
-      ].join(" ")}
-    >
+    <div className={["flex flex-col items-center gap-4 h-full w-full justify-center", className].join(" ")}>
       <IconButton
         active={micOn}
         label={micOn ? "마이크 끄기" : "마이크 켜기"}
         onClick={onToggleMic}
         iconOn={<IoIosMic size={20} />}
-        iconOff={<IoIosMicOff size={20} color="var(--color-error-500)" />}
+        iconOff={<IoIosMicOff size={20} color="var(--color-error-500)"/>}
       />
       <IconButton
         active={camOn}
         label={camOn ? "카메라 끄기" : "카메라 켜기"}
         onClick={onToggleCam}
         iconOn={<IoVideocamOutline size={20} />}
-        iconOff={<IoVideocamOffOutline size={20} color="var(--color-error-500)" />}
+        iconOff={<IoVideocamOffOutline size={20} color="var(--color-error-500)"/>}
       />
       <IconButton
         active={shareOn}
         label={shareOn ? "화면공유 중지" : "화면공유 시작"}
         onClick={onToggleShare}
         iconOn={<LuScreenShare size={20} />}
-        iconOff={<LuScreenShareOff size={20} color="var(--color-error-500)" />}
+        iconOff={<LuScreenShareOff size={20} color="var(--color-error-500)"/>}
       />
     </div>
   );
@@ -65,10 +59,7 @@ function IconButton({
       onClick={onClick}
       title={label}
       aria-pressed={active}
-      className={[
-        "p-2 rounded-full transition hover:bg-white/10",
-        active ? "bg-white/10" : "",
-      ].join(" ")}
+      className={["p-2 rounded-full transition hover:bg-white/10", active ? "bg-white/10" : ""].join(" ")}
     >
       {active ? iconOn : iconOff}
     </button>

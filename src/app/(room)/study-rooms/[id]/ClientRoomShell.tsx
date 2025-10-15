@@ -19,6 +19,7 @@ import ChatRoomContainer from './ChatRoomContainer';
 import { useChatRoom } from '@/hook/useChatRoom';
 import { ApiChatMsg } from '@/@types/websocket';
 import { ChatRoomMode } from '@/components/study-room/chatting/ChatWindow';
+import { MediaControlsProvider } from '@/contexts/MediaControlsContext';
 
 type Props = {
   children: ReactNode;
@@ -147,6 +148,7 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       : { gridTemplateColumns: '56px 1fr' };
 
   return (
+    <MediaControlsProvider>
     <div className="min-h-screen w-full">
       <div className="grid" style={gridStyle}>
         <Sidebar
@@ -252,5 +254,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
         onModeChange={setChatMode}
       />
     </div>
+    </MediaControlsProvider>
   );
 }

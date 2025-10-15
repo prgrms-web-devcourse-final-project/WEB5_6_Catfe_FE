@@ -96,7 +96,7 @@ export default function Sidebar({
     }
   };
 
-  const canManage = role === 'HOST' || role === 'SUB_HOST';
+  const canManage = role === 'HOST';
 
   return (
     <aside

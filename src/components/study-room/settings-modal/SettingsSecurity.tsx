@@ -1,116 +1,209 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import clsx from "clsx";
 import Button from "@/components/Button";
 import RoomPassword from "../RoomPassword";
+import Image from "next/image";
+import showToast from "@/utils/showToast";
+import { changeRoomPassword, deleteRoomPassword, setRoomPassword, deleteRoom } from "@/api/apiRooms";
+import { diffObject } from "@/utils/diffObject";
+import { validatePassword } from "@/utils/validatePassword";
+import { useConfirmStore } from "@/store/useConfirmStore";
 
-type SecurityValue = {
-  isPrivate: boolean;
-  password: string;
-};
+type SecurityValue = { isPrivate: boolean; password: string };
 
 type Props = {
+  roomId: number;
   defaultValue: SecurityValue;
   className?: string;
   onSave?: (changes: Partial<SecurityValue>, current: SecurityValue) => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
 };
 
-function isSame<T>(a: T, b: T) {
-  return a === b;
-}
-function diffObject<T extends Record<string, unknown>>(prev: T, next: T): Partial<T> {
-  const out: Partial<T> = {};
-  for (const key in next) {
-    const k = key as keyof T;
-    if (!isSame(prev[k], next[k])) out[k] = next[k];
-  }
-  return out;
-}
-
 export default function SettingsSecurity({
+  roomId,
   defaultValue,
   className,
   onSave,
   onDelete,
 }: Props) {
-  const [base, setBase] = useState<SecurityValue>(defaultValue);
-  const [info, setInfo] = useState<SecurityValue>(defaultValue);
+  const [base, setBase] = useState(defaultValue);
+  const [info, setInfo] = useState(defaultValue);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [showOld, setShowOld] = useState(false);
 
   useEffect(() => {
     setBase(defaultValue);
     setInfo(defaultValue);
+    setOldPassword("");
+    setShowOld(false);
   }, [defaultValue]);
 
+  const showOldInput = base.isPrivate && info.isPrivate;
+  useEffect(() => {
+    if (!showOldInput) {
+      setOldPassword("");
+      setShowOld(false);
+    }
+  }, [showOldInput]);
+
   const changes = useMemo(() => diffObject(base, info), [base, info]);
-  const isDirty = useMemo(() => Object.keys(changes).length > 0, [changes]);
+  const isDirty = Object.keys(changes).length > 0;
+
+  const violatesRule = useMemo(() => {
+    if (!info.isPrivate) return false;
+    return !validatePassword(info.password ?? "");
+  }, [info.isPrivate, info.password]);
 
   const canSave = useMemo(() => {
     if (!isDirty) return false;
-    if (!info.isPrivate) return true;
-    return info.password.trim().length > 0;
-  }, [isDirty, info.isPrivate, info.password]);
+    const fromPrivate = base.isPrivate;
+    const toPrivate = info.isPrivate;
+    const newPwd = info.password.trim();
+    const oldPwd = oldPassword.trim();
 
-  const handleSave = async () => {
+    if (!fromPrivate && toPrivate) return !violatesRule && !!newPwd;
+    if (fromPrivate && toPrivate) return !violatesRule && !!(newPwd && oldPwd);
+    if (fromPrivate && !toPrivate) return true;
+    return false;
+  }, [isDirty, base.isPrivate, info.isPrivate, info.password, oldPassword, violatesRule]);
+
+  const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
+
     try {
       setSaving(true);
-      if (onSave) await onSave(changes, info);
-      else {
-        console.log("[SettingsSecurity] changes →", changes);
-        console.log("[SettingsSecurity] current →", info);
+      const fromPrivate = base.isPrivate;
+      const toPrivate = info.isPrivate;
+
+      if (!fromPrivate && toPrivate) {
+        const msg = await setRoomPassword(roomId, info.password.trim());
+        setBase(info);
+        if (onSave) await onSave(changes, info);
+        showToast("success", msg || "비밀번호가 설정되었어요.");
+        return;
       }
-      setBase(info);
+
+      if (fromPrivate && toPrivate) {
+        const msg = await changeRoomPassword(roomId, oldPassword.trim(), info.password.trim());
+        setBase(info);
+        setOldPassword("");
+        setShowOld(false);
+        if (onSave) await onSave(changes, info);
+        showToast("success", msg || "비밀번호가 변경되었어요.");
+        return;
+      }
+
+      if (fromPrivate && !toPrivate) {
+        const msg = await deleteRoomPassword(roomId);
+        setBase({ isPrivate: false, password: "" });
+        setInfo({ isPrivate: false, password: "" });
+        setOldPassword("");
+        setShowOld(false);
+        if (onSave)
+          await onSave({ isPrivate: false, password: "" }, { isPrivate: false, password: "" });
+        showToast("success", msg || "공개방이 되었어요.");
+        return;
+      }
+
+      showToast("info", "처리할 변경 사항이 없어요.");
+    } catch (e) {
+      showToast("error", e instanceof Error ? e.message : "요청 처리 중 오류가 발생했어요.");
     } finally {
       setSaving(false);
     }
-  };
+  }, [canSave, saving, base.isPrivate, info, oldPassword, roomId, onSave, changes]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (deleting) return;
+
+    const confirm = await useConfirmStore.getState().open({
+      title: "스터디룸을 삭제할까요?",
+      description: "삭제 후에는 복구할 수 없어요. 방 내의 초대 코드 및 설정도 모두 사라집니다.",
+      confirmText: "네, 삭제합니다",
+      cancelText: "취소",
+      tone: "danger",
+    });
+
+    if (!confirm) return;
+
     try {
       setDeleting(true);
-      if (onDelete) await onDelete();
-      else console.log("[SettingsSecurity] delete room clicked");
+      const msg = await deleteRoom(roomId);
+      showToast("success", msg || "스터디룸이 삭제되었어요.");
+      await onDelete?.();
+    } catch (e) {
+      showToast("error", e instanceof Error ? e.message : "방 삭제 중 오류가 발생했어요.");
     } finally {
       setDeleting(false);
     }
-  };
+  }, [deleting, roomId, onDelete]);
 
   return (
     <div className={clsx("flex flex-col justify-between w-full h-full", className)}>
-      {/* 상단 폼 */}
       <div>
         <RoomPassword
           className="mb-4"
           enabled={info.isPrivate}
           password={info.password ?? ""}
-          onChange={(s) =>
-            setInfo(prev => ({
-              ...prev,
-              isPrivate: s.enabled,
-              password: s.password,
-            }))
-          }
+          onChange={(s) => setInfo((prev) => ({ ...prev, isPrivate: s.enabled, password: s.password }))}
         />
-        <hr className="border-text-secondary/70 mb-3" />
-        <Button
-          type="button"
-          size="sm"
-          borderType="solid"
-          color="primary"
-          className="text-[10px]"
-          onClick={handleDelete}
-          disabled={deleting}
-        >
-          {deleting ? "삭제 중..." : "스터디룸 삭제"}
-        </Button>
+
+        {showOldInput && (
+          <div className="mt-3">
+            <label className="block text-xs font-medium text-text-primary mb-2">기존 비밀번호 입력</label>
+            <div className="relative w-full">
+              <input
+                type={showOld ? "text" : "password"}
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="기존 비밀번호를 입력해 주세요"
+                className="w-full text-[10px] rounded-xl border border-text-secondary/60 bg-background-white px-3.5 py-2.5 text-text-primary outline-none pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOld((p) => !p)}
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                tabIndex={-1}
+              >
+                <Image
+                  src={showOld ? "/icon/study-room/hide.svg" : "/icon/study-room/show.svg"}
+                  alt={showOld ? "숨기기" : "보이기"}
+                  width={14}
+                  height={14}
+                />
+              </button>
+            </div>
+            {isDirty && (!oldPassword.trim() || !info.password.trim()) && (
+              <p className="mt-1 text-[10px] text-red-500">기존/새 비밀번호를 모두 입력해 주세요.</p>
+            )}
+          </div>
+        )}
+
+        {info.isPrivate && violatesRule && (
+          <p className="mt-2 text-[10px] text-red-500">비밀번호는 최소 8자이며, 영문과 숫자의 조합이어야 합니다.</p>
+        )}
+
+        <hr className="border-text-secondary/70 mb-3 mt-4" />
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            size="sm"
+            borderType="solid"
+            color="primary"
+            className="text-[10px]"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? "삭제 중..." : "스터디룸 삭제"}
+          </Button>
+        </div>
       </div>
 
-      {/* 하단 우측 저장 버튼 */}
       <div className="flex justify-end pt-4">
         <Button
           size="md"

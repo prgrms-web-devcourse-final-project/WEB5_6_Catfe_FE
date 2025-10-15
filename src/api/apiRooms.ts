@@ -51,6 +51,14 @@ export type InviteEnterData = {
   joinedAt: string;
 };
 
+export type RoleChangeResponse = {
+  userId: number;
+  nickname: string;
+  oldRole: Role;
+  newRole: Role;
+  message: string;
+};
+
 function safeErrorMessage(err: unknown, fallback: string) {
   const e = err as { response?: { data?: { message?: string } }; message?: string } | undefined;
   return e?.response?.data?.message ?? e?.message ?? fallback;
@@ -217,6 +225,23 @@ export async function updateRoom(
   }
 }
 
+export async function deleteRoom(roomId: number): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) {
+    throw new Error("유효하지 않은 roomId 입니다.");
+  }
+  try {
+    const { data } = await api.delete<ApiEnvelope<string>>(`/api/rooms/${roomId}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (data?.success === false) {
+      throw new Error(data?.message || "방 삭제에 실패했어요.");
+    }
+    return data?.data || data?.message || "스터디룸이 삭제되었어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "방 삭제에 실패했어요."));
+  }
+}
+
 export async function getMyInvite(roomId: number): Promise<InviteMeData> {
   const { data } = await api.get<ApiEnvelope<InviteMeData>>(`/api/rooms/${roomId}/invite/me`);
   if (!data.success) throw new Error(data.message || "초대 코드 발급에 실패했어요.");
@@ -231,5 +256,148 @@ export async function enterByInviteCode(inviteCode: string): Promise<InviteEnter
     return data.data;
   } catch (err: unknown) {
     throw new Error(safeErrorMessage(err, "초대 코드 입장에 실패했어요."));
+  }
+}
+
+type ApiSuccess = { code?: string; message?: string; data?: null; success?: boolean };
+
+function pickMessage(d: unknown, fallback: string): string {
+  if (typeof d === "object" && d !== null && "message" in d) {
+    const msg = (d as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.trim().length > 0) return msg;
+  }
+  return fallback;
+}
+
+export async function setRoomPassword(roomId: number, newPassword: string): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) {
+    throw new Error("유효하지 않은 roomId 입니다.");
+  }
+  try {
+    const { data } = await api.post<ApiEnvelope<string>>(
+      `/api/rooms/${roomId}/password`,
+      { newPassword },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!data?.success) throw new Error(data?.message || "비밀번호 설정에 실패했어요.");
+    return data.data || data.message || "비밀번호가 설정되었어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "비밀번호 설정에 실패했어요."));
+  }
+}
+
+export async function changeRoomPassword(
+  roomId: number,
+  currentPassword: string,
+  newPassword: string
+): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) {
+    throw new Error("유효하지 않은 roomId 입니다.");
+  }
+
+  try {
+    const { data } = await api.put<ApiSuccess>(`/api/rooms/${roomId}/password`, {
+      currentPassword,
+      newPassword,
+    }, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const msg = pickMessage(data, "비밀번호가 변경되었어요.");
+    if (data.code && data.code !== "200") throw new Error(msg);
+    if (data.success === false) throw new Error(msg);
+    return msg;
+  } catch (error) {
+    const serverMsg =
+      (typeof error === "object" && error && "response" in error
+        ? (error as { response?: { data?: unknown } }).response?.data
+        : undefined);
+    const msg = pickMessage(serverMsg, error instanceof Error ? error.message : "비밀번호 변경에 실패했어요.");
+    throw new Error(msg);
+  }
+}
+
+export async function deleteRoomPassword(roomId: number): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) throw new Error("유효하지 않은 roomId 입니다.");
+  try {
+    const { data } = await api.delete<ApiSuccess>(`/api/rooms/${roomId}/password`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    const msg = pickMessage(data, "비밀번호가 제거되었어요.");
+    if (data.code && data.code !== "200") throw new Error(msg);
+    if (data.success === false) throw new Error(msg);
+    return msg;
+  } catch (error) {
+    const serverMsg =
+      (typeof error === "object" && error && "response" in error
+        ? (error as { response?: { data?: unknown } }).response?.data
+        : undefined);
+    const msg = pickMessage(serverMsg, error instanceof Error ? error.message : "비밀번호 제거에 실패했어요.");
+    throw new Error(msg);
+  }
+}
+
+/** 단일 멤버 역할 변경 (PUT /api/rooms/{roomId}/members/{userId}/role) */
+export async function changeMemberRole(
+  roomId: number,
+  userId: number,
+  newRole: Exclude<Role, "HOST"> // HOST로의 변경이 가능하다면 Exclude 제거
+): Promise<RoleChangeResponse> {
+  try {
+    const { data } = await api.put<ApiEnvelope<RoleChangeResponse>>(
+      `/api/rooms/${roomId}/members/${userId}/role`,
+      { newRole },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!data?.success) throw new Error(data?.message || "역할 변경에 실패했어요.");
+    return data.data;
+  } catch (err) {
+    throw new Error(safeErrorMessage(err, "역할 변경에 실패했어요."));
+  }
+}
+
+/** 여러 명 배치 저장 유틸 (순차 호출; 실패/성공 결과 반환) */
+export type RoleUpdateItem = { userId: number; newRole: Exclude<Role, "HOST"> };
+
+export type BatchRoleResult = {
+  succeeded: Array<{ userId: number; newRole: Role; resp: RoleChangeResponse }>;
+  failed: Array<{ userId: number; newRole: Role; error: string }>;
+};
+
+export async function applyRoleUpdatesBatch(
+  roomId: number,
+  updates: RoleUpdateItem[]
+): Promise<BatchRoleResult> {
+  const succeeded: BatchRoleResult["succeeded"] = [];
+  const failed: BatchRoleResult["failed"] = [];
+
+  for (const u of updates) {
+    try {
+      const resp = await changeMemberRole(roomId, u.userId, u.newRole);
+      succeeded.push({ userId: u.userId, newRole: u.newRole, resp });
+    } catch (e) {
+      failed.push({
+        userId: u.userId,
+        newRole: u.newRole,
+        error: e instanceof Error ? e.message : "알 수 없는 오류",
+      });
+    }
+  }
+  return { succeeded, failed };
+}
+
+export async function deleteRoomMember(roomId: number, userId: number): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) throw new Error("유효하지 않은 roomId 입니다.");
+  if (!Number.isFinite(userId) || userId <= 0) throw new Error("유효하지 않은 userId 입니다.");
+
+  try {
+    const { data } = await api.delete<ApiEnvelope<string>>(
+      `/api/rooms/${roomId}/members/${userId}`,
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!data?.success) throw new Error(data?.message || "사용자 추방에 실패했어요.");
+    return data.data || data.message || "사용자를 추방했어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "사용자 추방에 실패했어요."));
   }
 }

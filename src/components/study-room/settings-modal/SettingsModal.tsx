@@ -8,6 +8,7 @@ import SettingsSecurity from './SettingsSecurity';
 import SettingsRoles from './SettingsRoles';
 import { useRoomInfoQuery, type RoomDetailDTO } from '@/hook/useRoomInfo';
 import { RoomInfoValue } from '../RoomInfo';
+import { useRouter } from 'next/navigation';
 
 export type TabKey = 'general' | 'security' | 'roles';
 
@@ -19,9 +20,9 @@ type SidebarItem = {
 };
 
 const MENUS: SidebarItem[] = [
-  { key: 'general',  label: '일반',   iconAct: '/icon/study-room/settings.svg', iconNon: '/icon/study-room/settings-non.svg' },
-  { key: 'security', label: '보안',   iconAct: '/icon/study-room/lock.svg',     iconNon: '/icon/study-room/lock-non.svg' },
-  { key: 'roles',    label: '멤버 권한', iconAct: '/icon/study-room/profile.svg',  iconNon: '/icon/study-room/profile-non.svg' },
+  { key: 'general', label: '일반', iconAct: '/icon/study-room/settings.svg', iconNon: '/icon/study-room/settings-non.svg' },
+  { key: 'security', label: '보안', iconAct: '/icon/study-room/lock.svg', iconNon: '/icon/study-room/lock-non.svg' },
+  { key: 'roles', label: '멤버 권한', iconAct: '/icon/study-room/profile.svg', iconNon: '/icon/study-room/profile-non.svg' },
 ];
 
 const TITLE: Record<TabKey, string> = {
@@ -53,6 +54,7 @@ function toRoomInfoValue(d: RoomDetailDTO): RoomInfoValue {
 export default function SettingsModal({ open, onClose, defaultTab = 'general', roomId }: Props) {
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const { data, isLoading, isError, error } = useRoomInfoQuery(roomId, { enabled: open });
+  const router = useRouter();
 
   const roleUsers = useMemo(
     () =>
@@ -83,12 +85,7 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
         {!isLoading && !isError && data && (
           <div className="flex h-full">
             <aside className="w-[220px] shrink-0 bg-secondary-100 rounded-bl-2xl overflow-hidden">
-              <ModalSideBar
-                items={MENUS}
-                value={tab}
-                onChange={(k) => setTab(k as TabKey)}
-                width={220}
-              />
+              <ModalSideBar items={MENUS} value={tab} onChange={(k) => setTab(k as TabKey)} width={220} />
             </aside>
 
             <section className="flex-1 px-7 py-5 flex flex-col h-[450px]">
@@ -101,13 +98,18 @@ export default function SettingsModal({ open, onClose, defaultTab = 'general', r
 
                 {tab === 'security' && value && (
                   <SettingsSecurity
+                    roomId={Number(roomId)}
                     defaultValue={{ isPrivate: value.isPrivate, password: value.password ?? '' }}
                     onSave={async () => {}}
-                    onDelete={async () => {}}
+                    onDelete={async () => {
+                      onClose?.();
+                      router.replace('/');
+                      router.refresh();
+                    }}
                   />
                 )}
 
-                {tab === 'roles' && <SettingsRoles defaultUsers={roleUsers} />}
+                {tab === 'roles' && <SettingsRoles roomId={Number(roomId)} defaultUsers={roleUsers} />}
               </div>
             </section>
           </div>

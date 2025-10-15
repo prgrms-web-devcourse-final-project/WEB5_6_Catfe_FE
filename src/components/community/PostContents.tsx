@@ -127,7 +127,7 @@ function PostContents({ post }: { post: PostDetail }) {
   });
 
   const handleDelete = async () => {
-    if (!requireLogin(`/community/sId}`)) return;
+    if (!requireLogin(`/community/${postId}`)) return;
     const confirmOk = await confirm({
       title: '게시글을 삭제하시겠습니까?',
       description: <>삭제된 글은 복원할 수 없습니다.</>,

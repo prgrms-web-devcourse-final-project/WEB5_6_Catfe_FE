@@ -52,7 +52,7 @@ function LoginPage() {
       const code = err.response?.data?.code;
       const message = err.response?.data?.message ?? '';
 
-      // ✅ 미인증 계정 (403 + USER_007)
+      // 미인증 계정 (403 + USER_007)
       if (status === 403 && code === 'USER_007') {
         setIsPendingUser(true);
         showToast('error', message || '이메일 인증 후 로그인할 수 있습니다.');

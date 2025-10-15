@@ -15,7 +15,14 @@ interface CommentEditorProps {
   onCancel?: () => void;
 }
 
-function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
+function CommentEditor({
+  target,
+  onSubmit,
+  className,
+  initialContent,
+  isEditMode,
+  onCancel,
+}: CommentEditorProps) {
   const {
     isReply,
     editorId,
@@ -30,11 +37,10 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
     cancel,
     contentLength,
     limit,
-    isEditMode: isEditorEditMode,
-  } = useCommentEditor({ target, onSubmit });
+  } = useCommentEditor({ target, onSubmit, initialContent, isEditMode, onCancel });
 
-  const showCancelButton = isEditorEditMode || (value.length > 0 && !isSubmitting);
-  const submitButtonLabel = isEditorEditMode ? '수정' : '등록';
+  const showCancelButton = isEditMode || (value.length > 0 && !isSubmitting);
+  const submitButtonLabel = isEditMode ? '수정' : '등록';
 
   return (
     <div
@@ -44,7 +50,13 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
       ].join(' ')}
     >
       <label htmlFor={editorId} className="sr-only">
-        {isReply ? '대댓글 입력' : '댓글 입력'}
+        {isReply
+          ? isEditMode
+            ? '대댓글 수정'
+            : '대댓글 입력'
+          : isEditMode
+            ? '댓글 수정'
+            : '댓글 입력'}
       </label>
       <textarea
         id={editorId}
@@ -54,7 +66,7 @@ function CommentEditor({ target, onSubmit, className }: CommentEditorProps) {
         onInput={resize}
         onKeyDown={handleKeyDown}
         placeholder={
-          isEditorEditMode
+          isEditMode
             ? '댓글 내용을 수정하세요'
             : isReply
               ? '답글을 입력하세요'

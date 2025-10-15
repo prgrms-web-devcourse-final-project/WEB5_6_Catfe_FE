@@ -17,6 +17,7 @@ import {
 import showToast from '@/utils/showToast';
 import { useConfirm } from '@/hook/useConfirm';
 import { useUser } from '@/api/apiUsersMe';
+import useRequireLogin from '@/hook/useRequireLogin';
 
 interface CommentProps {
   comment: RootComment;
@@ -47,6 +48,8 @@ function CommentRootItem({ comment }: CommentProps) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const confirm = useConfirm();
+  const requireLogin = useRequireLogin();
+
   const { mutateAsync: createCommentMutate } = useCreateCommentMutation();
   const { mutateAsync: updateCommentMutate } = useUpdateCommentMutation();
   const { mutateAsync: deleteCommentMutate } = useDeleteCommentMutation();
@@ -55,6 +58,7 @@ function CommentRootItem({ comment }: CommentProps) {
   const isAuthor = !!currentUserId && currentUserId === author.id;
 
   const toggleLike = () => {
+    if (!requireLogin(`/community/${postId}`)) return;
     const nextLiked = !liked;
     const nextLikeCount = likeCount + (nextLiked ? 1 : -1);
 
@@ -86,6 +90,7 @@ function CommentRootItem({ comment }: CommentProps) {
     parentCommentId?: number;
     content: string;
   }) => {
+    if (!requireLogin(`/community/${postId}`)) return;
     if (!parentCommentId) return;
     try {
       await createCommentMutate({ postId, parentCommentId, content });
@@ -97,6 +102,7 @@ function CommentRootItem({ comment }: CommentProps) {
   };
 
   const handleUpdate = async ({ content }: { content: string }) => {
+    if (!requireLogin(`/community/${postId}`)) return;
     try {
       await updateCommentMutate({ postId, commentId, content });
       showToast('success', '댓글이 수정되었습니다.');
@@ -108,6 +114,7 @@ function CommentRootItem({ comment }: CommentProps) {
   };
 
   const handleDelete = async () => {
+    if (!requireLogin(`/community/${postId}`)) return;
     const confirmOk = await confirm({
       title: '댓글을 삭제하시겠습니까?',
       description: <>삭제된 댓글은 복원할 수 없습니다.</>,

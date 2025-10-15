@@ -54,7 +54,6 @@ function Toolbar({ editor }: { editor: Editor | null }) {
   // const onSetLink = useCallback(() => {
   //   if (!editor) return;
   //   const prev = editor.getAttributes('link').href as string | undefined;
-  //   /*--------------------- 이거 테스트용 prompt 나중에 팝업으로 바꿀것 ------------------*/
   //   const url = window.prompt('URL 입력 for test', prev ?? '');
   //   if (url === null) return;
   //   if (url === '') editor.chain().focus().unsetLink().run();

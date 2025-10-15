@@ -85,7 +85,6 @@ function SettingProfile() {
     }
 
     setFieldErrors(errors);
-    console.log(Object.keys(errors).length === 0);
     return Object.keys(errors).length === 0;
   }, [nickname, bio]);
 
@@ -123,7 +122,6 @@ function SettingProfile() {
       showToast('error', '입력된 정보를 다시 확인해주세요.');
       return;
     }
-    console.log(validateOk);
 
     try {
       await saveProfile({

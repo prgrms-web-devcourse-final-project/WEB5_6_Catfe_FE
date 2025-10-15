@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useMemo, useRef, useEffect, useCallback } from "react";
-import clsx from "clsx";
-import CustomSelect from "../CustomSelect";
-import Button from "../Button";
-import Image from "next/image";
+import { useMemo, useRef, useEffect, useCallback } from 'react';
+import clsx from 'clsx';
+import CustomSelect from '../CustomSelect';
+import Button from '../Button';
+import Image from 'next/image';
+import showToast from '@/utils/showToast';
 
 export type RoomInfoValue = {
   title: string;
@@ -24,12 +25,7 @@ type RoomInfoProps = {
   mediaEnabled?: boolean;
 };
 
-function RoomInfo({
-  value,
-  onChange,
-  className,
-  mediaEnabled = false,
-}: RoomInfoProps) {
+function RoomInfo({ value, onChange, className, mediaEnabled = false }: RoomInfoProps) {
   const TITLE_MAX = 15;
   const DESC_MAX = 30;
 
@@ -40,9 +36,12 @@ function RoomInfo({
   }, [value]);
 
   // onChange만 의존하는 안정화된 업데이트 함수
-  const update = useCallback((patch: Partial<RoomInfoValue>) => {
-    onChange({ ...valueRef.current, ...patch });
-  }, [onChange]);
+  const update = useCallback(
+    (patch: Partial<RoomInfoValue>) => {
+      onChange({ ...valueRef.current, ...patch });
+    },
+    [onChange]
+  );
 
   const onChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ title: e.target.value.slice(0, TITLE_MAX) });
@@ -55,22 +54,22 @@ function RoomInfo({
 
   const lastBlobUrlRef = useRef<string | null>(null);
   const revokeIfBlob = (url: string | null | undefined) => {
-    if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+    if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
   };
 
   const allowedTypes = new Set([
-    "image/png",
-    "image/jpeg",
-    "image/webp",
-    "image/gif",
-    "image/svg+xml",
-    "image/avif",
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+    'image/svg+xml',
+    'image/avif',
   ]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     const resetPicker = () => {
-      e.currentTarget.value = "";
+      e.currentTarget.value = '';
     };
 
     if (!f) {
@@ -82,7 +81,7 @@ function RoomInfo({
     }
 
     if (!allowedTypes.has(f.type)) {
-      alert("이미지 파일만 선택할 수 있어요. (png, jpg, webp, gif, svg, avif)");
+      showToast('warn', '이미지 파일만 선택할 수 있어요. (png, jpg, webp, gif, svg, avif)');
       resetPicker();
       return;
     }
@@ -121,7 +120,7 @@ function RoomInfo({
   );
 
   return (
-    <div className={clsx("w-full", className)}>
+    <div className={clsx('w-full', className)}>
       <section className="flex flex-col gap-5">
         <div className="space-y-1.5">
           <label className="flex items-center justify-between text-xs font-medium text-text-primary">

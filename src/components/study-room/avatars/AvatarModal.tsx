@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import BigModal from "@/components/study-room/BigModalLayout";
 import AvatarSide, { AvatarSideItem } from "./AvatarSide";
-import AvatarSelect, { AvatarId } from "./AvatarSelect";
+import AvatarSelect from "./AvatarSelect";
+import { AvatarId } from "@/utils/avatar";
 import AvatarPreview from "./AvatarPreview";
 import { updateMyAvatar } from "@/api/apiAvatars";
 import showToast from "@/utils/showToast";

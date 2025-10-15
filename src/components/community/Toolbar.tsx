@@ -50,16 +50,16 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     [editor]
   );
 
-  // Attachment
-  const onSetLink = useCallback(() => {
-    if (!editor) return;
-    const prev = editor.getAttributes('link').href as string | undefined;
-    /*--------------------- 이거 테스트용 prompt 나중에 팝업으로 바꿀것 ------------------*/
-    const url = window.prompt('URL 입력 for test', prev ?? '');
-    if (url === null) return;
-    if (url === '') editor.chain().focus().unsetLink().run();
-    else editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor]);
+  // // Attachment
+  // const onSetLink = useCallback(() => {
+  //   if (!editor) return;
+  //   const prev = editor.getAttributes('link').href as string | undefined;
+  //   /*--------------------- 이거 테스트용 prompt 나중에 팝업으로 바꿀것 ------------------*/
+  //   const url = window.prompt('URL 입력 for test', prev ?? '');
+  //   if (url === null) return;
+  //   if (url === '') editor.chain().focus().unsetLink().run();
+  //   else editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  // }, [editor]);
 
   const onAttachImage = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,7 +217,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       <Seperator />
 
       {/* Attachment */}
-      <ToolButton onClick={onSetLink} active={snap.link} aria-label="링크">
+      {/* <ToolButton onClick={onSetLink} active={snap.link} aria-label="링크">
         <Image
           src="/icon/community/link.svg"
           alt=""
@@ -226,7 +226,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
           unoptimized
           priority={false}
         />
-      </ToolButton>
+      </ToolButton> */}
       <label
         htmlFor="insert-image"
         className={[

@@ -14,7 +14,7 @@ type Props = {
   className?: string;
 };
 
-export default function MediaControlBar({
+export default function VerticalMediaControlBar({
   micOn, camOn, shareOn,
   onToggleMic, onToggleCam, onToggleShare,
   className = "",
@@ -22,13 +22,10 @@ export default function MediaControlBar({
   return (
     <div
       className={[
-        "fixed left-1/2 -translate-x-1/2 bottom-6 z-40",
-        "h-10 min-w-[200px]",
-        "rounded-full border border-[color:var(--color-text-primary)] bg-transparent",
-        "flex items-center justify-center gap-2 px-2",
+        "flex flex-col items-center gap-4",
+        "h-full w-full justify-center",
         className,
       ].join(" ")}
-      aria-label="미디어 컨트롤 바"
     >
       <IconButton
         active={micOn}
@@ -66,13 +63,12 @@ function IconButton({
     <button
       type="button"
       onClick={onClick}
-      className={[
-        "h-10 w-10 rounded-full grid place-items-center transition",
-        "cursor-pointer focus:outline-none",
-      ].join(" ")}
-      aria-pressed={active}      
-      aria-label={label}
       title={label}
+      aria-pressed={active}
+      className={[
+        "p-2 rounded-full transition hover:bg-white/10",
+        active ? "bg-white/10" : "",
+      ].join(" ")}
     >
       {active ? iconOn : iconOff}
     </button>

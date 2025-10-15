@@ -84,7 +84,7 @@ export default function Tile({
           className={[
             'relative flex w-full items-center justify-center bg-text-primary',
             isFS ? 'h-full' : 'aspect-video',
-            'min-h-[180px] sm:min-h-[220px]',
+            'min-h-[180px] sm:min-h-[200px]',
           ].join(' ')}
         >
           {showVideo ? (

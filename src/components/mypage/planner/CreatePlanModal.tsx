@@ -4,7 +4,7 @@ import { ApplyScope, CreatePlanRequestBody, FrequencyEnum } from '@/@types/plann
 import Button from '@/components/Button';
 import { COLOR_ORDER, PLAN_SWATCH } from '@/lib/plannerSwatch';
 import tw from '@/utils/tw';
-import WeekdayChips from './WeekdayChips';
+// import WeekdayChips from './WeekdayChips';
 import { usePlannerForm } from '@/hook/usePlannerForm';
 import { useConfirm } from '@/hook/useConfirm';
 import { useRef, useState } from 'react';
@@ -68,8 +68,8 @@ function CreatePlanModal({
     setFrequency,
     untilDate,
     setUntilDate,
-    byDay,
-    setByDay,
+    // byDay,
+    // setByDay,
     timeInvalid,
     disabled,
     getPayload,
@@ -282,14 +282,14 @@ function CreatePlanModal({
               )}
             </div>
 
-            {frequency === 'WEEKLY' && (
+            {/* {frequency === 'WEEKLY' && (
               <div className="flex flex-col gap-2">
                 <label htmlFor="plan-repeat-day" className="mb-1 block text-sm text-text-secondary">
                   반복 요일 선택
                 </label>
                 <WeekdayChips id="plan-repeat-day" value={byDay} onChange={setByDay} />
               </div>
-            )}
+            )} */}
 
             {/* 색상 */}
             <div className="flex flex-col gap-2 mb-4">

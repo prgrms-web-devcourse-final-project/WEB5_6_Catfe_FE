@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "fmt": "prettier . --write"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.2.1",

@@ -23,13 +23,13 @@ const nextConfig: NextConfig = {
         pathname: '**',
       },
       {
-        protocol: 'https',
-        hostname: 'phinf.pstatic.net', // 네이버 프로필 이미지 도메인
+        protocol: 'http',
+        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
         pathname: '**',
       },
       {
         protocol: 'https',
-        hostname: 'avatars.githubusercontent.com', // GitHub 프로필 이미지 도메인
+        hostname: 'phinf.pstatic.net', // 네이버 프로필 이미지 도메인
         pathname: '**',
       },
       {

@@ -10,7 +10,9 @@ import { useBatchRoleSave } from '@/hook/useBatchRoleSave';
 import showToast from '@/utils/showToast';
 
 type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER' | 'VISITOR'>;
-type RoleSelectValue = RoleEditable | 'VISITOR' | 'DELETE';
+/** 추방 기능 비활성화: 'DELETE' 제거 */
+// type RoleSelectValue = RoleEditable | 'VISITOR' | 'DELETE';
+type RoleSelectValue = RoleEditable;
 type Filter = 'all' | RoleEditable;
 
 type User = {
@@ -23,6 +25,7 @@ type User = {
 
 type RolesPatch = {
   added: User[];
+  /** 추방 기능 비활성화: removed는 항상 빈 배열로 유지 */
   removed: string[];
   updated: Array<{ id: string; role: RoleEditable }>;
 };
@@ -44,7 +47,9 @@ const roleOptions = [
   { label: '스텝', value: 'SUB_HOST' as const },
   { label: '멤버', value: 'MEMBER' as const },
   { label: '방문자', value: 'VISITOR' as const },
+  /** 추방 기능 비활성화
   { label: '추방', value: 'DELETE' as const, intent: 'danger' as const },
+  */
 ] satisfies ReadonlyArray<{
   label: string;
   value: RoleSelectValue;
@@ -54,9 +59,10 @@ const roleOptions = [
 
 function computePatch(base: User[], current: User[]): RolesPatch {
   const baseMap = new Map(base.map((u) => [u.id, u]));
-  const curMap = new Map(current.map((u) => [u.id, u]));
+  // const curMap = new Map(current.map((u) => [u.id, u]));
 
   const added: User[] = [];
+  /** 🔒 추방 기능 비활성화: removed는 계산하지 않음 */
   const removed: string[] = [];
   const updated: Array<{ id: string; role: RoleEditable }> = [];
 
@@ -70,9 +76,13 @@ function computePatch(base: User[], current: User[]): RolesPatch {
       }
     }
   }
+
+  /** 추방 기능 비활성화: cur에 없는 사용자를 제거하지 않음
   for (const u of base) {
     if (!curMap.has(u.id)) removed.push(u.id);
   }
+  */
+
   return { added, removed, updated };
 }
 
@@ -95,15 +105,18 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
   }, [users, filter]);
 
   const updateRole = (userId: string, next: RoleSelectValue) => {
+    /** 추방 기능 비활성화
     if (next === 'DELETE') {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       return;
     }
+    */
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: next } : u)));
   };
 
   const patch = useMemo(() => computePatch(base, users), [base, users]);
-  const isDirty = patch.added.length + patch.removed.length + patch.updated.length > 0;
+  /** 추방 기능 비활성화: removed는 고려하지 않음 */
+  const isDirty = patch.added.length + patch.updated.length > 0;
 
   const handleSave = async () => {
     if (!isDirty || saving || savingBatch) return;
@@ -115,8 +128,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
 
     try {
       setSaving(true);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { succeeded, failed } = await saveBatch(updates);
+      const { failed } = await saveBatch(updates);
       await onSave?.(patch, users);
 
       if (failed.length === 0) {

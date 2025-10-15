@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import clsx from "clsx";
 import CustomSelect from "../CustomSelect";
 import Button from "../Button";
@@ -33,9 +33,16 @@ function RoomInfo({
   const TITLE_MAX = 15;
   const DESC_MAX = 30;
 
-  const update = (patch: Partial<RoomInfoValue>) => {
-    onChange({ ...value, ...patch });
-  };
+  // 최신 value를 보관해서 update가 안정적으로 참조
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  // onChange만 의존하는 안정화된 업데이트 함수
+  const update = useCallback((patch: Partial<RoomInfoValue>) => {
+    onChange({ ...valueRef.current, ...patch });
+  }, [onChange]);
 
   const onChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ title: e.target.value.slice(0, TITLE_MAX) });
@@ -98,11 +105,15 @@ function RoomInfo({
   const MAX_DEFAULT = 20;
   const maxCap = mediaEnabled ? MAX_WITH_MEDIA : MAX_DEFAULT;
 
+  // 표시값도 즉시 클램프해서 UI 깜빡임 방지
+  const clampedMaxParticipants = Math.min(value.maxParticipants, maxCap);
+
+  // 실제 값이 cap을 초과하면 한 번만 교정
   useEffect(() => {
     if (value.maxParticipants > maxCap) {
       update({ maxParticipants: maxCap });
     }
-  }, [maxCap]);
+  }, [maxCap, value.maxParticipants, update]);
 
   const members = useMemo(
     () => Array.from({ length: Math.max(0, maxCap - 1) }, (_, i) => i + 2),
@@ -169,7 +180,7 @@ function RoomInfo({
         <div className="flex items-center justify-between">
           <span className="font-medium text-text-primary text-xs">최대 인원</span>
           <CustomSelect
-            value={value.maxParticipants}
+            value={clampedMaxParticipants}
             onChange={(v) => update({ maxParticipants: (v as number) ?? value.maxParticipants })}
             options={members.map((n) => ({ label: String(n), value: n }))}
             size="sm"

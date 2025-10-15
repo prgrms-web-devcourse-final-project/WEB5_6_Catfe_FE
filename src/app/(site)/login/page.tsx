@@ -195,7 +195,7 @@ function LoginPage() {
               <p className="text-center text-sm text-secondary-800">
                 이메일 인증이 완료되지 않았습니다.
               </p>
-              <div className="flex w-full max-w-xs items-center gap-2">
+              <div className="flex w-full max-w-xs items-center gap-2 mb-2">
                 <input
                   type="email"
                   placeholder="가입한 이메일"

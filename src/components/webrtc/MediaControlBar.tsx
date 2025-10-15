@@ -20,36 +20,27 @@ export default function MediaControlBar({
   className = "",
 }: Props) {
   return (
-    <div
-      className={[
-        "fixed left-1/2 -translate-x-1/2 bottom-6 z-40",
-        "h-10 min-w-[200px]",
-        "rounded-full border border-[color:var(--color-text-primary)] bg-transparent",
-        "flex items-center justify-center gap-2 px-2",
-        className,
-      ].join(" ")}
-      aria-label="미디어 컨트롤 바"
-    >
+    <div className={["flex flex-col items-center gap-4 h-full w-full justify-center", className].join(" ")}>
       <IconButton
         active={micOn}
         label={micOn ? "마이크 끄기" : "마이크 켜기"}
         onClick={onToggleMic}
         iconOn={<IoIosMic size={20} />}
-        iconOff={<IoIosMicOff size={20} color="var(--color-error-500)" />}
+        iconOff={<IoIosMicOff size={20} color="var(--color-error-500)"/>}
       />
       <IconButton
         active={camOn}
         label={camOn ? "카메라 끄기" : "카메라 켜기"}
         onClick={onToggleCam}
         iconOn={<IoVideocamOutline size={20} />}
-        iconOff={<IoVideocamOffOutline size={20} color="var(--color-error-500)" />}
+        iconOff={<IoVideocamOffOutline size={20} color="var(--color-error-500)"/>}
       />
       <IconButton
         active={shareOn}
         label={shareOn ? "화면공유 중지" : "화면공유 시작"}
         onClick={onToggleShare}
         iconOn={<LuScreenShare size={20} />}
-        iconOff={<LuScreenShareOff size={20} color="var(--color-error-500)" />}
+        iconOff={<LuScreenShareOff size={20} color="var(--color-error-500)"/>}
       />
     </div>
   );
@@ -66,13 +57,9 @@ function IconButton({
     <button
       type="button"
       onClick={onClick}
-      className={[
-        "h-10 w-10 rounded-full grid place-items-center transition",
-        "cursor-pointer focus:outline-none",
-      ].join(" ")}
-      aria-pressed={active}      
-      aria-label={label}
       title={label}
+      aria-pressed={active}
+      className={["p-2 rounded-full transition hover:bg-white/10", active ? "bg-white/10" : ""].join(" ")}
     >
       {active ? iconOn : iconOff}
     </button>

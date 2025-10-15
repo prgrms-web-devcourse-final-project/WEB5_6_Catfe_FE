@@ -280,7 +280,7 @@ function SettingProfile() {
             />
             <div className="flex items-center justify-end text-sm text-text-secondary/50">
               <span>
-                <strong className={bio.length > MAX_BIO_LIMIT ? 'text-error-500' : ''}>
+                <strong className={bio.length >= MAX_BIO_LIMIT ? 'text-error-500' : ''}>
                   {bio.length}
                 </strong>{' '}
                 / {MAX_BIO_LIMIT}

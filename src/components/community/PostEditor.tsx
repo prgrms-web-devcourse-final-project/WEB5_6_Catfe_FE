@@ -256,7 +256,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
           {/* 제목 */}
           <div className="flex flex-col w-1/2 gap-2">
             <label htmlFor="community-title" className="text-xs">
-              Title
+              제목
             </label>
             <input
               type="text"
@@ -283,7 +283,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
               allowMultiSelect={false}
               // 원하는 과목이 없으면 직접 입력
               allowCustom={true}
-              label="Subject"
+              label="스터디 주제/과목"
             />
           </div>
         </div>
@@ -298,7 +298,7 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
               }}
               placeholder="연령대 선택..."
               options={categoryOptions.demographic}
-              label="Age"
+              label="연령대"
             />
           </div>
           {/* 옵션 3 */}
@@ -311,14 +311,14 @@ function PostEditor({ initialData, categoryData, onSubmitAction }: EditorProps) 
               }}
               placeholder="모집할 최대 인원 선택..."
               options={categoryOptions.groupSize}
-              label="Headcount"
+              label="모집 인원"
             />
           </div>
         </div>
         {/* 본문 에디터 */}
         <div className="w-full flex flex-col gap-2">
           <label htmlFor="contents" className="text-xs">
-            Description
+            내용
           </label>
           <div className="rounded-md border border-gray-300 p-3 max-h-[80vh] overflow-auto">
             <Toolbar editor={editor} />

@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import CustomSelect from '@/components/CustomSelect';
 import Button from '@/components/Button';
-import type { Role } from '@/@types/rooms';
 import HostBadge from '../HostBadge';
-import { useBatchRoleSave } from '@/hook/useBatchRoleSave';
 import showToast from '@/utils/showToast';
+import { useBatchRoleSave } from '@/hook/useBatchRoleSave';
+import { useRoomMembersQuery } from '@/hook/useRoomMembers';
+import type { Role } from '@/@types/rooms';
 
 type RoleEditable = Extract<Role, 'SUB_HOST' | 'MEMBER' | 'VISITOR'>;
-/** 추방 기능 비활성화: 'DELETE' 제거 */
-// type RoleSelectValue = RoleEditable | 'VISITOR' | 'DELETE';
 type RoleSelectValue = RoleEditable;
 type Filter = 'all' | RoleEditable;
 
@@ -25,44 +25,37 @@ type User = {
 
 type RolesPatch = {
   added: User[];
-  /** 추방 기능 비활성화: removed는 항상 빈 배열로 유지 */
   removed: string[];
   updated: Array<{ id: string; role: RoleEditable }>;
 };
 
-type Props = {
-  roomId: number;
-  defaultUsers?: User[];
-  className?: string;
-  onSave?: (patch: RolesPatch, current: User[]) => Promise<void> | void;
-};
+type Option<T> = { label: string; value: T; disabled?: boolean; intent?: 'default' | 'danger' };
 
-const filterOptions = [
-  { label: '전체', value: 'all' as const },
-  { label: '스텝', value: 'SUB_HOST' as const },
-  { label: '멤버', value: 'MEMBER' as const },
-] satisfies ReadonlyArray<{ label: string; value: Filter }>;
+const filterOptions: Option<Filter>[] = [
+  { label: '전체', value: 'all' },
+  { label: '스텝', value: 'SUB_HOST' },
+  { label: '멤버', value: 'MEMBER' },
+];
 
-const roleOptions = [
-  { label: '스텝', value: 'SUB_HOST' as const },
-  { label: '멤버', value: 'MEMBER' as const },
-  { label: '방문자', value: 'VISITOR' as const },
-  /** 추방 기능 비활성화
-  { label: '추방', value: 'DELETE' as const, intent: 'danger' as const },
-  */
-] satisfies ReadonlyArray<{
-  label: string;
-  value: RoleSelectValue;
-  disabled?: boolean;
-  intent?: 'default' | 'danger';
-}>;
+const roleOptions: Option<RoleEditable | 'VISITOR'>[] = [
+  { label: '스텝', value: 'SUB_HOST' },
+  { label: '멤버', value: 'MEMBER' },
+  { label: '방문자', value: 'VISITOR' },
+];
+
+function mapDtoToUsers(dto: ReturnType<typeof useRoomMembersQuery>['data']): User[] {
+  return (dto ?? []).map(m => ({
+    id: String(m.userId),
+    name: m.nickname,
+    email: undefined,
+    role: m.role,
+    isOwner: m.role === 'HOST',
+  }));
+}
 
 function computePatch(base: User[], current: User[]): RolesPatch {
-  const baseMap = new Map(base.map((u) => [u.id, u]));
-  // const curMap = new Map(current.map((u) => [u.id, u]));
-
+  const baseMap = new Map(base.map(u => [u.id, u]));
   const added: User[] = [];
-  /** 🔒 추방 기능 비활성화: removed는 계산하지 않음 */
   const removed: string[] = [];
   const updated: Array<{ id: string; role: RoleEditable }> = [];
 
@@ -76,52 +69,58 @@ function computePatch(base: User[], current: User[]): RolesPatch {
       }
     }
   }
-
-  /** 추방 기능 비활성화: cur에 없는 사용자를 제거하지 않음
-  for (const u of base) {
-    if (!curMap.has(u.id)) removed.push(u.id);
-  }
-  */
-
   return { added, removed, updated };
 }
 
-export default function SettingsRoles({ roomId, defaultUsers, className, onSave }: Props) {
+type Props = {
+  roomId: number;
+  className?: string;
+  onSave?: (patch: RolesPatch, current: User[]) => Promise<void> | void;
+};
+
+export default function SettingsRoles({ roomId, className, onSave }: Props) {
+  const queryClient = useQueryClient();
+  const { data: membersDto } = useRoomMembersQuery(roomId, {
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  const liveUsers = useMemo(() => mapDtoToUsers(membersDto), [membersDto]);
   const [filter, setFilter] = useState<Filter>('all');
-  const [base, setBase] = useState<User[]>(defaultUsers ?? []);
-  const [users, setUsers] = useState<User[]>(defaultUsers ?? []);
-  const [saving, setSaving] = useState(false);
-  const { save: saveBatch, saving: savingBatch } = useBatchRoleSave(roomId);
+  const [base, setBase] = useState<User[]>(liveUsers);
+  const [users, setUsers] = useState<User[]>(liveUsers);
 
   useEffect(() => {
-    const next = defaultUsers ?? [];
-    setBase(next);
-    setUsers(next);
-  }, [defaultUsers]);
+    const nextServer = liveUsers;
+    const patch = computePatch(base, users);
+    const isDirty = patch.added.length + patch.updated.length > 0;
+
+    if (!isDirty) {
+      setBase(nextServer);
+      setUsers(nextServer);
+    }
+  }, [base, liveUsers, users]);
 
   const visibleUsers = useMemo(() => {
     if (filter === 'all') return users;
-    return users.filter((u) => u.role === filter || u.role === 'HOST');
+    return users.filter(u => u.role === filter || u.role === 'HOST');
   }, [users, filter]);
 
   const updateRole = (userId: string, next: RoleSelectValue) => {
-    /** 추방 기능 비활성화
-    if (next === 'DELETE') {
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      return;
-    }
-    */
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: next } : u)));
+    setUsers(prev => prev.map(u => (u.id === userId ? { ...u, role: next } : u)));
   };
 
   const patch = useMemo(() => computePatch(base, users), [base, users]);
-  /** 추방 기능 비활성화: removed는 고려하지 않음 */
   const isDirty = patch.added.length + patch.updated.length > 0;
+
+  const { save: saveBatch, saving: savingBatch } = useBatchRoleSave(roomId);
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!isDirty || saving || savingBatch) return;
-
-    const updates = patch.updated.map((u) => ({
+    const updates = patch.updated.map(u => ({
       userId: Number(u.id),
       newRole: u.role,
     }));
@@ -134,6 +133,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
       if (failed.length === 0) {
         setBase(users);
         showToast('success', '권한이 저장되었어요.');
+        queryClient.invalidateQueries({ queryKey: ['roomMembers', roomId] });
       } else {
         showToast('error', `일부 실패: ${failed.length}명 - ${failed[0].error}`);
       }
@@ -152,7 +152,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
         <div className="mb-3 flex items-center justify-end">
           <CustomSelect<Filter>
             value={filter}
-            onChange={(v) => setFilter(v)}
+            onChange={v => setFilter(v)}
             options={filterOptions}
             placeholder="전체"
             size="md"
@@ -166,7 +166,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
           </div>
         ) : (
           <ul className="flex flex-col gap-4 justify-center">
-            {visibleUsers.map((u) => (
+            {visibleUsers.map(u => (
               <li key={u.id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="truncate text-xs font-semibold text-text-primary">{u.name}</div>
@@ -178,7 +178,7 @@ export default function SettingsRoles({ roomId, defaultUsers, className, onSave 
                 ) : (
                   <CustomSelect<RoleSelectValue>
                     value={u.role as RoleSelectValue}
-                    onChange={(v) => updateRole(u.id, v)}
+                    onChange={v => updateRole(u.id, v)}
                     options={roleOptions}
                     placeholder={u.role}
                     size="sm"

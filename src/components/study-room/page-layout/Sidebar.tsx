@@ -12,6 +12,9 @@ import showToast from '@/utils/showToast';
 import type { Role } from '@/@types/rooms';
 import { toAvatarId, type AvatarId } from '@/utils/avatar';
 import AvatarImage from '@/components/AvatarImage';
+import { useMyRoomMemberFromCache } from '@/hook/useMyData';
+import MediaControlBar from '@/components/webrtc/MediaControlBar';
+import { useMediaControls } from '@/contexts/MediaControlsContext';
 
 type Props = {
   roomId: number;
@@ -20,7 +23,6 @@ type Props = {
   onOpenSettings?: () => void;
   onOpenTimer?: () => void;
   onOpenChat?: () => void;
-  onOpenPlanner?: () => void;
   onOpenProfile?: () => void;
   onOpenUsers?: () => void;
   onOpenInvite?: () => void;
@@ -34,7 +36,6 @@ export default function Sidebar({
   onOpenSettings,
   onOpenTimer,
   onOpenChat,
-  onOpenPlanner,
   onOpenProfile,
   unreadCount,
 }: Props) {
@@ -42,7 +43,15 @@ export default function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [avatarId, setAvatarId] = useState<AvatarId>(1);
+  const { me } = useMyRoomMemberFromCache(roomId);
+  const [avatarId, setAvatarId] = useState<AvatarId | null>(null);
+  const media = useMediaControls();
+
+  useEffect(() => {
+    if (me?.avatarId != null) {
+      setAvatarId(toAvatarId(me.avatarId));
+    }
+  }, [me?.avatarId]);
 
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -111,7 +120,10 @@ export default function Sidebar({
       aria-label="Room sidebar"
     >
       <button
-        className={clsx('rounded-full p-2 cursor-pointer hover:bg-black/5', leaving && 'opacity-60 cursor-not-allowed')}
+        className={clsx(
+          'rounded-full p-2 cursor-pointer hover:bg-black/5',
+          leaving && 'opacity-60 cursor-not-allowed'
+        )}
         aria-label="뒤로가기"
         onClick={handleLeave}
         disabled={leaving}
@@ -120,9 +132,26 @@ export default function Sidebar({
         <Image src="/icon/study-room/exit.svg" alt="뒤로가기 아이콘" width={20} height={20} />
       </button>
 
+
       <div className="flex flex-col items-center justify-center gap-4">
+              {media && (
+        <div className="flex flex-col items-center gap-3">
+          <MediaControlBar
+            micOn={media.micOn}
+            camOn={media.camOn}
+            shareOn={media.shareOn}
+            onToggleMic={media.toggleMic}
+            onToggleCam={media.toggleCam}
+            onToggleShare={media.toggleShare}
+          />
+        </div>
+      )}
         {canManage && (
-          <button className="rounded-full p-2 cursor-pointer hover:bg-black/5" aria-label="설정" onClick={onOpenSettings}>
+          <button
+            className="rounded-full p-2 cursor-pointer hover:bg-black/5"
+            aria-label="설정"
+            onClick={onOpenSettings}
+          >
             <Image src="/icon/study-room/settings.svg" alt="설정 아이콘" width={20} height={20} />
           </button>
         )}
@@ -157,31 +186,29 @@ export default function Sidebar({
             </span>
           )}
         </button>
-
-        <button
-          className="rounded-full p-2 cursor-pointer hover:bg-black/5"
-          aria-label="플래너"
-          onClick={onOpenPlanner}
-        >
-          <Image src="/icon/study-room/planner.svg" alt="플래너 아이콘" width={20} height={20} />
-        </button>
-
         <div className="relative" ref={profileAnchorRef}>
           <button
-            className="rounded-full cursor-pointer overflow-hidden w-7 h-7 ring-1 ring-text-secondary"
+            className={clsx(
+              'rounded-full cursor-pointer overflow-hidden w-7 h-7',
+              avatarId == null ? 'ring-0' : 'ring-1 ring-text-secondary'
+            )}
             aria-label="프로필"
             aria-haspopup="dialog"
             aria-expanded={profileOpen}
             onClick={toggleProfile}
           >
-            <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
+            {avatarId == null ? (
+              <div className="w-[28px] h-[28px]" aria-hidden />
+            ) : (
+              <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
+            )}
           </button>
 
           {profileOpen && (
             <div className="absolute left-full ml-8 bottom-0 z-50">
               <UserProfileModal
                 roomId={roomId}
-                initialAvatarId={avatarId}
+                initialAvatarId={avatarId ?? undefined}
                 onAvatarChange={(id) => setAvatarId(toAvatarId(id))}
               />
             </div>

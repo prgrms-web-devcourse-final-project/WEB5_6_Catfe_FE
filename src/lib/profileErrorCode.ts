@@ -1,7 +1,7 @@
 import { MAX_FILE_SIZE } from '@/api/apiUploadFile';
 
 export const MAX_NICKNAME_LIMIT = 20;
-export const MAX_BIO_LIMIT = 300;
+export const MAX_BIO_LIMIT = 250;
 
 export type FieldErrors = Partial<{
   nickname: string;

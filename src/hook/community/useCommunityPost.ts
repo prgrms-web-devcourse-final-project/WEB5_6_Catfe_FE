@@ -131,9 +131,8 @@ export function usePost(id: number, userId?: number, authReady = true) {
   });
 }
 
-export function usePostMutations(isEditMode: boolean, existingPostId?: number, userId?: number) {
+export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
   const queryClient = useQueryClient();
-  const userKey = getUserCacheKey(userId);
 
   return useMutation<ApiResponse<PostDetail>, Error, CreatePostRequest>({
     mutationFn: async (data: CreatePostRequest) => {
@@ -156,7 +155,7 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number, u
       queryClient.invalidateQueries({ queryKey: communityQueryKey.all() });
       if (data.data.postId) {
         queryClient.invalidateQueries({
-          queryKey: communityQueryKey.post(data.data.postId, userKey),
+          queryKey: ['community', 'post', data.data.postId],
         });
       }
     },

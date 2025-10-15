@@ -7,6 +7,7 @@ import * as UITypes from '@/@types/rooms';
 import { getRoomSnapshot } from '@/api/apiRooms';
 import MediaRoomClient from './MediaRoomClient';
 import NonMediaRoomClient from './NonMediaRoomClient';
+import { useAutoLeaveRoom } from '@/hook/useAutoLeaveRoom';
 
 const getAccessToken = () => {
   try { return localStorage.getItem('accessToken') ?? ''; } catch { return ''; }
@@ -161,6 +162,9 @@ export default function RoomContent() {
     })();
     return () => { alive = false; };
   }, [joined, roomId, userId]);
+
+  const numericUserId = userId ? Number(userId) : null;
+  useAutoLeaveRoom(roomId, { enabled: joined, userId: numericUserId });
 
   if (mounted && !userId) {
     return (

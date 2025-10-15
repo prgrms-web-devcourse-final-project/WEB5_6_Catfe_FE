@@ -66,6 +66,7 @@ export function useUpdatePlan(ymd: string) {
 export function useDeletePlan(ymd: string) {
   const qc = useQueryClient();
   const queryKey = PlannerQueryKey.dayPlans(ymd);
+  const allDayPlansPrefix = ['dayPlans'];
 
   return useMutation({
     mutationFn: async ({ id, selectedDate, applyScope }: DeletePlanPayload) => {
@@ -96,7 +97,7 @@ export function useDeletePlan(ymd: string) {
       );
       return { previousPlans };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: allDayPlansPrefix }),
     onError: (err, deletedPayload, context) => {
       if (context?.previousPlans) {
         qc.setQueryData(queryKey, context.previousPlans);

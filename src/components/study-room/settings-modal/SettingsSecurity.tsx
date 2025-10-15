@@ -6,9 +6,10 @@ import Button from "@/components/Button";
 import RoomPassword from "../RoomPassword";
 import Image from "next/image";
 import showToast from "@/utils/showToast";
-import { changeRoomPassword, deleteRoomPassword, setRoomPassword } from "@/api/apiRooms";
+import { changeRoomPassword, deleteRoomPassword, setRoomPassword, deleteRoom } from "@/api/apiRooms";
 import { diffObject } from "@/utils/diffObject";
 import { validatePassword } from "@/utils/validatePassword";
+import { useConfirmStore } from "@/store/useConfirmStore";
 
 type SecurityValue = { isPrivate: boolean; password: string };
 
@@ -102,7 +103,8 @@ export default function SettingsSecurity({
         setInfo({ isPrivate: false, password: "" });
         setOldPassword("");
         setShowOld(false);
-        if (onSave) await onSave({ isPrivate: false, password: "" }, { isPrivate: false, password: "" });
+        if (onSave)
+          await onSave({ isPrivate: false, password: "" }, { isPrivate: false, password: "" });
         showToast("success", msg || "공개방이 되었어요.");
         return;
       }
@@ -117,13 +119,28 @@ export default function SettingsSecurity({
 
   const handleDelete = useCallback(async () => {
     if (deleting) return;
+
+    const confirm = await useConfirmStore.getState().open({
+      title: "스터디룸을 삭제할까요?",
+      description: "삭제 후에는 복구할 수 없어요. 방 내의 초대 코드 및 설정도 모두 사라집니다.",
+      confirmText: "네, 삭제합니다",
+      cancelText: "취소",
+      tone: "danger",
+    });
+
+    if (!confirm) return;
+
     try {
       setDeleting(true);
-      if (onDelete) await onDelete();
+      const msg = await deleteRoom(roomId);
+      showToast("success", msg || "스터디룸이 삭제되었어요.");
+      await onDelete?.();
+    } catch (e) {
+      showToast("error", e instanceof Error ? e.message : "방 삭제 중 오류가 발생했어요.");
     } finally {
       setDeleting(false);
     }
-  }, [deleting, onDelete]);
+  }, [deleting, roomId, onDelete]);
 
   return (
     <div className={clsx("flex flex-col justify-between w-full h-full", className)}>

@@ -217,6 +217,23 @@ export async function updateRoom(
   }
 }
 
+export async function deleteRoom(roomId: number): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) {
+    throw new Error("유효하지 않은 roomId 입니다.");
+  }
+  try {
+    const { data } = await api.delete<ApiEnvelope<string>>(`/api/rooms/${roomId}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (data?.success === false) {
+      throw new Error(data?.message || "방 삭제에 실패했어요.");
+    }
+    return data?.data || data?.message || "스터디룸이 삭제되었어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "방 삭제에 실패했어요."));
+  }
+}
+
 export async function getMyInvite(roomId: number): Promise<InviteMeData> {
   const { data } = await api.get<ApiEnvelope<InviteMeData>>(`/api/rooms/${roomId}/invite/me`);
   if (!data.success) throw new Error(data.message || "초대 코드 발급에 실패했어요.");

@@ -12,6 +12,7 @@ import showToast from '@/utils/showToast';
 import type { Role } from '@/@types/rooms';
 import { toAvatarId, type AvatarId } from '@/utils/avatar';
 import AvatarImage from '@/components/AvatarImage';
+import { useMyRoomMemberFromCache } from '@/hook/useMyData';
 
 type Props = {
   roomId: number;
@@ -42,7 +43,14 @@ export default function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [avatarId, setAvatarId] = useState<AvatarId>(1);
+  const { me } = useMyRoomMemberFromCache(roomId);
+  const [avatarId, setAvatarId] = useState<AvatarId | null>(null);
+
+  useEffect(() => {
+    if (me?.avatarId != null) {
+      setAvatarId(toAvatarId(me.avatarId));
+    }
+  }, [me?.avatarId]);
 
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -168,20 +176,27 @@ export default function Sidebar({
 
         <div className="relative" ref={profileAnchorRef}>
           <button
-            className="rounded-full cursor-pointer overflow-hidden w-7 h-7 ring-1 ring-text-secondary"
+            className={clsx(
+              'rounded-full cursor-pointer overflow-hidden w-7 h-7',
+              avatarId == null ? 'ring-0' : 'ring-1 ring-text-secondary'
+            )}
             aria-label="프로필"
             aria-haspopup="dialog"
             aria-expanded={profileOpen}
             onClick={toggleProfile}
           >
-            <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
+            {avatarId == null ? (
+              <div className="w-[28px] h-[28px]" aria-hidden />
+            ) : (
+              <AvatarImage id={avatarId} alt="내 프로필" width={28} height={28} />
+            )}
           </button>
 
           {profileOpen && (
             <div className="absolute left-full ml-8 bottom-0 z-50">
               <UserProfileModal
                 roomId={roomId}
-                initialAvatarId={avatarId}
+                initialAvatarId={avatarId ?? undefined}
                 onAvatarChange={(id) => setAvatarId(toAvatarId(id))}
               />
             </div>

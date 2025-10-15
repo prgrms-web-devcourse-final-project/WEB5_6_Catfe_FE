@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import RoomPassword from "../RoomPassword";
 import Image from "next/image";
 import showToast from "@/utils/showToast";
-import { changeRoomPassword, deleteRoomPassword } from "@/api/apiRooms";
+import { changeRoomPassword, deleteRoomPassword, setRoomPassword } from "@/api/apiRooms";
 import { diffObject } from "@/utils/diffObject";
 import { validatePassword } from "@/utils/validatePassword";
 
@@ -53,7 +53,6 @@ export default function SettingsSecurity({
   const isDirty = Object.keys(changes).length > 0;
 
   const violatesRule = useMemo(() => {
-    // 공개 전환(toPrivate=false)에서는 규칙 검사하지 않음
     if (!info.isPrivate) return false;
     return !validatePassword(info.password ?? "");
   }, [info.isPrivate, info.password]);
@@ -65,15 +64,9 @@ export default function SettingsSecurity({
     const newPwd = info.password.trim();
     const oldPwd = oldPassword.trim();
 
-    // 공개 → 비공개 (신규 설정)
     if (!fromPrivate && toPrivate) return !violatesRule && !!newPwd;
-
-    // 비공개 → 비공개 (변경)
     if (fromPrivate && toPrivate) return !violatesRule && !!(newPwd && oldPwd);
-
-    // 비공개 → 공개 (제거) — 비번 필요 없음
     if (fromPrivate && !toPrivate) return true;
-
     return false;
   }, [isDirty, base.isPrivate, info.isPrivate, info.password, oldPassword, violatesRule]);
 
@@ -85,16 +78,14 @@ export default function SettingsSecurity({
       const fromPrivate = base.isPrivate;
       const toPrivate = info.isPrivate;
 
-      // 공개 → 비공개: 비번 신규 설정
       if (!fromPrivate && toPrivate) {
-        const msg = await changeRoomPassword(roomId, "", info.password.trim());
+        const msg = await setRoomPassword(roomId, info.password.trim());
         setBase(info);
         if (onSave) await onSave(changes, info);
         showToast("success", msg || "비밀번호가 설정되었어요.");
         return;
       }
 
-      // 비공개 → 비공개: 비번 변경
       if (fromPrivate && toPrivate) {
         const msg = await changeRoomPassword(roomId, oldPassword.trim(), info.password.trim());
         setBase(info);
@@ -105,16 +96,14 @@ export default function SettingsSecurity({
         return;
       }
 
-      // 비공개 → 공개: 비번 제거
       if (fromPrivate && !toPrivate) {
         const msg = await deleteRoomPassword(roomId);
-        // 공개 전환이므로 로컬 상태도 공개로 고정 & 비번 초기화(가독성)
         setBase({ isPrivate: false, password: "" });
         setInfo({ isPrivate: false, password: "" });
         setOldPassword("");
         setShowOld(false);
         if (onSave) await onSave({ isPrivate: false, password: "" }, { isPrivate: false, password: "" });
-        showToast("success", msg || "비밀번호가 제거되었어요.");
+        showToast("success", msg || "공개방이 되었어요.");
         return;
       }
 
@@ -146,7 +135,6 @@ export default function SettingsSecurity({
           onChange={(s) => setInfo((prev) => ({ ...prev, isPrivate: s.enabled, password: s.password }))}
         />
 
-        {/* 비공개 → 비공개일 때만 기존 비번 입력 */}
         {showOldInput && (
           <div className="mt-3">
             <label className="block text-xs font-medium text-text-primary mb-2">기존 비밀번호 입력</label>
@@ -184,18 +172,7 @@ export default function SettingsSecurity({
 
         <hr className="border-text-secondary/70 mb-3 mt-4" />
 
-        <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            size="sm"
-            borderType="solid"
-            color="secondary"
-            className="text-[10px]"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? "일시 정지 중..." : "방 일시 정지"}
-          </Button>
+        <div className="flex justify-end">
           <Button
             type="button"
             size="sm"

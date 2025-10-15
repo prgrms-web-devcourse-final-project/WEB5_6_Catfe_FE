@@ -1,7 +1,6 @@
 import api from "@/utils/api";
 import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList, Role, RoomMemberDTO, UpdateRoomDto } from "@/@types/rooms";
 import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/rooms";
-import type { Role } from "@/@types/rooms"
 
 export type PageResponse<T> = {
   content: T[];
@@ -235,7 +234,6 @@ export async function enterByInviteCode(inviteCode: string): Promise<InviteEnter
   }
 }
 
-
 type ApiSuccess = { code?: string; message?: string; data?: null; success?: boolean };
 
 function pickMessage(d: unknown, fallback: string): string {
@@ -246,7 +244,23 @@ function pickMessage(d: unknown, fallback: string): string {
   return fallback;
 }
 
-/** 방 비밀번호 변경: 백엔드가 PATCH 미지원 → POST 고정 */
+export async function setRoomPassword(roomId: number, newPassword: string): Promise<string> {
+  if (!Number.isFinite(roomId) || roomId <= 0) {
+    throw new Error("유효하지 않은 roomId 입니다.");
+  }
+  try {
+    const { data } = await api.post<ApiEnvelope<string>>(
+      `/api/rooms/${roomId}/password`,
+      { newPassword },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!data?.success) throw new Error(data?.message || "비밀번호 설정에 실패했어요.");
+    return data.data || data.message || "비밀번호가 설정되었어요.";
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "비밀번호 설정에 실패했어요."));
+  }
+}
+
 export async function changeRoomPassword(
   roomId: number,
   currentPassword: string,
@@ -257,7 +271,7 @@ export async function changeRoomPassword(
   }
 
   try {
-    const { data } = await api.post<ApiSuccess>(`/api/rooms/${roomId}/password`, {
+    const { data } = await api.put<ApiSuccess>(`/api/rooms/${roomId}/password`, {
       currentPassword,
       newPassword,
     }, {
@@ -269,7 +283,6 @@ export async function changeRoomPassword(
     if (data.success === false) throw new Error(msg);
     return msg;
   } catch (error) {
-    // 서버 메시지 우선 노출
     const serverMsg =
       (typeof error === "object" && error && "response" in error
         ? (error as { response?: { data?: unknown } }).response?.data
@@ -298,7 +311,6 @@ export async function deleteRoomPassword(roomId: number): Promise<string> {
     throw new Error(msg);
   }
 }
-
 
 /** 단일 멤버 역할 변경 (PUT /api/rooms/{roomId}/members/{userId}/role) */
 export async function changeMemberRole(

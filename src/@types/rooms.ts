@@ -135,3 +135,21 @@ export type ApiRoomMemberDto = {
   profileImageUrl?: string | null;
   email?: string | null;
 };
+
+export type UpdateRoomDto = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  thumbnailAttachmentId?: number | null;
+};
+
+export type RoomInfoValue = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  isPrivate: boolean;
+  password?: string | null;
+  coverPreviewUrl: string | null;
+  coverUploadFile: File | null;
+  mediaEnabled?: boolean;
+};

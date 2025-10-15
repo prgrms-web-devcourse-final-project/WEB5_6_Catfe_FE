@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         pathname: '**',
       },
       {
+        protocol: 'http',
+        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
+        pathname: '**',
+      },
+      {
         protocol: 'https',
         hostname: 'phinf.pstatic.net', // 네이버 프로필 이미지 도메인
         pathname: '**',

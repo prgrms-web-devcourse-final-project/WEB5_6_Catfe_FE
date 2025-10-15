@@ -21,7 +21,7 @@ function InviteShareModal({ inviteCode, onClose }: Props) {
     const lines = [
       "Catfé 스터디룸에 초대합니다 🙌",
       `초대 코드: ${inviteCode}`,
-      `초대 코드 입력하러 가기 : https://catfe.com/study-rooms`,
+      `초대 코드 입력하러 가기 : ${process.env.NEXT_PUBLIC_API_URL}/study-rooms`,
     ];
     return lines.join("\n");
   }, [inviteCode]);

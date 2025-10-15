@@ -84,9 +84,7 @@ export function useChatWebSocket(roomId: number, onChatMessage: (message: ApiCha
       connectHeaders: {
         Authorization: `Bearer ${accessToken}`,
       },
-      debug: (str) => {
-        console.log('[WebSocket Debug]', str);
-      },
+      debug: () => {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

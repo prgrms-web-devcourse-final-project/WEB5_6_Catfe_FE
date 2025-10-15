@@ -38,7 +38,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   const usersRef = useRef<HTMLDivElement>(null);
   const onChatRoomRef = useRef<((m: ApiChatMsg) => void) | null>(null);
 
-  /* ------------ Room Info & Memeber --------------- */
   const { data: infoDto, error: infoError, isLoading: infoLoading } = useRoomInfoQuery(roomId);
 
   const {
@@ -67,17 +66,17 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   );
 
   const myRole: Role = useMemo(() => {
-    if (!membersDto) return "MEMBER";
+    if (!membersDto) return 'MEMBER';
 
     let myNumericId: number | null = null;
-    if (me && "id" in me && typeof (me as { id: number }).id === "number") {
+    if (me && 'id' in me && typeof (me as { id: number }).id === 'number') {
       myNumericId = (me as { id: number }).id;
-    } else if (me && "userId" in me && typeof (me as { userId: number }).userId === "number") {
+    } else if (me && 'userId' in me && typeof (me as { userId: number }).userId === 'number') {
       myNumericId = (me as { userId: number }).userId;
     }
 
     const myNickname =
-      me && "nickname" in me && typeof (me as { nickname?: string }).nickname === "string"
+      me && 'nickname' in me && typeof (me as { nickname?: string }).nickname === 'string'
         ? (me as { nickname?: string }).nickname
         : undefined;
 
@@ -85,10 +84,10 @@ export default function ClientRoomShell({ children, roomId }: Props) {
       membersDto.find((m) => myNumericId !== null && Number(m.userId) === myNumericId) ??
       (myNickname ? membersDto.find((m) => m.nickname === myNickname) : undefined);
 
-    return mine?.role ?? "MEMBER";
+    return mine?.role ?? 'MEMBER';
   }, [me, membersDto]);
 
-  const canManage = myRole === "HOST" || myRole === "SUB_HOST";
+  const canManage = myRole === 'HOST' || myRole === 'SUB_HOST';
 
   useEscapeKey(inviteOpen, () => setInviteOpen(false));
   useEscapeKey(usersOpen, () => setUsersOpen(false));
@@ -132,18 +131,15 @@ export default function ClientRoomShell({ children, roomId }: Props) {
 
   const usersCount = membersLoading ? '?' : (membersDto?.length ?? 0);
 
-  /* ------------ Chatting --------------- */
   const chatRoom = useChatRoom(roomId, {
     isOpen: chatOpen,
     onMessage: (m) => onChatRoomRef.current?.(m),
   });
 
-  // 채팅창 열면 뱃지 초기화
   useEffect(() => {
     if (chatOpen) chatRoom.resetUnread();
   }, [chatOpen, chatRoom]);
 
-  /* ------------ Layout --------------- */
   const chatDockWidth = 'min(33dvw, 420px)';
   const gridStyle: React.CSSProperties =
     chatOpen && chatMode === 'docked'
@@ -153,7 +149,6 @@ export default function ClientRoomShell({ children, roomId }: Props) {
   return (
     <div className="min-h-screen w-full">
       <div className="grid" style={gridStyle}>
-        {/* grid 1열: sidebar */}
         <Sidebar
           roomId={roomId}
           role={myRole}
@@ -164,11 +159,10 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           unreadCount={chatRoom.unread}
         />
 
-        {/* grid 2열: chatting (docked) */}
         {chatOpen && chatMode === 'docked' && <div className="relative" />}
-        {/* grid 3열: contents */}
+
         <div className="relative">
-          <header className="h-14 flex items-center justify-end px-6">
+          <header className="flex h-14 items-center justify-end px-6">
             <div className="flex items-center gap-2">
               <div className="relative inline-block" ref={usersRef}>
                 <Button
@@ -187,12 +181,8 @@ export default function ClientRoomShell({ children, roomId }: Props) {
                 </Button>
 
                 {usersOpen && (
-                  <div className="absolute right-0 top-full mt-2 z-50">
-                    <UsersModal
-                      users={users}
-                      canControl={canManage}
-                      onClose={() => setUsersOpen(false)}
-                    />
+                  <div className="absolute right-0 top-full z-50 mt-2">
+                    <UsersModal users={users} canControl={canManage} onClose={() => setUsersOpen(false)} />
                   </div>
                 )}
               </div>
@@ -235,7 +225,9 @@ export default function ClientRoomShell({ children, roomId }: Props) {
           <main className="px-6">{children}</main>
         </div>
       </div>
+
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} defaultTab="general" roomId={roomId} />
+
       <ChatRoomContainer
         roomId={roomId}
         open={chatOpen}

@@ -3,7 +3,6 @@ import SockJS from 'sockjs-client';
 import { getAccessToken } from '@/utils/authToken';
 import type { WebRTCSignal } from '@/lib/types';
 
-/** 서버 페이로드 */
 type ServerOfferAnswer = {
   type: 'OFFER' | 'ANSWER';
   fromUserId: number | string;
@@ -35,7 +34,6 @@ type ServerError = {
   error?: { code?: string; message?: string; detail?: string };
   timestamp?: string;
 };
-/** 방 이벤트 */
 type UserJoinedEvent = {
   type: 'USER_JOINED';
   userId: number;
@@ -47,7 +45,6 @@ type UserLeftEvent = {
   type: 'USER_LEFT';
   userId: number;
 };
-/** 외부로 내보낼 방 이벤트 타입 */
 export type RoomEvent =
   | { type: 'USER_JOINED'; payload: UserJoinedEvent }
   | { type: 'USER_LEFT'; payload: UserLeftEvent };
@@ -60,7 +57,6 @@ type ServerSignal =
   | UserJoinedEvent
   | UserLeftEvent;
 
-/** 유틸 & 타입 가드 */
 export type MediaState = { micOn: boolean; camOn: boolean; shareOn: boolean };
 export type TogglingMediaType = 'AUDIO' | 'VIDEO' | 'SCREEN';
 
@@ -93,9 +89,6 @@ function isServerError(p: ServerSignal): p is ServerError {
 function isUserJoined(p: ServerSignal): p is UserJoinedEvent { return p.type === 'USER_JOINED'; }
 function isUserLeft(p: ServerSignal): p is UserLeftEvent { return p.type === 'USER_LEFT'; }
 
-const DEBUG = process.env.NODE_ENV !== 'production';
-const dlog = (...a: unknown[]) => { if (DEBUG) console.log('[STOMP]', ...a); };
-
 export default class SignalingClient {
   private client: Client;
   private _ready = false;
@@ -104,7 +97,6 @@ export default class SignalingClient {
   private stoppedByAuthError = false;
   private activated = false;
 
-  /** 조인 가드 & webrtc 전송 큐 */
   private joinedOk = false;
   private joinedResolvers: Array<() => void> = [];
   private outbox: Array<{ dest: string; body: object }> = [];
@@ -113,7 +105,6 @@ export default class SignalingClient {
   get ready() { return this._ready; }
   get isReady() { return this._ready; }
 
-  /** 리스너 */
   private signalListeners = new Set<(s: WebRTCSignal) => void>();
   private mediaStateListeners = new Set<(userId: string, state: ServerMediaState) => void>();
   private roomEventListeners = new Set<(event: RoomEvent) => void>();
@@ -131,7 +122,7 @@ export default class SignalingClient {
     this.client = new Client({
       webSocketFactory: () => new SockJS(urlWithToken) as unknown as IStompSocket,
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-      debug: DEBUG ? (m: string) => dlog(m) : () => {},
+      debug: () => {},
       reconnectDelay: 3000,
 
       onConnect: () => {
@@ -156,9 +147,7 @@ export default class SignalingClient {
         if (/unauth|un\.auth|auth|인증|token/.test(raw)) this.stopReconnect('auth-error(stomp)');
       },
 
-      onWebSocketError: (e: Event) => {
-        dlog('WS error:', (e as { message?: string; type?: string } | undefined)?.message || e.type);
-      },
+      onWebSocketError: () => {},
     });
 
     this.client.onWebSocketClose = (e: CloseEvent) => {

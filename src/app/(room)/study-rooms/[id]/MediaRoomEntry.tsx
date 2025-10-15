@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useMemo, useRef } from "react";
 import MediaRoomClient from "./MediaRoomClient";
@@ -7,7 +7,6 @@ import { useRoomMembersQuery } from "@/hook/useRoomMembers";
 import type { RoomSnapshotUI, UsersListItem, RoomInfo, ApiRoomMemberDto } from "@/@types/rooms";
 import SignalingClient from "@/lib/signalingClient";
 
-/** 로컬 스토리지 → 'u-<num>' 형태 meUid */
 function getMeUid(): string | null {
   try {
     const raw = localStorage.getItem("user");
@@ -30,10 +29,8 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     staleTime: 0,
   });
 
-  // 브라우저에서만 meUid를 읽음
   const meUid = typeof window !== "undefined" ? getMeUid() : null;
 
-  /** RoomSnapshotUI 구성 */
   const roomUi: RoomSnapshotUI | null = useMemo(() => {
     if (!infoDto) return null;
 
@@ -63,7 +60,6 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
       joinedAt: null,
     }));
 
-    // 혹시 내 정보가 목록에 없을 때 보정
     if (meUid && !members.some((x) => x.isMe)) {
       const n = Number(meUid.split("-")[1]);
       const i = members.findIndex((x) => x.id === n);
@@ -73,24 +69,20 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
     return { info, members };
   }, [infoDto, membersDto, meUid]);
 
-  // SignalingClient 생성/해제 
   const signalingRef = useRef<SignalingClient | null>(null);
 
   useEffect(() => {
-    // roomUi랑 meUid가 준비된 뒤에 생성
     if (!roomUi || !meUid) return;
-
-    // 이미 있으면 건너뜀
     if (signalingRef.current) return;
 
-    const userIdForWS = meUid.split("-")[1] ?? ""; 
-    const client = new SignalingClient(String(roomNum), userIdForWS, () => {
-    });
+    const userIdForWS = meUid.split("-")[1] ?? "";
+    const client = new SignalingClient(String(roomNum), userIdForWS, () => {});
     signalingRef.current = client;
 
     return () => {
-      // 언마운트/room 변경 시 해제
-      try { signalingRef.current?.disconnect(); } finally {
+      try {
+        signalingRef.current?.disconnect();
+      } finally {
         signalingRef.current = null;
       }
     };
@@ -101,8 +93,8 @@ export default function MediaRoomEntry({ roomNum }: { roomNum: number }) {
   return (
     <MediaRoomClient
       room={roomUi}
-      meId={meUid}                         
-      signalingClient={signalingRef.current} 
+      meId={meUid}
+      signalingClient={signalingRef.current}
     />
   );
 }

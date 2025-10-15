@@ -6,6 +6,7 @@ import VideoPlayer from '@/components/webrtc/VideoPlayer';
 import type { UsersListItem } from '@/@types/rooms';
 import MicOffBadge from '@/components/webrtc/MicOffBadge';
 import UserNameBadge from '@/components/webrtc/UserNameBadge';
+import AvatarImage from '../AvatarImage';
 
 declare global {
   interface Document {
@@ -31,7 +32,10 @@ export default function Tile({
   allowFullscreen = true,
 }: TileProps) {
   const name = String(member.name ?? member.id);
-  const avatar = member.avatarUrl ?? '/image/cat.png';
+  const avatarUrl = member.avatarUrl;
+  const avatarId = member.avatarId;
+  const avatar = avatarUrl ?? '/image/cat.png';
+  const hasCustomAvatar = avatarId !== null && avatarId !== undefined;
 
   const fsRef = useRef<HTMLDivElement>(null);
   const [isFS, setIsFS] = useState(false);
@@ -80,29 +84,40 @@ export default function Tile({
           className={[
             'relative flex w-full items-center justify-center bg-text-primary',
             isFS ? 'h-full' : 'aspect-video',
-            'min-h-[180px] sm:min-h-[220px]',
+            'min-h-[180px] sm:min-h-[200px]',
           ].join(' ')}
         >
           {showVideo ? (
             <VideoPlayer
-              stream={stream}
-              muted={member.isMe}
-              className={['z-0 h-full w-full object-contain object-center', isFS ? 'object-cover' : ''].join(' ')}
-            />
+    stream={stream}
+    muted={member.isMe}
+    className={[
+      'z-0 h-full w-full',
+      isFS ? 'object-cover object-center' : 'object-contain',
+    ].join(' ')}
+  />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-white">
               <div className="flex flex-col items-center">
                 <div className="relative mb-2 h-12 w-12 overflow-hidden rounded-full ring-2 ring-white/20 sm:h-16 sm:w-16">
-                  <Image src={avatar} alt={name} fill sizes="64px" />
+                  {hasCustomAvatar ? (
+                    <AvatarImage
+                      id={avatarId}
+                      alt={name}
+                      width={64}
+                      height={64}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    <Image src={avatar} alt={name} fill sizes="64px" />
+                  )}
                 </div>
                 <span className="text-sm">{name}</span>
               </div>
             </div>
           )}
-
           {!member.isMe && !audioOn && <MicOffBadge />}
           {showVideo && <UserNameBadge name={name} />}
-
           {allowFullscreen && !isFS && (
             <div className="pointer-events-none absolute inset-x-0 bottom-2 mx-auto w-max rounded-md border border-white/30 bg-black/40 px-2 py-1 text-[11px] leading-none text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
               더블클릭으로 전체화면

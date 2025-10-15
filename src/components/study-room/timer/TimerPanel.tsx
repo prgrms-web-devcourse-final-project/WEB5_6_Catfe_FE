@@ -30,7 +30,7 @@ export default function TimerPanel() {
               activeTab === "record" ? "text-text-primary" : "text-text-secondary"
             }`}
           >
-            공부시간 기록
+            스톱워치
           </button>
         </div>
       </div>

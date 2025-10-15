@@ -66,7 +66,7 @@ export function useWebRTC(params: {
       } catch {}
       delete peersRef.current[key];
     }
-    setRemoteStreams(prev => {
+    setRemoteStreams((prev) => {
       const next = { ...prev };
       delete next[displayKey(key)];
       return next;
@@ -99,7 +99,7 @@ export function useWebRTC(params: {
         } catch {}
       };
       pc.ontrack = (e: RTCTrackEvent) => {
-        setRemoteStreams(prev => ({ ...prev, [displayKey(key)]: e.streams[0] }));
+        setRemoteStreams((prev) => ({ ...prev, [displayKey(key)]: e.streams[0] }));
       };
       pc.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
         if (e.candidate) {
@@ -118,7 +118,7 @@ export function useWebRTC(params: {
       };
       return pc;
     },
-    [meId, localStream, signalingClient, cleanupPeer, activeVideoTrack],
+    [meId, localStream, signalingClient, cleanupPeer, activeVideoTrack]
   );
 
   useEffect(() => {
@@ -152,16 +152,17 @@ export function useWebRTC(params: {
       } catch {}
     };
     signalingClient.addSignalListener(handleSignal);
+    const currentPeers = peersRef.current;
     return () => {
       signalingClient.removeSignalListener(handleSignal);
-      Object.keys(peersRef.current).forEach(cleanupPeer);
+      Object.keys(currentPeers).forEach(cleanupPeer);
     };
   }, [signalingClient, meId, createPeerConnection, cleanupPeer]);
 
   useEffect(() => {
     if (!activeVideoTrack) return;
     for (const peer of Object.values(peersRef.current)) {
-      const sender = peer.getSenders().find(s => s.track?.kind === 'video');
+      const sender = peer.getSenders().find((s) => s.track?.kind === 'video');
       sender?.replaceTrack(activeVideoTrack);
     }
   }, [activeVideoTrack]);
@@ -189,7 +190,7 @@ export function useWebRTC(params: {
   useEffect(() => {
     if (!localStream || !signalingReady) return;
     const currentPeerKeys = new Set(Object.keys(peersRef.current));
-    const newPeerKeys = new Set(peerIds.filter(id => sigKey(id) !== meId).map(sigKey));
+    const newPeerKeys = new Set(peerIds.filter((id) => sigKey(id) !== meId).map(sigKey));
     for (const key of newPeerKeys) if (!currentPeerKeys.has(key)) createPeerConnection(key);
     for (const key of currentPeerKeys) if (!newPeerKeys.has(key)) cleanupPeer(key);
   }, [peerIds, localStream, meId, signalingReady, createPeerConnection, cleanupPeer]);
@@ -198,7 +199,7 @@ export function useWebRTC(params: {
     if (!isSharing) return;
     const cameraTrack = localStream?.getVideoTracks()[0] ?? null;
     setActiveVideoTrack(cameraTrack);
-    shareStreamRef.current?.getTracks().forEach(track => track.stop());
+    shareStreamRef.current?.getTracks().forEach((track) => track.stop());
     shareStreamRef.current = null;
     setIsSharing(false);
     setCamOn(true);
@@ -244,7 +245,7 @@ export function useWebRTC(params: {
       if (!targetUserId || !signalingReady) return;
       createPeerConnection(sigKey(targetUserId));
     },
-    [createPeerConnection, signalingReady],
+    [createPeerConnection, signalingReady]
   );
 
   return {

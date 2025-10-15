@@ -17,6 +17,7 @@ export type RoomMemberDTO = {
   joinedAt: string | null;
   promotedAt: string | null;
   profileImageUrl?: string | null;
+  avatarId: number | null;
 };
 
 export const roomMembersQk = {

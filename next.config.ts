@@ -17,11 +17,17 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com', // Google 프로필 이미지 도메인
         pathname: '**',
       },
-      {
-        protocol: 'https',
-        hostname: 'k.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
-        pathname: '**',
-      },
+      // Kakao 프로필 이미지 도메인
+      // 1. k.kakaocdn.net
+      { protocol: 'http', hostname: 'k.kakaocdn.net', pathname: '/**' },
+      { protocol: 'https', hostname: 'k.kakaocdn.net', pathname: '/**' },
+      // 2. img1.kakaocdn.net
+      { protocol: 'http', hostname: 'img1.kakaocdn.net', pathname: '/**' },
+      { protocol: 'https', hostname: 'img1.kakaocdn.net', pathname: '/**' },
+      // 3. t1.kakaocdn.net (기본 프로필 등에 사용됨)
+      { protocol: 'http', hostname: 't1.kakaocdn.net', pathname: '/**' },
+      { protocol: 'https', hostname: 't1.kakaocdn.net', pathname: '/**' },
+
       {
         protocol: 'http',
         hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인

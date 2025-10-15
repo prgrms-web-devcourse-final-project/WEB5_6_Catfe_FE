@@ -1,5 +1,5 @@
 import api from "@/utils/api";
-import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList } from "@/@types/rooms";
+import type { AllRoomsList, CreateRoomDto, CreateRoomRes, MyRoomsList, Role, RoomMemberDTO, UpdateRoomDto } from "@/@types/rooms";
 import type { RoomSnapshotUI, RoomInfo, UsersListItem } from "@/@types/rooms";
 import type { Role } from "@/@types/rooms"
 
@@ -25,6 +25,24 @@ type RoomsPayload<T> = {
   totalPages: number;
   totalElements: number;
   hasNext: boolean;
+};
+
+export type InviteMeData = {
+  inviteCode: string;
+  inviteLink: string;
+  roomId: number;
+  roomTitle: string;
+  createdByNickname: string;
+  expiresAt: string;
+  active: boolean;
+  valid: boolean;
+};
+
+export type InviteEnterData = {
+  roomId: number;
+  userId: number;
+  role: Role;
+  joinedAt: string;
 };
 
 export type RoleChangeResponse = {
@@ -107,23 +125,13 @@ export const getPopularRooms = (page: number, size: number) =>
 export const getEnterRooms = (page: number, size: number) =>
   fetchRooms<AllRoomsList>("/api/rooms", page, size, "입장 가능한 공개 스터디룸 목록을 불러오지 못했어요.");
 
-export async function createRoom(dto: CreateRoomDto): Promise<CreateRoomRes> {
-  try {
-    const res = await api.post<ApiEnvelope<CreateRoomRes>>("/api/rooms", dto);
-    return res.data.data;
-  } catch (err: unknown) {
-    throw new Error(safeErrorMessage(err, "스터디룸 생성에 실패했어요."));
-  }
-}
+export const getPublicRooms = (page: number, size: number) =>
+  fetchRooms<AllRoomsList>("/api/rooms/public", page, size, "공개 스터디룸 목록을 불러오지 못했어요.");
 
-export type RoomMemberDTO = {
-  userId: number;
-  nickname: string;
-  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
-  joinedAt: string | null;
-  promotedAt: string | null;
-  profileImageUrl?: string | null;
-};
+export async function createRoom(dto: CreateRoomDto): Promise<CreateRoomRes> {
+  const res = await api.post<ApiEnvelope<CreateRoomRes>>("/api/rooms", dto);
+  return res.data.data;
+}
 
 export type RoomDetailDTO = {
   roomId: number;
@@ -139,6 +147,7 @@ export type RoomDetailDTO = {
   createdAt: string;
   private: boolean;
   members: RoomMemberDTO[];
+  thumbnailUrl?: string | null;
 };
 
 function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
@@ -150,7 +159,7 @@ function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
     description: d.description ?? "",
     maxParticipants: d.maxParticipants,
     isPrivate: !!d.private,
-    coverPreviewUrl: null,
+    coverPreviewUrl: d.thumbnailUrl ?? null,
     currentParticipants: d.currentParticipants ?? 0,
     status: d.status,
     allowCamera: !!d.allowCamera,
@@ -164,7 +173,8 @@ function toUIFromDetail(d: RoomDetailDTO): RoomSnapshotUI {
     name: m.nickname ?? `u-${m.userId}`,
     role: m.role,
     email: "",
-    avatarUrl: m.profileImageUrl ?? null,
+    avatarId: m.avatarId ?? null,
+    avatarUrl: m.avatarImageUrl ?? m.profileImageUrl ?? null,
     isMe: false,
     media: { camOn: false, screenOn: false },
     joinedAt: m.joinedAt ?? null,
@@ -189,6 +199,42 @@ export async function leaveRoom(roomId: number): Promise<void> {
     throw new Error(safeErrorMessage(err, "방 퇴장에 실패했어요."));
   }
 }
+
+export async function updateRoom(
+  roomId: number,
+  dto: UpdateRoomDto,
+  method: "put" | "patch" = "put"
+): Promise<string> {
+  try {
+    const req = method === "put"
+      ? api.put<ApiEnvelope<string>>(`/api/rooms/${roomId}`, dto)
+      : api.patch<ApiEnvelope<string>>(`/api/rooms/${roomId}`, dto);
+
+    const res = await req;
+    if (!res.data.success) throw new Error(res.data.message || "방 설정 변경에 실패했어요.");
+    return res.data.data;
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "방 설정 변경에 실패했어요."));
+  }
+}
+
+export async function getMyInvite(roomId: number): Promise<InviteMeData> {
+  const { data } = await api.get<ApiEnvelope<InviteMeData>>(`/api/rooms/${roomId}/invite/me`);
+  if (!data.success) throw new Error(data.message || "초대 코드 발급에 실패했어요.");
+  return data.data;
+}
+
+export async function enterByInviteCode(inviteCode: string): Promise<InviteEnterData> {
+  try {
+    const code = inviteCode.replace(/[\s-]/g, '').toUpperCase();
+    const { data } = await api.post<ApiEnvelope<InviteEnterData>>(`/api/invite/${encodeURIComponent(code)}`);
+    if (!data.success) throw new Error(data.message || "초대 코드 입장에 실패했어요.");
+    return data.data;
+  } catch (err: unknown) {
+    throw new Error(safeErrorMessage(err, "초대 코드 입장에 실패했어요."));
+  }
+}
+
 
 type ApiSuccess = { code?: string; message?: string; data?: null; success?: boolean };
 

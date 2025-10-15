@@ -24,6 +24,17 @@ export type RoomMember = {
   email?: string;
 };
 
+export type RoomMemberDTO = {
+  userId: number;
+  nickname: string;
+  role: "HOST" | "SUB_HOST" | "MEMBER" | "VISITOR";
+  joinedAt: string | null;
+  promotedAt: string | null;
+  profileImageUrl?: string | null;
+  avatarId?: number | null;
+  avatarImageUrl?: string | null;
+};
+
 export type RoomSnapshot = {
   info: RoomInfo;
   members: RoomMember[];
@@ -43,6 +54,7 @@ export type MediaState = {
 };
 
 export type UsersListItem = RoomMember & {
+  avatarId?: number | null;
   avatarUrl?: string | null;
   voice?: VoiceState;
   presence?: Presence;
@@ -64,25 +76,23 @@ export type CreateRoomDto = {
   password?: string | null;
   maxParticipants: number;
   useWebRTC: boolean;
+  thumbnailAttachmentId?: number | null;
 };
 
 export type CreateRoomRes = {
-  code: string;
-  message: string;
-  data: {
-    roomId: number;
-    title: string;
-    description: string;
-    currentParticipants: number;
-    maxParticipants: number;
-    status: 'WAITING' | 'ACTIVE' | 'CLOSED';
-    createdBy: string;
-    createdAt: string;
-    allowCamera: boolean;
-    allowAudio: boolean;
-    allowScreenShare: boolean;
-  };
-  success: boolean;
+  roomId: number;
+  title: string;
+  description: string;
+  isPrivate?: boolean;
+  currentParticipants: number;
+  maxParticipants: number;
+  status: 'WAITING' | 'ACTIVE' | 'CLOSED' | 'PAUSED';
+  createdBy: string;
+  createdAt: string;
+  allowCamera: boolean;
+  allowAudio: boolean;
+  allowScreenShare: boolean;
+  thumbnailUrl?: string | null;
 };
 
 export type MyRoomsList = {
@@ -93,8 +103,13 @@ export type MyRoomsList = {
   currentParticipants: number;
   maxParticipants: number;
   status: string;
-  myRole: 'HOST' | 'SUB_HOST' | 'MEMBER';
+  myRole?: 'HOST' | 'SUB_HOST' | 'MEMBER';
   createdAt: string;
+  thumbnailUrl?: string | null;
+  allowCamera?: boolean;
+  allowAudio?: boolean;
+  allowScreenShare?: boolean;
+  createdBy?: string;
 };
 
 export type AllRoomsList = {
@@ -110,12 +125,31 @@ export type AllRoomsList = {
   allowCamera: boolean;
   allowAudio: boolean;
   allowScreenShare: boolean;
+  thumbnailUrl?: string | null;
 };
 
 export type ApiRoomMemberDto = {
   userId: number | string;
   nickname: string;
-  role?: Role;                   
+  role?: Role;
   profileImageUrl?: string | null;
   email?: string | null;
+};
+
+export type UpdateRoomDto = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  thumbnailAttachmentId?: number | null;
+};
+
+export type RoomInfoValue = {
+  title: string;
+  description: string;
+  maxParticipants: number;
+  isPrivate: boolean;
+  password?: string | null;
+  coverPreviewUrl: string | null;
+  coverUploadFile: File | null;
+  mediaEnabled?: boolean;
 };

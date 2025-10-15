@@ -69,6 +69,9 @@ export interface ApiChatMsg {
 export interface ChatMsg {
   id: number;
   from: 'ME' | 'OTHER';
+  userId: number;
+  nickname: string;
+  profileImageUrl: string | null;
   content: string;
   createdAt: number;
 }

@@ -52,6 +52,8 @@ export type CreatePostRequest = {
   title: string;
   content: string;
   categoryIds: number[];
+  thumbnailUrl: string | null;
+  imageIds: number[];
 };
 
 /* ------ Comment ------ */

@@ -33,7 +33,6 @@ function RoomInfo({
   const TITLE_MAX = 15;
   const DESC_MAX = 30;
 
-  // 부모 value를 patch하여 올리는 헬퍼
   const update = (patch: Partial<RoomInfoValue>) => {
     onChange({ ...value, ...patch });
   };
@@ -47,31 +46,47 @@ function RoomInfo({
   const fileRef = useRef<HTMLInputElement>(null);
   const onPickImage = () => fileRef.current?.click();
 
-  // blob URL 관리(컴포넌트가 생성한 URL만 정리)
   const lastBlobUrlRef = useRef<string | null>(null);
   const revokeIfBlob = (url: string | null | undefined) => {
     if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
   };
 
+  const allowedTypes = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "image/avif",
+  ]);
+
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
+    const resetPicker = () => {
+      e.currentTarget.value = "";
+    };
+
     if (!f) {
-      // 이전 blob 정리
       revokeIfBlob(lastBlobUrlRef.current);
       lastBlobUrlRef.current = null;
       update({ coverUploadFile: null, coverPreviewUrl: null });
+      resetPicker();
       return;
     }
 
-    // 이전 blob 정리
-    revokeIfBlob(lastBlobUrlRef.current);
+    if (!allowedTypes.has(f.type)) {
+      alert("이미지 파일만 선택할 수 있어요. (png, jpg, webp, gif, svg, avif)");
+      resetPicker();
+      return;
+    }
 
+    revokeIfBlob(lastBlobUrlRef.current);
     const url = URL.createObjectURL(f);
     lastBlobUrlRef.current = url;
     update({ coverUploadFile: f, coverPreviewUrl: url });
+    resetPicker();
   };
 
-  // 언마운트 시 blob 정리
   useEffect(() => {
     return () => {
       revokeIfBlob(lastBlobUrlRef.current);
@@ -79,17 +94,14 @@ function RoomInfo({
     };
   }, []);
 
-  // 미디어 사용 시 최대 인원
   const MAX_WITH_MEDIA = 4;
   const MAX_DEFAULT = 20;
   const maxCap = mediaEnabled ? MAX_WITH_MEDIA : MAX_DEFAULT;
 
-  // cap 초과 시 부모값 보정
   useEffect(() => {
     if (value.maxParticipants > maxCap) {
       update({ maxParticipants: maxCap });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxCap]);
 
   const members = useMemo(
@@ -100,7 +112,6 @@ function RoomInfo({
   return (
     <div className={clsx("w-full", className)}>
       <section className="flex flex-col gap-5">
-        {/* 스터디룸 이름 */}
         <div className="space-y-1.5">
           <label className="flex items-center justify-between text-xs font-medium text-text-primary">
             <span>스터디룸 이름</span>
@@ -116,7 +127,6 @@ function RoomInfo({
           />
         </div>
 
-        {/* 스터디룸 소개 */}
         <div className="space-y-1.5">
           <label className="flex items-center justify-between text-xs font-medium text-text-primary">
             <span>스터디룸 소개</span>
@@ -133,14 +143,13 @@ function RoomInfo({
           />
         </div>
 
-        {/* 썸네일 변경 */}
         <div className="flex items-center justify-between">
           <span className="font-medium text-xs text-text-primary">스터디룸 썸네일</span>
           <div>
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif"
               className="hidden"
               onChange={onFileChange}
             />
@@ -157,7 +166,6 @@ function RoomInfo({
           </div>
         </div>
 
-        {/* 최대 인원 */}
         <div className="flex items-center justify-between">
           <span className="font-medium text-text-primary text-xs">최대 인원</span>
           <CustomSelect
@@ -171,9 +179,10 @@ function RoomInfo({
           />
         </div>
 
-        {/* 미리보기 썸네일 (있으면) */}
         {value.coverPreviewUrl ? (
           <Image
+            width={640}
+            height={280}
             src={value.coverPreviewUrl}
             alt="미리보기"
             className="mt-2 h-28 w-full rounded-md object-cover border"

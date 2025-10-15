@@ -48,15 +48,11 @@ export function useChatWebSocket(roomId: number, onChatMessage: (message: ApiCha
             destination: '/app/heartbeat',
             body: JSON.stringify({ userId: userIdRef.current }),
           });
-          // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-          console.log(`[Heartbeat] 전송 완료 - 사용자: ${userIdRef.current}`);
         } catch (err) {
           console.error('[Heartbeat] 전송 실패:', err);
         }
       }
     }, HEARTBEAT_INTERVAL_MS);
-    // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-    console.log('[Heartbeat] 시작됨 - 5분 간격');
   }, []);
 
   /* ------ Heartbeat 중지 ------ */
@@ -64,17 +60,12 @@ export function useChatWebSocket(roomId: number, onChatMessage: (message: ApiCha
     if (heartbeatTimerRef.current) {
       clearInterval(heartbeatTimerRef.current);
       heartbeatTimerRef.current = null;
-      // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-      console.log('[Heartbeat] 중지됨');
     }
   }, []);
 
   /* ------ WebSocket 연결 및 해제 ------ */
   useEffect(() => {
     if (!accessToken || !userId) {
-      // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-      console.log('[WebSocket] 사용자 인증 실패: 연결 시도 안 함.');
-
       // 연결된 클라이언트 clean up
       if (clientRef.current) {
         clientRef.current.deactivate();
@@ -102,11 +93,8 @@ export function useChatWebSocket(roomId: number, onChatMessage: (message: ApiCha
     });
 
     // 연결 성공 시 콜백
-    client.onConnect = (frame) => {
-      // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-      console.log('WebSocket 연결 성공:', frame);
+    client.onConnect = () => {
       setIsConnected(true);
-
       // Heartbeat 시작
       startHeartbeat();
       // 방 채팅 구독 시작
@@ -128,8 +116,6 @@ export function useChatWebSocket(roomId: number, onChatMessage: (message: ApiCha
     };
 
     client.onDisconnect = () => {
-      // !! 기능 확인용 임시 콘솔 나중에 삭제하세요 !!
-      console.log('WebSocket 연결 해제됨');
       setIsConnected(false);
       stopHeartbeat();
     };

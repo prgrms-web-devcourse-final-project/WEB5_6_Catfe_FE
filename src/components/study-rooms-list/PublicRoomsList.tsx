@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import StudyRoomCard from "@/components/study-room/StudyRoomCard";
 import EnterPasswordModal from "@/components/study-room/EnterPasswordModal";
 import Pagination from "@/components/Pagination";
-import { getAllRooms } from "@/api/apiRooms";
+import { getPublicRooms } from "@/api/apiRooms";
 import type { AllRoomsList } from "@/@types/rooms";
 import useRequireLogin from "@/hook/useRequireLogin";
 
 const UI_PAGE_SIZE = 12;
 const SERVER_PAGE_SIZE = 60;
 
-export default function AllRoomsList() {
+export default function PublicRoomsList() {
   const router = useRouter();
   const params = useSearchParams();
   const requireLogin = useRequireLogin();
@@ -35,7 +35,7 @@ export default function AllRoomsList() {
     setError(null);
     try {
       const zeroBase = Math.max(0, oneBasePage - 1);
-      const res = await getAllRooms(zeroBase, UI_PAGE_SIZE);
+      const res = await getPublicRooms(zeroBase, UI_PAGE_SIZE);
       setRows(res.content);
       setServerTotalPages(res.totalPages || 1);
     } catch (e) {
@@ -49,10 +49,10 @@ export default function AllRoomsList() {
     setLoading(true);
     setError(null);
     try {
-      const first = await getAllRooms(0, SERVER_PAGE_SIZE);
+      const first = await getPublicRooms(0, SERVER_PAGE_SIZE);
       let acc = first.content.slice();
       for (let p = 1; p < (first.totalPages || 1); p++) {
-        const r = await getAllRooms(p, SERVER_PAGE_SIZE);
+        const r = await getPublicRooms(p, SERVER_PAGE_SIZE);
         acc = acc.concat(r.content);
       }
       setAllRows(acc);
@@ -73,9 +73,7 @@ export default function AllRoomsList() {
     }
   }, [keyword, urlPage, fetchServerPage, fetchAllThenFilter]);
 
-  const baseRows = useMemo(() => {
-    return keyword ? (allRows ?? []) : rows;
-  }, [keyword, allRows, rows]);
+  const baseRows = useMemo(() => (keyword ? (allRows ?? []) : rows), [keyword, allRows, rows]);
 
   const filteredRows = useMemo(() => {
     if (!keyword) return baseRows;
@@ -107,14 +105,13 @@ export default function AllRoomsList() {
   const enterRoom = (room: AllRoomsList) => {
     const next = `/study-rooms/${room.roomId}`;
     if (!requireLogin(next)) return;
-
     if (room.isPrivate) {
       setPending(room);
       setPwOpen(true);
       setRoomId(room.roomId);
       return;
     }
-    router.push(next);
+    router.push(`/study-rooms/${room.roomId}`);
   };
 
   const closePw = () => {

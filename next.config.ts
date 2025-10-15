@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'team5-s3-1.s3.ap-northeast-2.amazonaws.com',
-        pathname: '/**',
       },
       {
         protocol: 'https',
@@ -24,11 +23,6 @@ const nextConfig: NextConfig = {
         pathname: '**',
       },
       {
-        protocol: 'http',
-        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
-        pathname: '**',
-      },
-      {
         protocol: 'https',
         hostname: 'phinf.pstatic.net', // 네이버 프로필 이미지 도메인
         pathname: '**',
@@ -36,6 +30,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com', // GitHub 프로필 이미지 도메인
+        pathname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'img1.kakaocdn.net', // 카카오톡 프로필 이미지 도메인
         pathname: '**',
       },
     ],

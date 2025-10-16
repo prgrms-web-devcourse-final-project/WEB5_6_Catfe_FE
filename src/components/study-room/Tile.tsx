@@ -7,6 +7,7 @@ import type { UsersListItem } from '@/@types/rooms';
 import MicOffBadge from '@/components/webrtc/MicOffBadge';
 import UserNameBadge from '@/components/webrtc/UserNameBadge';
 import AvatarImage from '../AvatarImage';
+import { useMyRoomMemberFromCache } from '@/hook/useMyData';
 
 declare global {
   interface Document {
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-const CONTROL_BAR_RESERVE = 150;
+const CONTROL_BAR_RESERVE = 80;
 
 type TileProps = {
   member: UsersListItem;
@@ -22,7 +23,13 @@ type TileProps = {
   audioOn: boolean;
   videoOn: boolean;
   allowFullscreen?: boolean;
+  roomId?: number;
 };
+
+// me에 avatarId가 있는지 확인하는 타입 가드
+function hasAvatarId(x: unknown): x is { avatarId?: number | null } {
+  return !!x && typeof x === 'object' && 'avatarId' in (x as Record<string, unknown>);
+}
 
 export default function Tile({
   member,
@@ -30,12 +37,21 @@ export default function Tile({
   audioOn,
   videoOn,
   allowFullscreen = true,
+  roomId,
 }: TileProps) {
   const name = String(member.name ?? member.id);
-  const avatarUrl = member.avatarUrl;
-  const avatarId = member.avatarId;
-  const avatar = avatarUrl ?? '/image/cat.png';
-  const hasCustomAvatar = avatarId !== null && avatarId !== undefined;
+
+  // 캐시의 me에서 avatarId만 사용 (URL은 기존 member.avatarUrl 유지)
+  const { me } = useMyRoomMemberFromCache(roomId ?? 0);
+  const myAvatarId: number | null = hasAvatarId(me) ? me.avatarId ?? null : null;
+
+  const effectiveAvatarId: number | null = member.isMe
+    ? (myAvatarId ?? member.avatarId ?? null)
+    : (member.avatarId ?? null);
+
+  const avatarUrl = member.avatarUrl ?? null; // URL은 건드리지 않음
+  const hasCustomAvatar = effectiveAvatarId !== null && effectiveAvatarId !== undefined;
+  const imgSrc = avatarUrl ?? '/image/cat.png';
 
   const fsRef = useRef<HTMLDivElement>(null);
   const [isFS, setIsFS] = useState(false);
@@ -89,27 +105,27 @@ export default function Tile({
         >
           {showVideo ? (
             <VideoPlayer
-    stream={stream}
-    muted={member.isMe}
-    className={[
-      'z-0 h-full w-full',
-      isFS ? 'object-cover object-center' : 'object-contain',
-    ].join(' ')}
-  />
+              stream={stream}
+              muted={member.isMe}
+              className={[
+                'z-0 h-full w-full',
+                isFS ? 'object-cover object-center' : 'object-contain',
+              ].join(' ')}
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-white">
               <div className="flex flex-col items-center">
                 <div className="relative mb-2 h-12 w-12 overflow-hidden rounded-full ring-2 ring-white/20 sm:h-16 sm:w-16">
                   {hasCustomAvatar ? (
                     <AvatarImage
-                      id={avatarId}
+                      id={effectiveAvatarId!}
                       alt={name}
                       width={64}
                       height={64}
                       className="rounded-full"
                     />
                   ) : (
-                    <Image src={avatar} alt={name} fill sizes="64px" />
+                    <Image key={imgSrc} src={imgSrc} alt={name} fill sizes="64px" />
                   )}
                 </div>
                 <span className="text-sm">{name}</span>

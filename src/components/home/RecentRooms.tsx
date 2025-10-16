@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import StudyRoomCard from "@/components/study-room/StudyRoomCard";
-import { getAllRooms } from "@/api/apiRooms";
-import type { AllRoomsList } from "@/@types/rooms";
-import useRequireLogin from "@/hook/useRequireLogin";
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import StudyRoomCard from '@/components/study-room/StudyRoomCard';
+import { getAllRooms } from '@/api/apiRooms';
+import type { AllRoomsList } from '@/@types/rooms';
+import useRequireLogin from '@/hook/useRequireLogin';
 
 const PAGE = 0;
 const SIZE = 20;
@@ -24,7 +24,7 @@ export default function RecentRooms() {
         const top3 = (res.content ?? []).slice(0, 3);
         setRooms(top3);
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "전체 스터디룸 목록을 불러오지 못했어요.");
+        setErr(e instanceof Error ? e.message : '전체 스터디룸 목록을 불러오지 못했어요.');
       } finally {
         setLoading(false);
       }
@@ -67,6 +67,7 @@ export default function RecentRooms() {
           description={room.description}
           coverSrc={room.thumbnailUrl ?? null}
           isPrivate={room.isPrivate}
+          status={room.status}
           clickable
           onClick={() => handleCardClick(room.roomId)}
           className="w-full"

@@ -73,6 +73,7 @@ function StudyRoomList({ sort }: { sort: SortKey }) {
                 description={room.description}
                 coverSrc={room.thumbnailUrl ?? null}
                 isPrivate={room.isPrivate}
+                status={room.status}
                 clickable
                 onClick={() => enterRoom(room)}
               />
@@ -86,7 +87,6 @@ function StudyRoomList({ sort }: { sort: SortKey }) {
           <div className="progressBar h-full w-1/3 bg-primary-600 rounded" />
         </div>
       )}
-
       {roomId && (
         <EnterPasswordModal
           roomId={roomId}
@@ -95,8 +95,6 @@ function StudyRoomList({ sort }: { sort: SortKey }) {
           onSuccess={handleSuccess}
         />
       )}
-
-      <style jsx>{``}</style>
     </div>
   );
 }

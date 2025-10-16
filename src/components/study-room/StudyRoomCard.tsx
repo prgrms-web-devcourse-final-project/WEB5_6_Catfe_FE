@@ -1,13 +1,14 @@
-import React from "react";
-import clsx from "clsx";
-import Image from "next/image";
-import { useState } from "react";
+import React from 'react';
+import clsx from 'clsx';
+import Image from 'next/image';
+import { useState } from 'react';
 
 type Props = {
   title: string;
   description?: string;
   coverSrc?: string | null;
   isPrivate?: boolean;
+  status?: 'WAITING' | 'ACTIVE' | 'PAUSED' | 'TERMINATED' | string;
   clickable?: boolean;
   onClick?: () => void;
   className?: string;
@@ -18,18 +19,20 @@ export default function StudyRoomCard({
   description,
   coverSrc,
   isPrivate = false,
+  status = 'ACTIVE',
   clickable = false,
   onClick,
   className,
 }: Props) {
   const [imgError, setImgError] = useState(false);
   const hasThumb = !!coverSrc && !imgError;
+  const isTerminated = status === 'TERMINATED';
 
   return (
     <article
       className={clsx(
-        "w-full overflow-hidden rounded-2xl border-2 border-text-secondary bg-background-white shadow-sm",
-        clickable && "cursor-pointer hover:shadow-md active:translate-y-[1px]",
+        'w-full overflow-hidden rounded-2xl border-2 border-text-secondary bg-background-white shadow-sm',
+        clickable && 'cursor-pointer hover:shadow-md active:translate-y-[1px]',
         className
       )}
       onClick={clickable ? onClick : undefined}
@@ -59,6 +62,20 @@ export default function StudyRoomCard({
               />
             </div>
           )}
+          {isTerminated && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <div className="rounded-full bg-background-white/50 size-16 flex items-center justify-center">
+                <div className="relative size-12">
+                  <Image
+                    src="/icon/study-room/trash-alert.svg"
+                    alt="종료된 스터디룸"
+                    fill
+                    className="opacity-90"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="h-[2px] w-full bg-text-secondary" />
       </div>
@@ -66,7 +83,8 @@ export default function StudyRoomCard({
       <div className="p-3 flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-text-primary leading-tight line-clamp-1 text-xs">
-            {title || "[roomName]"}
+            {title || '[roomName]'}
+            {isTerminated && ' (종료)'}
           </h3>
           {isPrivate && (
             <Image
@@ -80,7 +98,7 @@ export default function StudyRoomCard({
         </div>
 
         <p className="mt-2 text-[10px] text-text-secondary leading-snug line-clamp-1 min-h-[20px]">
-          {description?.trim() || " "}
+          {description?.trim() || ' '}
         </p>
       </div>
     </article>

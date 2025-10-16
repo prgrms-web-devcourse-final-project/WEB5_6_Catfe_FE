@@ -178,6 +178,7 @@ export default function JoinList({ search = '' }: { search?: string }) {
               description={room.description}
               coverSrc={room.thumbnailUrl ?? null}
               isPrivate={room.isPrivate}
+              status={room.status}
               clickable
               onClick={() => enterRoom(room)}
             />

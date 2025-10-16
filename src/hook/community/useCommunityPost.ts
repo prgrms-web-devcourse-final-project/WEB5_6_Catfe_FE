@@ -158,6 +158,7 @@ export function usePostMutations(isEditMode: boolean, existingPostId?: number) {
           queryKey: ['community', 'post', data.data.postId],
         });
       }
+      queryClient.invalidateQueries({ queryKey: communityQueryKey.categories() });
     },
   });
 }
@@ -243,6 +244,10 @@ export function useCreateCommentMutation() {
         queryKey: ['community', 'comments', variables.postId],
         refetchType: 'all',
       });
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'post', variables.postId],
+        refetchType: 'all',
+      });
     },
   });
 }
@@ -265,6 +270,10 @@ export function useUpdateCommentMutation() {
         queryKey: ['community', 'comments', variables.postId],
         refetchType: 'all',
       });
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'post', variables.postId],
+        refetchType: 'all',
+      });
     },
   });
 }
@@ -284,6 +293,10 @@ export function useDeleteCommentMutation() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['community', 'comments', variables.postId],
+        refetchType: 'all',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['community', 'post', variables.postId],
         refetchType: 'all',
       });
     },

@@ -59,6 +59,7 @@ export default function RoomStage({
             stream={showVideo ? stream : null}
             audioOn={micOn}
             videoOn={camOn}
+            roomId={room.info.id}
           />
         );
       })}

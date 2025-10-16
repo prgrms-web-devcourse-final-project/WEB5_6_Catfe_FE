@@ -30,9 +30,6 @@ export default function AvatarModal({
     () =>
       items ?? [
         { key: "fur", label: "털색", hint: "고양이 아바타의 털색을 바꿔요." },
-        { key: "hat", label: "모자", disabled: true },
-        { key: "clothes", label: "옷", disabled: true },
-        { key: "shoes", label: "신발", disabled: true },
       ],
     [items]
   );

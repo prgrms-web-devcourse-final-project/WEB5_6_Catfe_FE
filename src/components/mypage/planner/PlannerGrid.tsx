@@ -119,7 +119,7 @@ function PlannerGrid({ plans, hourHeight, onSelectedRange, onPlanClick }: Planne
                   sw.border
                 )}
               >
-                <div className="font-medium truncate select-none pointer-events-none">
+                <div className={`font-medium truncate select-none pointer-events-none ${sw.text}`}>
                   {plan.subject}
                 </div>
                 <div className="opacity-70 select-none pointer-events-none whitespace-nowrap overflow-ellipsis">
